@@ -8,3 +8,4 @@ secrets/
 .vite/
 server/var/
 server/config.php
+releases/
