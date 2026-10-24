@@ -15,6 +15,7 @@ import { Fireworks } from '../fx';
 import { MeteorSession, METEOR_MODES, type Meteor, type MeteorEvent } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
+import { reportResult, outcomeText } from '../../platform/results';
 
 export const W = 1280;
 export const H = 720;
@@ -119,6 +120,7 @@ export class MeteorScene extends Phaser.Scene {
   private wreck: Phaser.GameObjects.GameObject[] = [];
   private ending = false;
   private musicLevel = 0;
+  private startedAt = 0;
 
   constructor() {
     super('pluie-de-meteores');
@@ -1447,6 +1449,20 @@ export class MeteorScene extends Phaser.Scene {
       c.add(this.add.text(W / 2 - 230, y, label, style(20, '#cfe8e4', 600)).setOrigin(0, 0.5));
       c.add(this.add.text(W / 2 + 230, y, value, style(22, B.C.cream, 800)).setOrigin(1, 0.5));
     });
+    const status = this.add.text(W / 2, top + 418, 'Enregistrement…', style(16, '#9fc9c2', 700)).setOrigin(0.5);
+    c.add(status);
+    void reportResult({
+      jeu: 'meteores',
+      niveau: this.tier.id,
+      mode: s.mode,
+      score: s.score,
+      gagne: won,
+      etoiles: stars,
+      duree: (Date.now() - this.startedAt) / 1000,
+      precision: s.accuracy(),
+      ops: s.stats.byOp,
+      details: { tirs: s.stats.hits, erreurs: s.stats.errors, impacts: s.stats.impacts, serie: s.stats.bestCombo },
+    }).then((o) => status.active && status.setText(outcomeText(o)));
     this.addOverlayButton(W / 2 - 130, top + 460, 'Accueil', false, () => {
       window.location.href = '../index.html';
     });
@@ -1487,6 +1503,7 @@ export class MeteorScene extends Phaser.Scene {
     this.ending = false;
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new MeteorSession(this.tier.id, this.seed, mode);
+    this.startedAt = Date.now();
     this.scoreShown = 0;
     this.refreshShields();
     this.refreshScore();

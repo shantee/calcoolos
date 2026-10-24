@@ -122,6 +122,8 @@ export interface DragonStats {
   bestCombo: number;
   batsBurned: number;
   bonuses: number;
+  /** Par opération : [objectifs réussis, indigestions]. */
+  byOp: Record<string, [number, number]>;
 }
 
 type Point = { x: number; y: number };
@@ -193,7 +195,7 @@ export class DragonSession {
   hunger = 0;
   phase: 'play' | 'won' | 'lost' = 'play';
   elapsed = 0;
-  readonly stats: DragonStats = { goals: 0, perfect: 0, overshoots: 0, hurts: 0, hungers: 0, orbsEaten: 0, bestCombo: 0, batsBurned: 0, bonuses: 0 };
+  readonly stats: DragonStats = { goals: 0, perfect: 0, overshoots: 0, hurts: 0, hungers: 0, orbsEaten: 0, bestCombo: 0, batsBurned: 0, bonuses: 0, byOp: {} };
   private nextId = 1;
   private lastTarget = 0;
 
@@ -257,6 +259,7 @@ export class DragonSession {
     if (rest === null) {
       // Dépassé : hoquet, le ventre se vide ; l'objectif reste le même.
       this.stats.overshoots++;
+      (this.stats.byOp[this.goal.op] ??= [0, 0])[1]++;
       this.combo = 0;
       const spat = this.belly;
       this.belly = [];
@@ -277,6 +280,7 @@ export class DragonSession {
     this.belly = [];
     this.combo++;
     this.stats.goals++;
+    (this.stats.byOp[goal.op] ??= [0, 0])[0]++;
     if (perfect) this.stats.perfect++;
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     const comboMul = Math.min(2, 1 + 0.1 * (this.combo - 1));

@@ -6,3 +6,5 @@ dist/
 secrets/
 *.log
 .vite/
+server/var/
+server/config.php

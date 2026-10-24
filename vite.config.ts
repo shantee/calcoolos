@@ -30,6 +30,7 @@ export default defineConfig({
       output: {
         manualChunks(id: string) {
           if (id.includes('node_modules/phaser')) return 'phaser';
+          if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) return 'echarts';
           return undefined;
         },
       },
@@ -38,11 +39,17 @@ export default defineConfig({
         cubes: resolve(import.meta.dirname, 'jeu/cubes-de-siege.html'),
         meteores: resolve(import.meta.dirname, 'jeu/pluie-de-meteores.html'),
         dragon: resolve(import.meta.dirname, 'jeu/dragon-gourmand.html'),
+        compte: resolve(import.meta.dirname, 'compte.html'),
+        tableau: resolve(import.meta.dirname, 'tableau.html'),
+        classements: resolve(import.meta.dirname, 'classements.html'),
+        confidentialite: resolve(import.meta.dirname, 'confidentialite.html'),
         prototypeA: resolve(import.meta.dirname, 'prototypes/a.html'),
         prototypeB: resolve(import.meta.dirname, 'prototypes/b.html'),
       },
     },
   },
-  server: { host: true, port: 5173 },
-  preview: { host: true, port: 4173 },
+  // L'API PHP tourne à côté (npm run api) ; Vite lui transmet les appels /api en gardant
+  // l'en-tête Host (l'API compare l'origine de chaque POST à ce nom d'hôte).
+  server: { host: true, port: 5173, proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: false } } },
+  preview: { host: true, port: 4173, proxy: { '/api': { target: 'http://127.0.0.1:8080', changeOrigin: false } } },
 });

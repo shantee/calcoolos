@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Confidentialité · %BRAND_NAME%</title>
+    <meta name="description" content="%BRAND_DESCRIPTION%" />
+    <meta name="color-scheme" content="dark" />
+  </head>
+  <body>
+    <div class="ciel" aria-hidden="true"></div>
+    <header id="barre"></header>
+    <main class="page" id="contenu">
+      <article class="texte">
+        <h1>Confidentialité</h1>
+        <p class="chapeau">
+          %BRAND_NAME% est conçu pour des enfants : on collecte le moins possible, rien n’est public par défaut,
+          il n’y a ni publicité, ni traceur, ni messagerie entre joueurs.
+        </p>
+        <p class="message erreur">
+          Brouillon rédigé pendant le développement : ce texte doit être relu (et complété avec l’identité du
+          responsable du site) avant toute mise en ligne. Il ne garantit pas, à lui seul, la conformité au RGPD.
+        </p>
+
+        <h2>Sans compte (mode invité)</h2>
+        <p>
+          On peut jouer sans rien fournir. Le niveau choisi, les records et l’historique des parties restent dans
+          le navigateur de l’appareil (stockage local) et ne sont envoyés nulle part. Aucun cookie n’est déposé.
+          Pour tout effacer : vider les données du site dans le navigateur.
+        </p>
+
+        <h2>Avec un espace famille</h2>
+        <ul>
+          <li><b>Compte de l’adulte</b> : adresse e-mail et mot de passe (stocké uniquement sous forme d’empreinte
+            chiffrée, jamais en clair), date de création et de dernière connexion.</li>
+          <li><b>Profils des enfants</b> : un pseudo, un avatar, un niveau de difficulté. Ni nom, ni âge, ni date de
+            naissance, ni photo.</li>
+          <li><b>Résultats des parties</b> : jeu, niveau, mode, score, étoiles, durée, part de calculs justes et
+            nombre de réussites par type d’opération, date.</li>
+          <li><b>Sécurité</b> : pour limiter les essais de mot de passe, une empreinte non réversible de l’adresse IP
+            est gardée 24 heures au plus.</li>
+        </ul>
+        <p>
+          Un seul cookie technique (« calcoolos_session ») est déposé quand l’adulte se connecte, pour maintenir la
+          connexion. Il disparaît à la déconnexion.
+        </p>
+
+        <h2>Qui voit quoi ?</h2>
+        <ul>
+          <li>Les résultats d’un enfant ne sont visibles que dans l’espace famille de son compte.</li>
+          <li>Les classements publics n’affichent que les profils explicitement autorisés par l’adulte, sous un
+            <b>nom inventé</b> (par exemple « Dragon Futé 42 »), jamais le pseudo ni l’adresse e-mail.</li>
+          <li>Il n’y a pas de chat, de commentaire ni de contenu publié par les joueurs.</li>
+        </ul>
+
+        <h2>Vos droits</h2>
+        <p>
+          Depuis l’espace parents : télécharger toutes les données du compte (fichier JSON), modifier ou supprimer
+          un profil, supprimer le compte et toutes ses données (immédiat et définitif). Les données ne sont ni
+          vendues ni partagées ; elles sont hébergées sur le serveur du responsable du site (lieu à préciser).
+        </p>
+      </article>
+    </main>
+    <footer class="pied">
+      <a href="confidentialite.html">Confidentialité</a> · aucune publicité, aucun traceur.
+    </footer>
+    <script type="module" src="/src/entries/page.ts"></script>
+  </body>
+</html>

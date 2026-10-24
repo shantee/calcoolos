@@ -20,6 +20,7 @@ import { Fireworks } from '../fx';
 import { DragonSession, DRAGON_MODES, DRAGON_STAGES, type EatResult, type Goal, type Orb, type Setback } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
+import { reportResult, outcomeText } from '../../platform/results';
 
 export const W = 1280;
 export const H = 720;
@@ -184,6 +185,7 @@ export class DragonScene extends Phaser.Scene {
   private musicLevel = 0;
   private shownStage = 0;
   private wreck: Phaser.GameObjects.GameObject[] = [];
+  private startedAt = 0;
 
   constructor() {
     super('dragon-gourmand');
@@ -1727,6 +1729,20 @@ export class DragonScene extends Phaser.Scene {
       c.add(this.add.text(W / 2 - 250, y, label, style(20, '#e8dcff', 600)).setOrigin(0, 0.5));
       c.add(this.add.text(W / 2 + 250, y, value, style(22, B.C.cream, 800)).setOrigin(1, 0.5));
     });
+    const status = this.add.text(W / 2, top + 440, 'Enregistrement…', style(16, '#c9bfff', 700)).setOrigin(0.5);
+    c.add(status);
+    void reportResult({
+      jeu: 'dragon',
+      niveau: this.tier.id,
+      mode: s.mode,
+      score: s.score,
+      gagne: won,
+      etoiles: stars,
+      duree: (Date.now() - this.startedAt) / 1000,
+      precision: s.accuracy(),
+      ops: s.stats.byOp,
+      details: { objectifs: s.stats.goals, parfaits: s.stats.perfect, hoquets: s.stats.overshoots, serie: s.stats.bestCombo, chauvesSouris: s.stats.batsBurned },
+    }).then((o) => status.active && status.setText(outcomeText(o)));
     this.addOverlayButton(W / 2 - 130, top + 482, 'Accueil', false, () => {
       window.location.href = '../index.html';
     });
@@ -1771,6 +1787,7 @@ export class DragonScene extends Phaser.Scene {
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.resetDragon(240, 400);
     this.session = new DragonSession(this.tier.id, this.seed, mode, { x: 240, y: 400 });
+    this.startedAt = Date.now();
     this.session.orbs.forEach((o, i) => this.addOrbView(o, 150 + i * 70));
     this.scoreShown = 0;
     this.nextCakeAt = this.time.now + 15000;

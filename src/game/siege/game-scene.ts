@@ -13,6 +13,7 @@ import { Sfx } from '../sfx';
 import { Fireworks } from '../fx';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import { ARCHETYPES, MODES, WAVES, type EnemyKind, type Mode } from '../../core/waves';
+import { reportResult, outcomeText } from '../../platform/results';
 
 export const W = 1280;
 export const H = 720;
@@ -72,6 +73,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private tier!: Tier;
   private seed = 1;
   private session: SiegeSession | null = null;
+  private startedAt = 0;
   private sfx = new Sfx();
   private reducedMotion = false;
   private cubes: CubeView[] = [];
@@ -522,6 +524,27 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       c.add(this.add.text(W / 2 - 220, y, label, style(20, '#cfe8e4', 600)).setOrigin(0, 0.5));
       c.add(this.add.text(W / 2 + 220, y, value, style(22, B.C.cream, 800)).setOrigin(1, 0.5));
     });
+    // Étoiles (comme les autres jeux) : victoire, 85 % de calculs justes, 70 % de coups parfaits.
+    let stars = 0;
+    if (won) {
+      stars = 1;
+      if (s.accuracy() >= 0.85) stars++;
+      if (s.stats.hits > 0 && s.stats.perfects / s.stats.hits >= 0.7) stars++;
+    }
+    const status = this.add.text(W / 2, top + 396, `${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}   Enregistrement…`, style(17, '#9fc9c2', 700)).setOrigin(0.5);
+    c.add(status);
+    void reportResult({
+      jeu: 'cubes',
+      niveau: this.tier.id,
+      mode: s.mode,
+      score: s.score,
+      gagne: won,
+      etoiles: stars,
+      duree: (Date.now() - this.startedAt) / 1000,
+      precision: s.accuracy(),
+      ops: { '+': [s.stats.hits, s.stats.misses] },
+      details: { monstres: s.stats.defeated, parfaits: s.stats.perfects, serie: s.stats.bestCombo },
+    }).then((o) => status.active && status.setText(`${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}   ${outcomeText(o)}`));
     this.overlayButton(W / 2 - 130, top + 440, 'Accueil', false, () => {
       window.location.href = '../index.html';
     });
@@ -542,6 +565,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.resetWorld();
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new SiegeSession(this.tier, this.seed, mode);
+    this.startedAt = Date.now();
     this.session.round.cubes.forEach((v, i) => {
       this.cubes[i].base.setTexture('b-tile');
       this.cubes[i].obj.setY(this.cubes[i].y);

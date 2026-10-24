@@ -75,6 +75,8 @@ export interface MeteorStats {
   bestCombo: number;
   /** Hauteur moyenne (p) au moment du tir : plus c'est bas, plus on a tiré tôt. */
   heights: number[];
+  /** Par opération : [réussis, ratés (arrivés sur la station)]. */
+  byOp: Record<string, [number, number]>;
 }
 
 export class MeteorSession {
@@ -88,7 +90,7 @@ export class MeteorSession {
   shields: number | null;
   score = 0;
   combo = 0;
-  stats: MeteorStats = { hits: 0, errors: 0, impacts: 0, bestCombo: 0, heights: [] };
+  stats: MeteorStats = { hits: 0, errors: 0, impacts: 0, bestCombo: 0, heights: [], byOp: {} };
   private nextId = 1;
   private toSpawn: MeteorKind[] = [];
   private spawnTimer = 1.5;
@@ -195,6 +197,7 @@ export class MeteorSession {
           m.alive = false;
         }
         this.stats.impacts++;
+        this.countOp(m.expr.op, false);
         this.combo = 0;
         if (lost) this.shields = (this.shields ?? 0) - 1;
         events.push({ type: 'impact', meteor: m, shieldLost: lost });
@@ -254,6 +257,7 @@ export class MeteorSession {
     this.stats.hits++;
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     this.stats.heights.push(m.p);
+    this.countOp(m.expr.op, true);
     const multiplier = 1 + 0.1 * Math.min(this.combo - 1, 20);
     let points = Math.round((50 + 100 * (1 - Math.min(1, m.p))) * multiplier);
     const destroyed: Meteor[] = [];
@@ -287,6 +291,11 @@ export class MeteorSession {
     }
     this.score += points;
     return { kind: 'hit', meteor: m, points, destroyed, bossDone };
+  }
+
+  private countOp(op: string, ok: boolean): void {
+    const c = (this.stats.byOp[op] ??= [0, 0]);
+    c[ok ? 0 : 1]++;
   }
 
   /** Points bonus hors calcul (canard de l'espace attrapé). */
