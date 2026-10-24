@@ -99,6 +99,7 @@ if (plan === 'gagner') {
     // Une indigestion volontaire au 3e objectif, pour la capture du hoquet.
     if (st.goals === 2 && !overshootDone) {
       overshootDone = true;
+      await page.waitForTimeout(1800);
       for (let k = 0; k < 6; k++) {
         const big = await page.evaluate(() => [...window.__dragon.session().orbs].sort((a, b) => b.value - a.value)[0]);
         await page.evaluate((id) => window.__dragon.feed(id), big.id);

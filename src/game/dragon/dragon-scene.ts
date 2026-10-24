@@ -186,6 +186,7 @@ export class DragonScene extends Phaser.Scene {
   private shownStage = 0;
   private wreck: Phaser.GameObjects.GameObject[] = [];
   private startedAt = 0;
+  private stampText: Phaser.GameObjects.Text | null = null;
 
   constructor() {
     super('dragon-gourmand');
@@ -580,17 +581,21 @@ export class DragonScene extends Phaser.Scene {
     const base = this.headPoint(122, 62);
     const back = { x: -Math.cos(this.head.a), y: -Math.sin(this.head.a) };
     const flip = Math.cos(this.head.a) < 0 ? -1 : 1;
-    const perp = { x: -back.y * flip, y: back.x * flip };
-    for (const [side, ph] of [[1, 0], [-0.4, 1.7]] as const) {
-      const w1 = Math.sin(time / 170 + ph) * 10;
-      const w2 = Math.sin(time / 140 + ph + 1) * 16;
-      const c1 = { x: base.x + back.x * 30 + perp.x * (18 * side + w1), y: base.y + back.y * 30 + perp.y * (18 * side + w1) + 10 };
-      const end = { x: base.x + back.x * 78 + perp.x * (34 * side + w2), y: base.y + back.y * 78 + perp.y * (34 * side + w2) + 26 };
-      const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(base.x, base.y), new Phaser.Math.Vector2(c1.x, c1.y), new Phaser.Math.Vector2(end.x, end.y));
-      g.lineStyle(6, 0x1d1a2b, this.headImg.alpha);
-      curve.draw(g, 16);
-      g.lineStyle(3, this.fever ? 0xfff0b0 : 0xffc94a, this.headImg.alpha);
-      curve.draw(g, 16);
+    const perp = { x: back.y * flip, y: -back.x * flip };
+    const fwd = { x: -back.x, y: -back.y };
+    // Deux moustaches qui pendent sous le museau et flottent vers l'arrière.
+    for (const [len, ph] of [[1, 0], [0.7, 1.7]] as const) {
+      const w1 = Math.sin(time / 170 + ph) * 8;
+      const w2 = Math.sin(time / 140 + ph + 1) * 14;
+      const p0 = new Phaser.Math.Vector2(base.x, base.y);
+      const p1 = new Phaser.Math.Vector2(base.x + fwd.x * 12 + perp.x * 22, base.y + fwd.y * 12 + perp.y * 22);
+      const p2 = new Phaser.Math.Vector2(base.x + back.x * 40 * len + perp.x * (38 + w1) * len, base.y + back.y * 40 * len + perp.y * (38 + w1) * len);
+      const p3 = new Phaser.Math.Vector2(base.x + back.x * 92 * len + perp.x * (26 + w2) * len, base.y + back.y * 92 * len + perp.y * (26 + w2) * len);
+      const curve = new Phaser.Curves.CubicBezier(p0, p1, p2, p3);
+      g.lineStyle(5, 0x1d1a2b, this.headImg.alpha);
+      curve.draw(g, 20);
+      g.lineStyle(2.5, this.fever ? 0xfff0b0 : 0xffc94a, this.headImg.alpha);
+      curve.draw(g, 20);
     }
   }
 
@@ -1351,9 +1356,12 @@ export class DragonScene extends Phaser.Scene {
   }
 
   private stamp(text: string, color: string): void {
+    // Un seul tampon à la fois : le nouveau remplace l'ancien.
+    if (this.stampText?.active) this.stampText.destroy();
     const t = this.add.text(this.head.x, this.head.y - 110, text, style(text.length > 10 ? 34 : 46, color, 800, 7)).setOrigin(0.5).setDepth(56);
     t.x = Phaser.Math.Clamp(t.x, 180, W - 180);
     t.y = Phaser.Math.Clamp(t.y, 170, H - 120);
+    this.stampText = t;
     if (this.reducedMotion) {
       this.time.delayedCall(900, () => t.destroy());
       return;
