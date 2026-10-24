@@ -3,7 +3,7 @@
  * Les scènes Phaser lisent cet état et jouent les animations correspondantes.
  */
 import { createRng, type Rng } from '../../core/rng';
-import { evaluateSelection, generatePuzzle, refillAndNext, type Puzzle } from '../../core/puzzle';
+import { evaluateSelection, generatePuzzle, refillAndNext, type Puzzle, type PuzzleConfig } from '../../core/puzzle';
 import { scoreHit, type HitResult } from '../../core/scoring';
 import type { Tier } from '../../core/difficulty';
 
@@ -24,11 +24,14 @@ export class SiegeRound {
   /** Horodatage (ms) d'apparition de la cible courante ; null = mode sans chrono. */
   private targetShownAt: number | null = null;
   timed: boolean;
+  /** Réglage utilisé pour les cibles suivantes (le palier, éventuellement ajusté). */
+  puzzleConfig: PuzzleConfig;
 
   constructor(tier: Tier, seed: number, timed = false) {
     this.tier = tier;
     this.rng = createRng(seed);
     this.timed = timed;
+    this.puzzleConfig = tier.puzzle;
     this.puzzle = generatePuzzle(tier.puzzle, this.rng);
   }
 
@@ -89,7 +92,7 @@ export class SiegeRound {
     const target = this.puzzle.target;
     const optimal = this.puzzle.optimalCount;
     this.selected = [];
-    this.puzzle = refillAndNext(this.puzzle.cubes, used, this.tier.puzzle, this.rng);
+    this.puzzle = refillAndNext(this.puzzle.cubes, used, this.puzzleConfig, this.rng);
     return { kind: 'hit', used, values, target, optimal, result };
   }
 }

@@ -131,6 +131,26 @@ export class Sfx {
     this.noise(0.5, { gain: 0.3, filter: 2400, delay: 0.1 });
   }
 
+  /** Hou-hou de la chouette. */
+  owl(): void {
+    this.tone(520, 0.18, { wave: 'sine', gain: 0.16, slideTo: 440 });
+    this.tone(500, 0.3, { wave: 'sine', gain: 0.16, slideTo: 400, delay: 0.24 });
+  }
+
+  /** Petit « plop » (escargot qui rentre dans sa coquille). */
+  pop(): void {
+    this.tone(700, 0.08, { wave: 'sine', gain: 0.2, slideTo: 260 });
+  }
+
+  /** Annonce d'une vague. */
+  fanfare(): void {
+    [392, 523, 659].forEach((f, i) => this.tone(f, 0.16, { wave: 'triangle', gain: 0.12, delay: i * 0.09 }));
+  }
+
+  victory(): void {
+    [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, 0.22, { wave: 'triangle', gain: 0.14, delay: i * 0.12 }));
+  }
+
   bump(): void {
     this.tone(90, 0.3, { wave: 'sawtooth', gain: 0.12, slideTo: 60 });
   }

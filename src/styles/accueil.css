@@ -98,7 +98,7 @@ main {
   z-index: 1;
   max-width: 760px;
   margin: 0 auto;
-  padding: 56px 16px 34vh;
+  padding: 56px 16px 44vh;
 }
 
 .surtitre {
@@ -111,7 +111,7 @@ main {
 }
 
 h1 {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: clamp(3rem, 10vw, 5.5rem);
   font-weight: 800;
   line-height: 1;
@@ -140,17 +140,95 @@ h2 {
 }
 
 .lieu p {
-  margin: 0 0 20px;
+  margin: 0;
   line-height: 1.5;
   color: #dfeeea;
 }
 
+.lieu {
+  display: grid;
+  gap: 18px;
+}
+
+.lieu h2 {
+  margin: -12px 0 0;
+}
+
+.aide {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgb(95 211 188 / 0.1);
+  border: 2px solid rgb(95 211 188 / 0.35);
+}
+
+.aide strong {
+  color: var(--safran);
+}
+
+.exemple {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.cube,
+.pancarte {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.2em;
+  height: 2.2em;
+  border: 3px solid var(--encre);
+  border-radius: 10px;
+  box-shadow: 0 4px 0 var(--encre);
+}
+
+.cube {
+  background: var(--safran);
+  color: var(--encre);
+}
+
+.pancarte {
+  padding: 0 10px;
+  background: #b67c4f;
+  color: var(--creme);
+  border-radius: 4px;
+}
+
+.jouer {
+  justify-self: start;
+  padding: 14px 40px;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--encre);
+  background: var(--safran);
+  border: 4px solid var(--encre);
+  border-radius: 18px;
+  box-shadow: 0 6px 0 var(--encre);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.jouer:hover,
+.jouer:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 var(--encre);
+  outline: none;
+}
+
+.note a {
+  color: var(--brume);
+}
+
 .niveau {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   font-weight: 700;
-  margin-bottom: 20px;
 }
 
 select {
@@ -163,55 +241,11 @@ select {
   color: var(--encre);
 }
 
-.variantes {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-}
-
-.variante {
-  display: grid;
-  gap: 4px;
-  padding: 18px;
-  border-radius: 18px;
-  border: 4px solid var(--encre);
-  background: var(--creme);
-  color: var(--encre);
-  text-decoration: none;
-  box-shadow: 0 6px 0 var(--encre);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.variante:hover,
-.variante:focus-visible {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 0 var(--encre);
-  outline: none;
-  background: var(--safran);
-}
-
-.lettre {
-  font-size: 2.4rem;
-  font-weight: 800;
-  line-height: 1;
-}
-
-.nom {
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-.desc {
-  font-size: 0.95rem;
-  line-height: 1.35;
-}
-
-.aide {
-  margin-top: 20px;
+.commandes {
   color: #dfeeea;
 }
 
-.aide summary {
+.commandes summary {
   cursor: pointer;
   font-weight: 700;
 }
@@ -229,7 +263,7 @@ select {
   .lanterne {
     animation: none;
   }
-  .variante {
+  .jouer {
     transition: none;
   }
 }

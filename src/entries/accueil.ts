@@ -1,10 +1,10 @@
 import '@fontsource-variable/bricolage-grotesque';
 import '../styles/accueil.css';
 
-// Le niveau choisi est transmis aux prototypes (?niveau=…) et retenu localement.
+// Le niveau choisi est transmis au jeu (?niveau=…) et retenu localement.
 const KEY = 'calcoolos.niveau';
 const select = document.querySelector<HTMLSelectElement>('#niveau');
-const links = document.querySelectorAll<HTMLAnchorElement>('a[data-proto]');
+const links = document.querySelectorAll<HTMLAnchorElement>('a[data-jeu]');
 
 function apply(): void {
   if (!select) return;
