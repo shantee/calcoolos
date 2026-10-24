@@ -21,6 +21,7 @@ for cmd in nginx php mariadb php-fpm8.3; do
   command -v "$cmd" >/dev/null || { echo "Manque : $cmd (voir doc/DEPLOIEMENT.md, prérequis)." >&2; exit 1; }
 done
 php -m | grep -qi pdo_mysql || { echo "Manque l'extension PHP pdo_mysql (paquet php8.3-mysql)." >&2; exit 1; }
+php -m | grep -qi mbstring || { echo "Manque l'extension PHP mbstring (paquet php8.3-mbstring)." >&2; exit 1; }
 
 echo "→ Utilisateur et dossiers"
 id calcoolos >/dev/null 2>&1 || useradd --system --home /srv/calcoolos --shell /usr/sbin/nologin calcoolos

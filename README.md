@@ -3,8 +3,9 @@
 Plateforme francophone de jeux de calcul mental, pensée d'abord pour les 7-12 ans et agréable pour les plus grands.
 Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer sur un monstre, et non pour répondre à un questionnaire.
 
-> **État : deux jeux complets et jouables** (direction 2D illustrée) : « Cubes de siège » et « Pluie de météores ».
-> Pas encore de comptes ni de serveur.
+> **État : trois jeux complets et jouables** (direction 2D illustrée) : « Cubes de siège », « Pluie de météores » et
+> « Le Dragon gourmand », plus la plateforme (invité, espace famille, profils, progrès, classements) avec son API PHP.
+> **Pas encore en ligne** : le kit d'installation est prêt (`doc/DEPLOIEMENT.md`) et attend le feu vert.
 > Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md).
 
 ## Lancer le projet
@@ -13,14 +14,20 @@ Prérequis : Node.js 20 ou plus récent (testé avec Node 22).
 
 ```bash
 npm install
-npm run dev        # http://localhost:5173 (rechargement automatique)
+npm run api        # API PHP sur 127.0.0.1:8080 (base SQLite de développement créée toute seule)
+npm run dev        # http://localhost:5173 (rechargement automatique ; /api est transmis à l'API PHP)
 ```
+
+Sans `npm run api`, les jeux marchent en mode invité ; l'espace parents et les classements indiquent que le serveur
+est indisponible. Prérequis de l'API : PHP 8.2 ou plus avec `pdo_sqlite` (développement) ou `pdo_mysql` (production)
+et `mbstring`.
 
 Autres commandes :
 
 | Commande | Rôle |
 |---|---|
-| `npm test` | tests unitaires (moteur d'énigmes, barème, déroulement d'une partie) |
+| `npm test` | tests unitaires (moteurs des jeux, barèmes, tableau de bord) |
+| `npm run test:api` | tests de l'API PHP (SQLite en mémoire ; MariaDB avec `TEST_DB_DSN`, voir `server/tests/run.php`) |
 | `npm run typecheck` | vérification TypeScript |
 | `npm run build` | version de production dans `dist/` (fichiers statiques uniquement) |
 | `npm run preview` | sert `dist/` sur http://localhost:4173 |
@@ -31,6 +38,8 @@ Pages :
 - `/` : accueil, aide et choix du niveau ;
 - `/jeu/cubes-de-siege.html` : Cubes de siège ;
 - `/jeu/pluie-de-meteores.html` : Pluie de météores ;
+- `/jeu/dragon-gourmand.html` : Le Dragon gourmand ;
+- `/compte.html` (espace parents), `/tableau.html` (mes progrès), `/classements.html`, `/confidentialite.html` ;
 - `/prototypes/a.html`, `/prototypes/b.html` : prototypes du choix de direction artistique (figés).
 
 Paramètres d'URL utiles : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123` (partie reproductible),
@@ -52,6 +61,10 @@ node scripts/partie-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
 node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES gagner stratege
 node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
 node scripts/test-un-seul-monstre.mjs http://localhost:4173
+node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES gagner stratege
+node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES perdre explorateur
+node scripts/plateforme-e2e.mjs http://localhost:5173 CAPTURES   # parcours complet (npm run api + npm run dev)
+node scripts/csp-check.mjs                                        # dist/ avec les en-têtes de sécurité de Nginx
 ```
 
 Ces scripts utilisent le Playwright installé sur la machine (il n'est pas une dépendance du projet). Il signale toute
@@ -71,6 +84,14 @@ Clavier : flèches, Espace (choisir), Entrée (lancer), Retour arrière ou Écha
 exploser ; le Robot-Mère demande six calculs. Pause : bouton « II », Échap ou P. Touche aussi la baleine, le chat
 astronaute, les petits robots… et attrape le canard s'il passe.
 
+**Le Dragon gourmand** : guide le dragon (souris, doigt ou flèches) et avale des lanternes pour faire exactement le
+nombre demandé (en additionnant, ou en multipliant aux niveaux Stratège et Maître). Les lanternes avalées restent
+visibles dans son corps ; s'il dépasse, il a le hoquet et recrache tout. Moins de lanternes = coup parfait.
+
+**Plateforme** : sans compte, tout reste dans le navigateur (aucun cookie). Un adulte peut créer un espace famille :
+un profil par enfant (pseudo, avatar, niveau), progrès sur tous les appareils, classements publics seulement sur
+autorisation et sous un nom inventé.
+
 ## Organisation
 
 ```
@@ -78,17 +99,22 @@ brand.json            nom et slogan de la plateforme (le seul endroit à modifie
 index.html            accueil
 jeu/                  pages des jeux
 prototypes/           pages des deux variantes graphiques (figées)
-src/core/             logique pure et testée : hasard reproductible, énigmes, barème, paliers
-src/game/             jeu Phaser : Cubes de siège (game-scene, session), prototypes A et B, sons synthétisés
-src/art/              « PixelForge » (pixel art procédural), dessins de la variante B et du monde du jeu
+compte.html, tableau.html, classements.html, confidentialite.html   pages de la plateforme
+src/core/             logique pure et testée : hasard reproductible, énigmes, barème, paliers, calculs
+src/game/             jeux Phaser : siege/, meteors/, dragon/ (logique pure + scène), sons, effets partagés
+src/platform/         plateforme : API, joueur actif, envoi des résultats, statistiques, avatars, barre du haut
+src/entries/          point d'entrée de chaque page
+src/art/              dessins par code : variante B, monde de l'archipel, espace, dragon
+server/               API PHP (src/, migrations/, bin/ outils, tests/, public/index.php)
+deploy/               installation sur le serveur : Nginx, PHP-FPM, MariaDB, mise en service, retour arrière
 tests/                tests Vitest
 scripts/              captures Playwright et partie automatique
 CAPTURES/             captures réelles des écrans
 doc/                  cahier des charges d'origine + documents de conception
 ```
 
-Voir [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md), [`doc/DIRECTION_ARTISTIQUE.md`](doc/DIRECTION_ARTISTIQUE.md)
-et [`ART_ASSETS.md`](ART_ASSETS.md).
+Voir [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md), [`doc/DEPLOIEMENT.md`](doc/DEPLOIEMENT.md),
+[`doc/DIRECTION_ARTISTIQUE.md`](doc/DIRECTION_ARTISTIQUE.md) et [`ART_ASSETS.md`](ART_ASSETS.md).
 
 ## Renommer la plateforme
 

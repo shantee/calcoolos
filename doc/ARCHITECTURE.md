@@ -1,19 +1,23 @@
-# Architecture (état au 24/10/2026, étape C)
+# Architecture (état au 24/10/2026, étape D)
 
 ## Vue d'ensemble
 
 ```
-Navigateur                                         Serveur Dell (plus tard, étape D)
-┌───────────────────────────────────────────┐      ┌──────────────────────────────┐
-│ Pages HTML/CSS (accueil, hub)             │      │ Nginx : sert dist/ (statique) │
-│ Jeu Phaser 4 + TypeScript (rendu, sons)   │ ───▶ │ API PHP 8 (PHP-FPM)           │
-│ Logique pure src/core (énigmes, barème)   │ JSON │ MariaDB : comptes, scores     │
-└───────────────────────────────────────────┘      └──────────────────────────────┘
+Navigateur                                         Serveur Dell (kit prêt, pas encore installé)
+┌───────────────────────────────────────────┐      ┌───────────────────────────────────┐
+│ Pages HTML/CSS + TS (accueil, espace      │      │ Nginx (127.0.0.1:8088) : dist/     │
+│ parents, progrès, classements)            │ ───▶ │ /api/ → PHP-FPM (pool dédié)       │
+│ Jeux Phaser 4 + TypeScript (rendu, sons)  │ JSON │ server/ : API PHP 8.3, sans        │
+│ Logique pure (énigmes, barèmes, stats)    │      │ dépendance → MariaDB 10.11         │
+│ localStorage : invité, file d'attente     │      └───────────────────────────────────┘
+└───────────────────────────────────────────┘          ▲ tunnel Cloudflare (après accord)
 ```
 
 - **Vite** ne sert qu'au développement et à la construction : `npm run build` produit des fichiers statiques
   (`dist/`). Le serveur n'exécute ni Node ni Vite.
-- **PHP + MariaDB** viendront à l'étape D pour les comptes, profils et scores (décision de Philippe du 24/10/2026).
+- **PHP + MariaDB** pour les comptes, profils et scores (décision de Philippe du 24/10/2026). L'API n'a aucune
+  dépendance Composer : une dizaine de fichiers dans `server/src`, faciles à relire. SQLite sert au développement et
+  aux tests ; les migrations sont écrites une fois et adaptées aux deux moteurs.
 - **Phaser 4.2.1** (MIT) gère le rendu WebGL, les animations, les particules et les entrées.
 
 ## Découpage du code
@@ -31,13 +35,20 @@ Navigateur                                         Serveur Dell (plus tard, éta
 | `src/game/meteors/session.ts` | Pluie de météores : vagues, chute, saisie, tirs, boss, boucliers | non, testé seul |
 | `src/game/meteors/meteor-scene.ts` | Pluie de météores : rendu, pavé numérique, effets | oui |
 | `src/art/space.ts` | vaisseau, météores, robots, Robot-Mère, station, pavé | non |
+| `src/game/dragon/session.ts` | Dragon gourmand : lanternes, objectifs garantis atteignables, ciels, faim, cœurs | non, testé seul |
+| `src/game/dragon/dragon-scene.ts` | Dragon gourmand : vol, corps qui suit le chemin, feu, chauves-souris, orage | oui |
+| `src/art/dragon.ts` | ciel, dragon, lanternes, chauves-souris, orage, montgolfière… | non |
+| `src/platform/` | API, joueur actif, envoi des résultats (`results.ts`), statistiques (`stats.ts`, testé), avatars, DOM | non |
+| `src/entries/*.ts` | une entrée par page (accueil, compte, tableau, classements, jeux) | selon la page |
+| `server/` | API PHP : `Api.php` (routes), `Games.php` (contrôle des scores), `Db.php` (migrations), `Session.php` | — |
 | `src/game/fx.ts` | feu d'artifice et confettis partagés | oui |
 | `src/game/siege/base-scene.ts`, `scene-a.ts`, `scene-b.ts` | prototypes du point de contrôle B (figés) | oui |
 | `src/game/sfx.ts` | sons synthétisés (Web Audio), coupables | non |
 | `src/art/` | génération des visuels (aucun fichier image) | non |
 
-Les mini-jeux suivants suivront le même schéma : une logique pure testée dans `src/core` et une scène Phaser.
-Les modules partagés (profil, statistiques, progression) arriveront avec la plateforme (étape D).
+Chaque mini-jeu suit le même schéma : une logique pure testée et une scène Phaser. En fin de partie, la scène appelle
+`reportResult()` (`src/platform/results.ts`) avec un résultat commun à tous les jeux (jeu, niveau, mode, score,
+victoire, étoiles, durée, précision, réussites par opération, détails propres au jeu).
 
 ## Moteur d'énigmes
 
@@ -102,6 +113,8 @@ sont plutôt grands, et une même valeur ne peut pas apparaître trop souvent.
 | Sons synthétisés | aucun fichier ni licence | timbre plus simple que des sons enregistrés |
 | `maxTextures: 1` | sur le GPU logiciel des tests, Phaser 4 mélangeait des textures au-delà de 2 par lot | à revérifier sur un vrai GPU (`?textures=16`) ; coût négligeable ici |
 | Phaser dans un fichier séparé (357 Ko compressé) | mis en cache une fois pour tous les jeux | premier chargement un peu lourd sur mobile |
+| ECharts 6 (Apache 2.0) pour les graphiques | recommandé par le cahier des charges, accessible (description ARIA), rendu canvas | 181 Ko compressés, chargés seulement sur « Mes progrès » |
+| API PHP sans framework ni Composer | une dizaine de fichiers lisibles, rien à mettre à jour, se déploie comme les autres sites PHP du Dell | moins d'outils prêts à l'emploi (envoi d'e-mail, etc.) |
 | Échelle « FIT » 1280×720 | une seule mise en page, bandes noires en 4:3 | pixel art pas toujours à un multiple entier en variante A |
 
 ## Pluie de météores
@@ -118,3 +131,73 @@ sont plutôt grands, et une même valeur ne peut pas apparaître trop souvent.
 | Mode « en feu » | série ≥ 8 : effets renforcés et musique plus rapide (pas de points en plus que la série elle-même) |
 | Bonus caché | canard de l'espace cliquable : + 100 points |
 | Étoiles de fin | 1 pour la victoire, + 1 si ≥ 85 % de calculs justes, + 1 si ≥ 95 % et aucun impact |
+
+## Le Dragon gourmand
+
+| Élément | Règle |
+|---|---|
+| Lanternes | toujours le même nombre dans le ciel (6 à 9 selon le niveau) ; une lanterne avalée est remplacée ailleurs |
+| Objectif | atteignable avec les lanternes présentes (sac à dos pour les sommes, table des produits pour ×) ; après chaque bouchée, le reste l'est encore (au besoin, une lanterne lointaine change discrètement de valeur) |
+| Ventre | les valeurs avalées restent affichées sur le corps ; le total ne l'est jamais |
+| Dépassement | somme > cible, ou produit qui ne divise plus la cible : hoquet, ventre vidé, série perdue, même objectif |
+| Points | `(150 + 50 × lanternes) × 1,5 si parfait × série (jusqu'à × 2)` + bonus de vitesse en Défi ; + 1 000 à la victoire |
+| Niveaux | Éveil : sommes 6-15, lanternes 1-9 ; Explorateur : 10-25, 1-12 ; Stratège : sommes 14-36 et produits 12-90 (40 %) ; Maître : sommes 24-60 et produits 24-240 (50 %) |
+| Ciels | 5, 6 puis 6 objectifs ; chauves-souris dès le 2ᵉ ciel, orage et éclairs au 3ᵉ |
+| Modes | Tranquille : vol plus lent, rien à perdre ; Défi : chrono de faim par objectif et 3 cœurs |
+| Feu | à chaque objectif ; brûle les chauves-souris dans le cône (toutes sur un coup parfait), les autres fuient |
+| Étoiles | 1 pour la victoire, + 1 si ≥ 85 % sans hoquet, + 1 si ≥ 95 % sans être touché ni affamé |
+
+## Plateforme (étape D)
+
+### Qui est qui
+
+- **Invité** : rien à créer. Records et historique dans le navigateur (`localStorage`), aucun cookie.
+- **Adulte** : un compte (e-mail + mot de passe) pour la famille. La case « je suis un adulte responsable » est
+  obligatoire.
+- **Profils de joueurs** (6 par compte au plus) : pseudo, avatar, niveau. Ni nom, ni âge, ni date de naissance. Le
+  « joueur actif » est retenu dans le navigateur ; le serveur vérifie à chaque envoi que le profil appartient bien au
+  compte connecté.
+
+### Données (MariaDB)
+
+| Table | Contenu |
+|---|---|
+| `comptes` | e-mail, empreinte du mot de passe (argon2id), dates de création et de dernière connexion |
+| `profils` | compte, pseudo, avatar, niveau, autorisation de classement public (non par défaut), nom public inventé |
+| `resultats` | profil, jeu, niveau, mode, score, victoire, étoiles, durée, précision, réussites par opération (JSON), détails (JSON), vérifié ou non, motif du doute, date |
+| `tentatives` | clé (empreinte de l'IP ou de l'e-mail) et date, pour les limites de débit ; purgée après 24 h |
+
+Supprimer un compte supprime ses profils et leurs résultats (`ON DELETE CASCADE`).
+
+### API (`/api/…`, JSON)
+
+| Méthode | Adresse | Rôle |
+|---|---|---|
+| GET | `/etat` | connecté ? profils, jeton CSRF (aucune session créée pour un invité) |
+| POST | `/inscription`, `/connexion`, `/deconnexion`, `/mot-de-passe`, `/supprimer-compte` | compte |
+| GET, POST | `/profils`, `/profils/{id}/modifier`, `/profils/{id}/supprimer` | profils (404 si le profil n'est pas au compte) |
+| POST | `/resultats` | enregistre un résultat |
+| GET | `/profils/{id}/resultats` | historique d'un profil (300 derniers) |
+| GET | `/classements?jeu=&niveau=&mode=` | top 20 public (profils autorisés, nom inventé, scores vérifiés) + classement familial si connecté |
+| GET | `/export` | toutes les données du compte (fichier JSON) |
+
+### Résultats : refusés, gardés « non classés », ou vérifiés
+
+Le jeu tourne dans le navigateur : le serveur ne peut pas prouver qu'un score est honnête.
+- **Forme** (sinon refus 422) : jeu, niveau et mode connus ; entiers bornés ; opérations parmi + − × ÷.
+- **Vraisemblance** (sinon gardé, mais « non vérifié » et absent des classements) : score sous le maximum du jeu,
+  victoire pas trop rapide, pas d'étoile sans victoire, points et réponses par seconde plausibles.
+- **Débit** : 8 s au moins entre deux résultats d'un profil, 60 par heure au plus.
+
+### Tableau de bord
+
+L'historique (serveur pour un profil, navigateur pour l'invité) est résumé dans le navigateur par
+`src/platform/stats.ts` (testé) : chiffres clés, parties et réussite par jour sur 30 jours, réussite par opération
+(graphiques ECharts, avec équivalent textuel pour les lecteurs d'écran), records par jeu, niveau et mode, dix succès,
+dernières parties.
+
+### Sécurité
+
+Voir `doc/DEPLOIEMENT.md` (« Sécurité : ce qui est en place ») : argon2id, cookie HttpOnly + SameSite (+ Secure),
+CSRF par en-tête dédié et jeton, vérification de l'origine, limites de débit, SQL préparé, CSP stricte vérifiée par
+`scripts/csp-check.mjs`, pool PHP isolé.

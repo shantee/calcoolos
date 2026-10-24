@@ -8,8 +8,9 @@
 | B. Direction artistique (2 variantes + captures) | fait : **B (2D illustrée) retenue** par Philippe |
 | C. Jeu complet « Cubes de siège » | fait : jouable de bout en bout, victoire et défaite testées dans le navigateur |
 | Deuxième jeu « Pluie de météores » | fait : jouable de bout en bout, victoire et défaite testées |
-| D. Plateforme (invité, comptes, profils, sauvegardes) | non commencé |
-| E. Finition, déploiement Dell | non commencé |
+| Troisième jeu « Le Dragon gourmand » | fait : jouable de bout en bout, victoire et défaite testées |
+| D. Plateforme (invité, comptes, profils, sauvegardes) | fait : API PHP + MariaDB, parcours complet testé, comptes isolés |
+| E. Finition, déploiement Dell | kit et guide prêts, répétés dans un conteneur ; **rien installé sur le Dell** |
 
 ## Rappels pour Philippe
 
@@ -18,6 +19,49 @@
   finition graphique et de nouveaux jeux. Cela consomme plus de crédit.
 - Accès GitHub en écriture rétabli par Philippe le 24/10/2026 ; branche `dev` poussée.
 - Aperçu jouable sans installation : page privée claude.ai https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh
+  (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
+- **Avant la mise en ligne** : choisir le nom de domaine, donner l'accord pour le branchement au tunnel Cloudflare,
+  faire relire la page de confidentialité (identité du responsable, hébergement). Voir `doc/DEPLOIEMENT.md`.
+
+## 2026-10-24 : Claude, session 5 (troisième jeu, étape D, kit de déploiement)
+
+**Demande de Philippe** : un troisième jeu arcade, qui fasse réfléchir et soit addictif, avec des effets graphiques
+soignés ; puis attaquer l'installation sur le serveur : comptes, base de données, statistiques, classements.
+
+**Fait**
+- **Le Dragon gourmand** (`jeu/dragon-gourmand.html`) : on guide un dragon-lanterne (souris, doigt ou flèches) qui
+  avale des lanternes numérotées pour faire **exactement** le nombre demandé ; les lanternes avalées brillent dans son
+  corps (total jamais affiché). Additions, et multiplications aux niveaux Stratège et Maître (« 24 = 3 × 8 »).
+  - Réussi : le ventre s'illumine, souffle de feu, écaille d'or qui allonge le dragon ; coup parfait (le moins de
+    lanternes possible) : couronne de feu, feu d'artifice, clin d'œil de la lune.
+  - Trop mangé : hoquet, trombone triste, les lanternes sont recrachées.
+  - Trois ciels : crépuscule, nuit (chauves-souris rouges à crocs, que le feu transforme en petites chauves-souris
+    roussies et gentilles), orage (nuages grognons qui se chargent avant l'éclair, pluie).
+  - Mode « dragon doré » à partir d'une série de 4, lucioles qui suivent le dragon, gâteau de lune bonus, escargot en
+    montgolfière, lune endormie qui ronfle, phare de Cubes de siège sur son île, poissons volants, étoiles filantes,
+    aurore boréale à la victoire ; défaite : le dragon pique dans la mer et sa tête flotte, étourdie.
+  - Musique pentatonique originale (3 intensités), sons dédiés (croc, glouglou mélodieux, souffle, hoquet, tonnerre).
+  - Garanties testées : objectif toujours atteignable, jamais coincé après une bouchée (12 tests).
+- **Plateforme (étape D)** :
+  - API PHP sans dépendance (`server/`) : comptes adultes, profils privés (pseudo, avatar, niveau), résultats,
+    classements, export et suppression ; MariaDB en production, SQLite en développement ;
+  - pages : accueil « Qui joue ? », espace parents, mes progrès (graphiques ECharts, records, succès), classements,
+    confidentialité ;
+  - les trois jeux envoient leur résultat (profil actif → serveur ; invité → navigateur ; hors ligne → file
+    d'attente) ; Cubes de siège donne maintenant aussi 1 à 3 étoiles ;
+  - protection des mineurs : profils privés par défaut, classement public seulement sur autorisation de l'adulte et
+    sous un nom inventé (« Dragon Futé 42 »), jamais le pseudo ni l'e-mail ; aucun cookie pour les invités ;
+  - contrôle des scores : forme vérifiée (sinon refus), vraisemblance vérifiée (sinon « non classé ») ;
+  - tests : 83 vérifications d'API (SQLite et MariaDB 10.11), parcours complet dans Chromium (20 vérifications).
+- **Kit de déploiement (`deploy/`, guide `doc/DEPLOIEMENT.md`)** : préparation du serveur, mise en service avec
+  sauvegarde et migrations, retour arrière, sauvegardes quotidiennes, Nginx avec CSP stricte, pool PHP-FPM isolé.
+  **Répétition générale dans un conteneur Ubuntu** (Nginx + PHP-FPM + MariaDB) : installation, parcours complet,
+  deuxième version, retour arrière, restauration d'une sauvegarde — tout fonctionne. Rien n'a été installé sur le Dell,
+  rien n'a été changé chez Cloudflare.
+
+**Limites** : sons et musique du dragon non écoutés par un humain ; pas d'envoi d'e-mail (pas de mot de passe oublié en
+libre-service : outil d'administration à la place) ; page de confidentialité à faire relire ; l'aperçu claude.ai ne
+contient que les jeux (pas de serveur PHP).
 
 ## 2026-10-24 : Claude, session 4 (Pluie de météores, effort « high »)
 
