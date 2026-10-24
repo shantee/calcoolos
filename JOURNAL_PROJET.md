@@ -15,8 +15,8 @@
 - **Réglage d'effort « high » :** Philippe a demandé qu'on le lui rappelle au bon moment. Moment recommandé : la phase de
   finition graphique, quand la direction est choisie et que le jeu complet est jouable (fin de l'étape C ou étape E).
   Pas utile pour les prototypes ; cela consomme plus de crédit.
-- **Accès GitHub en écriture** pour Claude : l'application Claude doit être installée sur `shantee/calcoolos` pour
-  que les branches soient poussées.
+- Accès GitHub en écriture rétabli par Philippe le 24/10/2026 ; branche `dev` poussée.
+- Aperçu jouable sans installation : page privée claude.ai https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh
 
 ## 2026-10-24 : Claude, session 1 (étapes A et B)
 
