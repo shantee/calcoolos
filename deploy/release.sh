@@ -24,5 +24,5 @@ echo "4/4 Archive"
 mkdir -p releases
 tar --exclude='server/var' --exclude='server/.env' --exclude='server/config.php' \
   -czf "releases/calcoolos-$version.tar.gz" dist server deploy
-sha256sum "releases/calcoolos-$version.tar.gz" > "releases/calcoolos-$version.tar.gz.sha256"
+(cd releases && sha256sum "calcoolos-$version.tar.gz" > "calcoolos-$version.tar.gz.sha256")
 echo "Prêt : releases/calcoolos-$version.tar.gz"
