@@ -245,6 +245,51 @@ export class Sfx {
     for (let b = 0; b < Math.floor(t / (q * 2)); b++) this.noise(0.05, { gain: 0.12, filter: 5000, q: 1, delay: b * q * 2 });
   }
 
+  /** Tir laser rétro. */
+  laser(): void {
+    this.tone(1400, 0.16, { wave: 'square', gain: 0.06, slideTo: 300 });
+    this.tone(2100, 0.1, { wave: 'sawtooth', gain: 0.03, slideTo: 600 });
+  }
+
+  /** Explosion (plus grosse si `big`). */
+  boom(big = false): void {
+    this.noise(big ? 0.9 : 0.45, { gain: big ? 0.7 : 0.5, filter: big ? 300 : 600, type: 'lowpass' });
+    this.tone(big ? 90 : 140, big ? 0.7 : 0.35, { wave: 'sine', gain: 0.4, slideTo: 35 });
+  }
+
+  /** Bip d'une touche du pavé (hauteur selon le chiffre). */
+  key(d: number): void {
+    this.tone(500 + d * 45, 0.06, { wave: 'square', gain: 0.04 });
+  }
+
+  /** Erreur de saisie : bourdonnement bref. */
+  buzz(): void {
+    this.tone(150, 0.22, { wave: 'sawtooth', gain: 0.08 });
+    this.tone(142, 0.22, { wave: 'sawtooth', gain: 0.06 });
+  }
+
+  /** Alarme du boss. */
+  alarm(): void {
+    for (let i = 0; i < 3; i++) {
+      this.tone(660, 0.22, { wave: 'square', gain: 0.06, slideTo: 440, delay: i * 0.45 });
+      this.tone(440, 0.2, { wave: 'square', gain: 0.05, slideTo: 660, delay: i * 0.45 + 0.22 });
+    }
+  }
+
+  /** Onde de choc du météore doré. */
+  shockwave(): void {
+    this.tone(200, 0.9, { wave: 'sine', gain: 0.3, slideTo: 1600 });
+    this.noise(1, { gain: 0.5, filter: 1200, q: 0.3 });
+    this.chime();
+  }
+
+  /** Bip-boup d'un robot ennemi qui arrive. */
+  robotBeep(): void {
+    this.tone(880, 0.08, { wave: 'square', gain: 0.04 });
+    this.tone(660, 0.08, { wave: 'square', gain: 0.04, delay: 0.1 });
+    this.tone(990, 0.1, { wave: 'square', gain: 0.04, delay: 0.2 });
+  }
+
   bump(): void {
     this.tone(90, 0.3, { wave: 'sawtooth', gain: 0.12, slideTo: 60 });
   }

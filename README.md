@@ -3,7 +3,7 @@
 Plateforme francophone de jeux de calcul mental, pensée d'abord pour les 7-12 ans et agréable pour les plus grands.
 Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer sur un monstre, et non pour répondre à un questionnaire.
 
-> **État : étape C faite.** Le premier jeu, « Cubes de siège », est complet et jouable (direction 2D illustrée).
+> **État : deux jeux complets et jouables** (direction 2D illustrée) : « Cubes de siège » et « Pluie de météores ».
 > Pas encore de comptes ni de serveur.
 > Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md).
 
@@ -29,7 +29,8 @@ Autres commandes :
 Pages :
 
 - `/` : accueil, aide et choix du niveau ;
-- `/jeu/cubes-de-siege.html` : le jeu ;
+- `/jeu/cubes-de-siege.html` : Cubes de siège ;
+- `/jeu/pluie-de-meteores.html` : Pluie de météores ;
 - `/prototypes/a.html`, `/prototypes/b.html` : prototypes du choix de direction artistique (figés).
 
 Paramètres d'URL utiles : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123` (partie reproductible),
@@ -48,6 +49,9 @@ Partie complète jouée automatiquement (gagnée, ou perdue avec `perdre`) :
 ```bash
 node scripts/partie-auto.mjs http://localhost:4173 CAPTURES tranquille explorateur
 node scripts/partie-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
+node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES gagner stratege
+node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
+node scripts/test-un-seul-monstre.mjs http://localhost:4173
 ```
 
 Ces scripts utilisent le Playwright installé sur la machine (il n'est pas une dépendance du projet). Il signale toute
@@ -62,12 +66,16 @@ en cours.
 
 Clavier : flèches, Espace (choisir), Entrée (lancer), Retour arrière ou Échap (effacer), M (son).
 
+**Pluie de météores** : des météores et des robots tombent sur la station, chacun avec un calcul. Tape le résultat
+(pavé à l'écran ou chiffres du clavier) : le vaisseau tire dès que la réponse est complète. Le météore doré fait tout
+exploser ; le Robot-Mère demande six calculs.
+
 ## Organisation
 
 ```
 brand.json            nom et slogan de la plateforme (le seul endroit à modifier pour renommer)
 index.html            accueil
-jeu/                  page du jeu « Cubes de siège »
+jeu/                  pages des jeux
 prototypes/           pages des deux variantes graphiques (figées)
 src/core/             logique pure et testée : hasard reproductible, énigmes, barème, paliers
 src/game/             jeu Phaser : Cubes de siège (game-scene, session), prototypes A et B, sons synthétisés

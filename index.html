@@ -30,43 +30,51 @@
         <p class="accroche">%BRAND_TAGLINE%</p>
       </header>
 
-      <section class="lieu" aria-labelledby="atelier-titre">
-        <p class="surtitre">L’Atelier des Cubes</p>
-        <h2 id="atelier-titre">Cubes de siège</h2>
+      <label class="niveau" for="niveau">
+        Niveau
+        <select id="niveau">
+          <option value="eveil">Éveil · 7-8 ans</option>
+          <option value="explorateur" selected>Explorateur · 9-10 ans</option>
+          <option value="stratege">Stratège · 11-12 ans</option>
+          <option value="maitre">Maître · ados et adultes</option>
+        </select>
+      </label>
 
-        <div class="aide" role="note" aria-label="Comment jouer">
-          <p>
-            Un monstre approche du phare avec un nombre sur sa pancarte.
-            <strong>Additionne des cubes pour obtenir exactement ce nombre</strong> : moins tu utilises de cubes, plus ton tir est fort !
-          </p>
-          <p class="exemple" aria-hidden="true">
-            <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
-          </p>
-        </div>
+      <div class="jeux">
+        <section class="lieu" aria-labelledby="cubes-titre">
+          <p class="surtitre">L’Atelier des Cubes</p>
+          <h2 id="cubes-titre">Cubes de siège</h2>
+          <div class="aide" role="note" aria-label="Comment jouer à Cubes de siège">
+            <p>
+              Un monstre approche du phare avec un nombre sur sa pancarte.
+              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong> : moins tu utilises de cubes, plus ton tir est fort !
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
+            </p>
+          </div>
+          <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer</a>
+        </section>
 
-        <label class="niveau" for="niveau">
-          Niveau
-          <select id="niveau">
-            <option value="eveil">Éveil · 7-8 ans</option>
-            <option value="explorateur" selected>Explorateur · 9-10 ans</option>
-            <option value="stratege">Stratège · 11-12 ans</option>
-            <option value="maitre">Maître · ados et adultes</option>
-          </select>
-        </label>
-
-        <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer</a>
-
-        <details class="commandes">
-          <summary>Commandes</summary>
-          <ul>
-            <li>Souris ou doigt : touche les cubes, puis « Lancer ! ».</li>
-            <li>Clavier : flèches pour se déplacer, Espace pour choisir, Entrée pour lancer, Retour arrière pour effacer, M pour le son.</li>
-          </ul>
-        </details>
-      </section>
+        <section class="lieu lieu-espace" aria-labelledby="meteores-titre">
+          <p class="surtitre">Au-dessus de l’archipel</p>
+          <h2 id="meteores-titre">Pluie de météores</h2>
+          <div class="aide" role="note" aria-label="Comment jouer à Pluie de météores">
+            <p>
+              Météores et robots foncent sur la station, chacun porte un calcul.
+              <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt ! Le météore doré fait tout exploser.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="meteore">7 × 8</span> → <span class="cube">56</span>
+            </p>
+          </div>
+          <a class="jouer" data-jeu href="jeu/pluie-de-meteores.html">Jouer</a>
+        </section>
+      </div>
 
       <p class="note">
-        Bientôt d’autres lieux dans l’archipel. Le niveau et les records restent dans ce navigateur : pas de compte, pas de cookie.
+        Le niveau et les records restent dans ce navigateur : pas de compte, pas de cookie.
+        Clavier : flèches, Espace et Entrée dans Cubes de siège ; chiffres et Retour arrière dans Pluie de météores ; M coupe le son.
         <a href="prototypes/a.html">Prototype A</a> · <a href="prototypes/b.html">Prototype B</a>
       </p>
     </main>

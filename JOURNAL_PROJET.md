@@ -7,6 +7,7 @@
 | A. Initialisation (socle, scripts, accueil minimal) | fait |
 | B. Direction artistique (2 variantes + captures) | fait : **B (2D illustrée) retenue** par Philippe |
 | C. Jeu complet « Cubes de siège » | fait : jouable de bout en bout, victoire et défaite testées dans le navigateur |
+| Deuxième jeu « Pluie de météores » | fait : jouable de bout en bout, victoire et défaite testées |
 | D. Plateforme (invité, comptes, profils, sauvegardes) | non commencé |
 | E. Finition, déploiement Dell | non commencé |
 
@@ -17,6 +18,44 @@
   finition graphique et de nouveaux jeux. Cela consomme plus de crédit.
 - Accès GitHub en écriture rétabli par Philippe le 24/10/2026 ; branche `dev` poussée.
 - Aperçu jouable sans installation : page privée claude.ai https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh
+
+## 2026-10-24 : Claude, session 3 (finitions et deuxième jeu)
+
+**Retours de Philippe** : Cubes de siège validé. Bug d'un boss superposé à un autre monstre ; effet plus
+impressionnant pour les coups parfaits (explosion rouge-rose, feu d'artifice) ; animation et musique de victoire
+« comme à la fin d'un jeu de plateforme » ; puis d'autres jeux d'arcade (robots, vaisseaux spatiaux). Les
+multiplications dans Cubes de siège : plus tard.
+
+**Fait**
+- Bug corrigé : un tir en vol pendant qu'un monstre atteignait le phare (mode Défi) faisait apparaître un second
+  monstre. Le monstre s'arrête pendant le tir et un garde empêche tout doublon ; test de non-régression
+  `scripts/test-un-seul-monstre.mjs` (tirs au moment critique, jamais plus d'un monstre).
+- Coup parfait : tampon « PARFAIT ! » et feu d'artifice rouge, rose et or (plus de fusées avec la série), qui ne
+  masque jamais la pancarte ; dégâts affichés à côté du monstre.
+- Victoire : fanfare composée pour le jeu (mélodie originale, pas celle d'un jeu existant), faisceau du phare,
+  feu d'artifice, confettis, cubes qui sautent en vague, chouette et escargot qui dansent, puis l'écran de fin.
+- Feu d'artifice et confettis regroupés dans `src/game/fx.ts`, partagé par les deux jeux.
+- **Pluie de météores** (`jeu/pluie-de-meteores.html`) :
+  - météores rouges à crocs, robots ennemis en zigzag, météore doré (onde de choc qui détruit tout l'écran),
+    boss « Robot-Mère » à 6 calculs ;
+  - on tape la réponse sur le pavé à l'écran ou au clavier ; le vaisseau tire dès que la saisie correspond à une
+    réponse, sans touche Entrée ; une saisie impossible est une erreur (combo cassé) ;
+  - deux réponses à l'écran ne peuvent jamais être le début l'une de l'autre (pas de 3 et de 36 en même temps) ;
+  - opérations selon le niveau : additions et soustractions (Éveil), tables de 2, 5 et 10 (Explorateur), toutes
+    les tables et divisions (Stratège), tables jusqu'à 12 (Maître) ;
+  - modes Tranquille (chute lente, le bouclier tient) et Défi (3 boucliers) ; victoire avec boucle du vaisseau et
+    feu d'artifice ; défaite avec explosion de la station et robots qui dansent ;
+  - logique pure testée (15 tests) ; partie gagnée et perdue jouées automatiquement (`scripts/meteores-auto.mjs`).
+- Bug trouvé en route : des tirs rapprochés laissaient des météores détruits à l'écran ; corrigé (le tir ne dépend
+  plus de l'animation du vaisseau, et un filet de sécurité fait exploser tout météore mort encore affiché).
+- Accueil : les deux jeux côte à côte, chacun avec son aide en deux phrases.
+- 49 tests unitaires.
+
+**Limites** : toujours testé seulement dans Chromium avec un GPU logiciel ; sons non écoutés par un humain ; sur
+téléphone, le pavé numérique et le terrain sont petits (pensé pour ordinateur et tablette).
+
+**Prochaines étapes proposées** : retours de Philippe sur Pluie de météores ; troisième jeu (recommandation :
+Astéroïdes en morceaux, voir `doc/IDEES_JEUX.md`) ; multiplications dans Cubes de siège ; étape D (comptes).
 
 ## 2026-10-24 : Claude, session 2 (étape C)
 

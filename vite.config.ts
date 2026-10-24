@@ -36,6 +36,7 @@ export default defineConfig({
       input: {
         accueil: resolve(import.meta.dirname, 'index.html'),
         cubes: resolve(import.meta.dirname, 'jeu/cubes-de-siege.html'),
+        meteores: resolve(import.meta.dirname, 'jeu/pluie-de-meteores.html'),
         prototypeA: resolve(import.meta.dirname, 'prototypes/a.html'),
         prototypeB: resolve(import.meta.dirname, 'prototypes/b.html'),
       },

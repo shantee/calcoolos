@@ -10,6 +10,7 @@ import * as B from '../../art/variant-b';
 import * as Wd from '../../art/world-b';
 import { SiegeSession } from './session';
 import { Sfx } from '../sfx';
+import { Fireworks } from '../fx';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import { ARCHETYPES, MODES, WAVES, type EnemyKind, type Mode } from '../../core/waves';
 
@@ -906,39 +907,11 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     }
   }
 
-  private fireworkEmitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+  private fireworksFx: Fireworks | null = null;
 
-  /** Une gerbe de feu d'artifice (anneau, étincelles colorées, crépitement). */
-  private fireworkBurst(x: number, y: number, palette = ['#ff4d6d', '#ff8fb1', '#ffc94a', '#ffffff']): void {
-    if (this.fireworkEmitters.length === 0) {
-      ['#ff4d6d', '#ff8fb1', '#ffc94a', '#ffffff', '#5fd3bc', '#b79ad8'].forEach((col) => {
-        const key = this.tex(`w-fw-${col}`, () => B.sparkle(col));
-        const em = this.add.particles(0, 0, key, {
-          speed: { min: 140, max: 360 },
-          angle: { min: 0, max: 360 },
-          rotate: { min: 0, max: 360 },
-          gravityY: 240,
-          lifespan: { min: 700, max: 1200 },
-          scale: { start: 0.9, end: 0 },
-          alpha: { start: 1, end: 0.2 },
-          emitting: false,
-          // Couleurs franches : seul le blanc est additif (éclat), le rouge et le rose restent vifs.
-          blendMode: col === '#ffffff' ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL,
-        }).setDepth(71);
-        em.setData('color', col);
-        this.fireworkEmitters.push(em);
-      });
-    }
-    const count = this.reducedMotion ? 6 : 14;
-    for (const em of this.fireworkEmitters) if (palette.includes(em.getData('color') as string)) em.explode(count, x, y);
-    const ring = this.add.circle(x, y, 14).setStrokeStyle(5, Phaser.Display.Color.HexStringToColor(palette[0]).color).setDepth(70).setBlendMode(Phaser.BlendModes.ADD);
-    this.tweens.add({ targets: ring, scale: 6, alpha: 0, duration: 520, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
-    if (!this.reducedMotion) {
-      const white = this.fireworkEmitters.find((e) => e.getData('color') === '#ffffff');
-      this.time.delayedCall(450, () => {
-        for (let k = 0; k < 6; k++) white?.explode(2, x + Phaser.Math.Between(-90, 90), y + Phaser.Math.Between(-60, 80));
-      });
-    }
+  private fireworkBurst(x: number, y: number, palette?: string[]): void {
+    this.fireworksFx ??= new Fireworks(this, 71, this.reducedMotion);
+    this.fireworksFx.burst(x, y, palette);
   }
 
   /** Victoire : faisceau du phare, feu d'artifice, confettis, cubes et habitants qui dansent, fanfare. */
@@ -970,23 +943,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       this.sfx.firework(0.25 + i * 0.38);
     }
     // Pluie de confettis.
-    if (!this.reducedMotion) {
-      const colors = ['#ff4d6d', '#ffc94a', '#5fd3bc', '#b79ad8', '#f6ecd8'];
-      colors.forEach((col, i) => {
-        const em = this.add.particles(0, 0, this.tex(`w-confetti-${i}`, () => Wd.confetti(col)), {
-          x: { min: 0, max: W },
-          y: -20,
-          speedY: { min: 90, max: 200 },
-          speedX: { min: -50, max: 50 },
-          rotate: { start: 0, end: 720 },
-          scaleX: { start: 0.6, end: 0.2, random: true },
-          lifespan: 4500,
-          frequency: 90,
-          duration: 3200,
-        }).setDepth(74);
-        this.wreck.push(em);
-      });
-    }
+    this.fireworksFx ??= new Fireworks(this, 71, this.reducedMotion);
+    this.wreck.push(...this.fireworksFx.confetti(W, 3200));
     // Les cubes sautent en vague, la chouette et l'escargot dansent.
     if (!this.reducedMotion) {
       this.cubes.forEach((c, i) => {

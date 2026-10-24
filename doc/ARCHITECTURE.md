@@ -27,6 +27,11 @@ Navigateur                                         Serveur Dell (plus tard, éta
 | `src/game/siege/session.ts` | partie complète : vagues, cœurs, statistiques | non, testé seul |
 | `src/game/siege/game-scene.ts` | **le jeu** : rendu, effets, écrans de début et de fin | oui |
 | `src/art/world-b.ts` | monstres, habitants du décor, destruction du phare | non |
+| `src/core/expressions.ts` | calculs des jeux d'arcade, par niveau, sans conflit de réponses | non, testé seul |
+| `src/game/meteors/session.ts` | Pluie de météores : vagues, chute, saisie, tirs, boss, boucliers | non, testé seul |
+| `src/game/meteors/meteor-scene.ts` | Pluie de météores : rendu, pavé numérique, effets | oui |
+| `src/art/space.ts` | vaisseau, météores, robots, Robot-Mère, station, pavé | non |
+| `src/game/fx.ts` | feu d'artifice et confettis partagés | oui |
 | `src/game/siege/base-scene.ts`, `scene-a.ts`, `scene-b.ts` | prototypes du point de contrôle B (figés) | oui |
 | `src/game/sfx.ts` | sons synthétisés (Web Audio), coupables | non |
 | `src/art/` | génération des visuels (aucun fichier image) | non |
@@ -98,3 +103,14 @@ sont plutôt grands, et une même valeur ne peut pas apparaître trop souvent.
 | `maxTextures: 1` | sur le GPU logiciel des tests, Phaser 4 mélangeait des textures au-delà de 2 par lot | à revérifier sur un vrai GPU (`?textures=16`) ; coût négligeable ici |
 | Phaser dans un fichier séparé (357 Ko compressé) | mis en cache une fois pour tous les jeux | premier chargement un peu lourd sur mobile |
 | Échelle « FIT » 1280×720 | une seule mise en page, bandes noires en 4:3 | pixel art pas toujours à un multiple entier en variante A |
+
+## Pluie de météores
+
+| Élément | Règle |
+|---|---|
+| Saisie | chiffre par chiffre ; tir dès que la saisie vaut exactement une réponse à l'écran ; erreur dès qu'elle ne peut plus en devenir une |
+| Conflits | deux réponses à l'écran ne sont jamais le début l'une de l'autre |
+| Points | `(50 + 100 × hauteur restante) × (1 + 0,1 × combo)` ; doré × 3 + 50 par météore emporté ; boss + 100 par calcul, + 1 000 à la fin |
+| Vagues | 3 vagues (8, 12 et 14 objets dont un doré ; robots dès la 2ᵉ) puis le Robot-Mère (6 calculs) |
+| Modes | Tranquille : chute à 60 % de la vitesse, le bouclier bloque tout ; Défi : 3 boucliers |
+| Opérations | Éveil + et − jusqu'à 20 ; Explorateur + et − jusqu'à 50, tables de 2, 5, 10 ; Stratège + et − jusqu'à 100, tables 2 à 9, divisions ; Maître jusqu'à 200, tables jusqu'à 12 |
