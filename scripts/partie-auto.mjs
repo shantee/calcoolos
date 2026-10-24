@@ -71,7 +71,7 @@ if (perdre) {
 const ready = () =>
   page.waitForFunction(() => {
     const s = window.__siege.session();
-    return window.__siege.overlay() || (s && s.enemyHp > 0 && !window.__siege.busy());
+    return window.__siege.overlay() || (s && s.phase === 'won') || (s && s.enemyHp > 0 && !window.__siege.busy());
   }, null, { timeout: 30000 });
 
 let shots = 0;
@@ -80,6 +80,15 @@ const t0 = Date.now();
 for (;;) {
   await ready();
   if (await page.evaluate(() => window.__siege.overlay())) break;
+  if (await page.evaluate(() => window.__siege.session().phase === 'won')) {
+    // Fête de victoire avant l'écran de fin.
+    await page.waitForTimeout(1500);
+    await shot('6b-victoire');
+    await page.waitForTimeout(900);
+    await shot('6c-victoire');
+    await page.waitForFunction(() => window.__siege.overlay(), null, { timeout: 15000 });
+    break;
+  }
   // Laisse le monstre entrer avant la première capture.
   if (shots === 0) {
     await page.waitForTimeout(1600);
@@ -106,6 +115,13 @@ for (;;) {
   }
   await page.evaluate(() => window.__siege.validate());
   shots++;
+  if (shots === 2) {
+    // Coup parfait : tampon et feu d'artifice.
+    // Le rendu logiciel des tests est lent : on attend l'impact plutôt qu'une durée fixe.
+    await page.waitForFunction(() => !window.__siege.busy(), null, { timeout: 10000 });
+    await page.waitForTimeout(150);
+    await shot('3b-parfait');
+  }
   const kind = await page.evaluate(() => window.__siege.session().enemy?.kind);
   if (kind === 'carapacon' && !problems.includes('cap')) {
     await page.waitForTimeout(700);

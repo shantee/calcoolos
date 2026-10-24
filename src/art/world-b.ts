@@ -615,3 +615,33 @@ export function bubble(w: number, h: number): HTMLCanvasElement {
   ctx.fillRect(w / 2 - 6, h - 2, 14, 7);
   return c;
 }
+
+// --- Fête -----------------------------------------------------------------------------------
+
+/** Confetti rectangulaire. */
+export function confetti(color: string): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(12, 7);
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 12, 7);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+  ctx.fillRect(0, 0, 12, 2);
+  return c;
+}
+
+/** Faisceau du phare (cône lumineux qui part de la lanterne vers la droite). */
+export function beam(): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(700, 260, 1);
+  const g = ctx.createLinearGradient(0, 0, 700, 0);
+  g.addColorStop(0, 'rgba(232, 255, 244, 0.9)');
+  g.addColorStop(0.4, 'rgba(95, 211, 188, 0.35)');
+  g.addColorStop(1, 'rgba(95, 211, 188, 0)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0, 120);
+  ctx.lineTo(700, 0);
+  ctx.lineTo(700, 260);
+  ctx.lineTo(0, 140);
+  ctx.closePath();
+  ctx.fill();
+  return c;
+}

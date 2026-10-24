@@ -214,6 +214,37 @@ export class Sfx {
     });
   }
 
+  /** Fusée de feu d'artifice : sifflement, détonation, crépitement. */
+  firework(delay = 0): void {
+    this.tone(900, 0.25, { wave: 'sine', gain: 0.05, slideTo: 2200, delay });
+    this.noise(0.3, { gain: 0.45, filter: 900, q: 0.5, delay: delay + 0.22 });
+    this.tone(160, 0.25, { wave: 'sine', gain: 0.25, slideTo: 60, delay: delay + 0.22 });
+    for (let i = 0; i < 7; i++) this.noise(0.03, { gain: 0.18, filter: 4000 + i * 400, q: 3, delay: delay + 0.45 + i * 0.06 + Math.random() * 0.05 });
+  }
+
+  /**
+   * Fanfare de victoire, composée pour le jeu (mélodie originale) :
+   * montée joyeuse, thème en deux phrases, trille et accord final.
+   */
+  victoryJingle(): void {
+    const q = 0.16;
+    const melody: Array<[number, number]> = [
+      [392, 1], [523, 1], [659, 1], [784, 2], [659, 1], [784, 3],
+      [698, 1], [880, 1], [1047, 2], [880, 1], [1047, 3],
+      [988, 1], [1047, 1], [988, 1], [1047, 1], [1175, 2], [1319, 6],
+    ];
+    let t = 0;
+    for (const [f, d] of melody) {
+      this.tone(f, q * d * 0.95, { wave: 'square', gain: 0.06, delay: t });
+      this.tone(f / 2, q * d * 0.9, { wave: 'triangle', gain: 0.1, delay: t });
+      t += q * d;
+    }
+    // Accord final tenu.
+    [523, 659, 784, 1047].forEach((f) => this.tone(f, 1.2, { wave: 'triangle', gain: 0.07, delay: t - q * 6 }));
+    // Petites percussions.
+    for (let b = 0; b < Math.floor(t / (q * 2)); b++) this.noise(0.05, { gain: 0.12, filter: 5000, q: 1, delay: b * q * 2 });
+  }
+
   bump(): void {
     this.tone(90, 0.3, { wave: 'sawtooth', gain: 0.12, slideTo: 60 });
   }

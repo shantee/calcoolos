@@ -61,6 +61,8 @@ interface EnemyView {
   frame: number;
   acc: number;
   walking: boolean;
+  /** Vrai pendant l'entrée en scène. */
+  entering: boolean;
 }
 
 const RECORD_KEY = 'calcoolos.cubes.records';
@@ -144,6 +146,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       validate: () => this.validate(),
       busy: () => this.busy,
       overlay: () => this.overlay !== null,
+      monstres: () => this.children.list.filter((o) => o.name === 'monstre' && o.active).length,
+      enemyX: () => this.enemy?.obj.x ?? null,
     };
   }
 
@@ -522,7 +526,6 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     });
     this.overlayButton(W / 2 + 130, top + 440, 'Rejouer', true, () => this.showIntro());
     if (won) {
-      this.sfx.victory();
       this.moonReact('clin', 4000);
       if (!this.reducedMotion) for (let i = 0; i < 4; i++) this.time.delayedCall(i * 250, () => this.sparks.explode(18, Phaser.Math.Between(300, 980), Phaser.Math.Between(120, 300)));
     }
@@ -574,24 +577,29 @@ export class CubesDeSiegeScene extends Phaser.Scene {
 
   private spawnNext(): void {
     const s = this.session;
-    if (!s || s.phase !== 'play') return;
+    // Jamais deux monstres à la fois.
+    if (!s || s.phase !== 'play' || this.enemy) return;
     const a = s.nextEnemy(this.time.now);
     if (!a) {
       if (s.nextWave()) this.announceWave();
-      else this.showEnd(true);
+      else this.celebrate(() => this.showEnd(true));
       return;
     }
-    this.enemy = this.makeEnemy(a.kind);
-    this.setEnemyTarget(this.enemy, s.round.target, false);
+    const e = this.makeEnemy(a.kind);
+    this.enemy = e;
+    this.setEnemyTarget(e, s.round.target, false);
     this.time.delayedCall(500, () => this.sfx.growl());
     this.enemyWalking = false;
     this.tweens.add({
-      targets: this.enemy.obj,
+      targets: e.obj,
       x: L.enemyEnterX,
       duration: 1300,
       ease: 'Sine.easeOut',
       onComplete: () => {
-        this.enemyWalking = true;
+        e.entering = false;
+        if (this.enemy !== e) return;
+        // Si un tir est en vol, la marche reprendra après l'impact.
+        if (!this.busy) this.enemyWalking = true;
         s.markShown(this.time.now);
       },
     });
@@ -741,7 +749,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.tex(`w-${kind}-1`, () => Wd.creature(kind, 1));
     this.tex('b-shadow', () => B.shadow(110, 18));
     const scale = Wd.CREATURE_SCALE[kind];
-    const obj = this.add.container(L.enemyStartX, L.groundY + 22).setDepth(10);
+    const obj = this.add.container(L.enemyStartX, L.groundY + 22).setDepth(10).setName('monstre');
     const shadow = this.add.image(0, 0, 'b-shadow').setScale(K * scale);
     const body = this.add.image(0, 2, `w-${kind}-0`).setOrigin(0.5, 1).setScale(K * scale);
     const signY = -(Wd.CREATURE_H - 14) * scale;
@@ -752,7 +760,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const bar = this.add.rectangle(-barW / 2, barY, barW, 6, 0xf0745e).setOrigin(0, 0.5);
     obj.add([shadow, body, sign, barBg, bar]);
     if (ARCHETYPES[kind].armored) obj.add(this.add.image(-barW / 2 - 18, barY, this.tex('w-shield', Wd.shield)).setScale(K));
-    return { kind, obj, body, sign, bar, barBg, shadow, extras: [], scale, signY, frame: 0, acc: 0, walking: true };
+    return { kind, obj, body, sign, bar, barBg, shadow, extras: [], scale, signY, frame: 0, acc: 0, walking: true, entering: true };
   }
 
   private setEnemyTarget(e: EnemyView, n: number, animate: boolean): void {
@@ -811,6 +819,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       return;
     }
     this.busy = true;
+    // Le monstre s'arrête pendant le tir : il ne peut pas atteindre le phare entre-temps.
+    this.enemyWalking = false;
     const e = this.enemy;
     const perfect = out.result.perfect;
     const to = new Phaser.Math.Vector2(e.obj.x - 4, e.obj.y - 70 * e.scale);
@@ -823,6 +833,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       this.flash(e);
       if (perfect) {
         this.sfx.perfect();
+        this.perfectFx(at, s.round.combo);
         this.moonReact('clin', 1200);
         this.owlImg.setTexture('w-owl-contente');
         if (!this.reducedMotion) this.tweens.add({ targets: this.owlImg, y: this.owlImg.y - 10, duration: 140, yoyo: true, ease: 'Quad.easeOut' });
@@ -833,10 +844,12 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         this.tweens.add({ targets: e.body, scaleX: K * e.scale * 1.22, scaleY: K * e.scale * 0.8, duration: 120, yoyo: true, ease: 'Sine.easeOut' });
         this.tweens.add({ targets: e.sign, angle: { from: perfect ? -24 : -12, to: 0 }, duration: 700, ease: 'Elastic.easeOut' });
       }
-      this.floatDamage(to.x + 90, to.y - 10, res.damage, perfect);
+      // À gauche du monstre (côté phare) : la pancarte et son nombre restent visibles.
+      this.floatDamage(to.x - 120, to.y + 10, res.damage, perfect);
       if (!res.killed) this.time.delayedCall(120, () => this.sfx.ouch());
-      if (perfect) this.toast(s.round.combo > 1 ? `Parfait ! Série ×${s.round.combo}` : 'Parfait !', 'perfect');
-      else if (res.armoredHalved) this.toast('La carapace a amorti le coup !', 'good');
+      if (perfect) {
+        if (s.round.combo > 1) this.toast(`Série parfaite ×${s.round.combo}`, 'perfect');
+      } else if (res.armoredHalved) this.toast('La carapace a amorti le coup !', 'good');
       else this.toast('Touché ! Avec moins de cubes, ça frappe plus fort', 'good');
       this.refreshScore();
       const max = ARCHETYPES[e.kind].hp;
@@ -863,9 +876,136 @@ export class CubesDeSiegeScene extends Phaser.Scene {
           this.setEnemyTarget(e, s.round.target, true);
           s.markShown(this.time.now);
           this.busy = false;
+          if (!e.entering) this.enemyWalking = true;
           this.refreshEquation();
         });
       }
+    });
+  }
+
+  /** Coup parfait : tampon « PARFAIT ! » et feu d'artifice rouge, rose et or. */
+  private perfectFx(at: Phaser.Math.Vector2, combo: number): void {
+    // Au-dessus de la pancarte, sans sortir de l'écran ni cacher le nombre.
+    const sx = Phaser.Math.Clamp(at.x - 40, 760, W - 200);
+    const stamp = this.add.text(sx, at.y - 250, 'PARFAIT !', { ...style(64, B.C.saffron, 800, 9), stroke: '#c2365a' }).setOrigin(0.5).setDepth(72).setAngle(-8);
+    if (this.reducedMotion) {
+      this.time.delayedCall(900, () => stamp.destroy());
+    } else {
+      stamp.setScale(2.6).setAlpha(0);
+      this.tweens.add({ targets: stamp, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: stamp, y: stamp.y - 30, alpha: 0, delay: 750, duration: 350, onComplete: () => stamp.destroy() });
+    }
+    // Plus la série est longue, plus il y a de fusées.
+    const n = this.reducedMotion ? 1 : Math.min(5, 2 + Math.floor(combo / 2));
+    for (let i = 0; i < n; i++) {
+      // Dans le ciel, au-dessus du monstre et de sa pancarte.
+      const x = Phaser.Math.Clamp(at.x + Phaser.Math.Between(-260, 60), 700, W - 80);
+      const y = at.y - Phaser.Math.Between(230, 340);
+      this.time.delayedCall(120 + i * 170, () => this.fireworkBurst(x, y));
+      this.sfx.firework(0.1 + i * 0.17);
+    }
+  }
+
+  private fireworkEmitters: Phaser.GameObjects.Particles.ParticleEmitter[] = [];
+
+  /** Une gerbe de feu d'artifice (anneau, étincelles colorées, crépitement). */
+  private fireworkBurst(x: number, y: number, palette = ['#ff4d6d', '#ff8fb1', '#ffc94a', '#ffffff']): void {
+    if (this.fireworkEmitters.length === 0) {
+      ['#ff4d6d', '#ff8fb1', '#ffc94a', '#ffffff', '#5fd3bc', '#b79ad8'].forEach((col) => {
+        const key = this.tex(`w-fw-${col}`, () => B.sparkle(col));
+        const em = this.add.particles(0, 0, key, {
+          speed: { min: 140, max: 360 },
+          angle: { min: 0, max: 360 },
+          rotate: { min: 0, max: 360 },
+          gravityY: 240,
+          lifespan: { min: 700, max: 1200 },
+          scale: { start: 0.9, end: 0 },
+          alpha: { start: 1, end: 0.2 },
+          emitting: false,
+          // Couleurs franches : seul le blanc est additif (éclat), le rouge et le rose restent vifs.
+          blendMode: col === '#ffffff' ? Phaser.BlendModes.ADD : Phaser.BlendModes.NORMAL,
+        }).setDepth(71);
+        em.setData('color', col);
+        this.fireworkEmitters.push(em);
+      });
+    }
+    const count = this.reducedMotion ? 6 : 14;
+    for (const em of this.fireworkEmitters) if (palette.includes(em.getData('color') as string)) em.explode(count, x, y);
+    const ring = this.add.circle(x, y, 14).setStrokeStyle(5, Phaser.Display.Color.HexStringToColor(palette[0]).color).setDepth(70).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: ring, scale: 6, alpha: 0, duration: 520, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+    if (!this.reducedMotion) {
+      const white = this.fireworkEmitters.find((e) => e.getData('color') === '#ffffff');
+      this.time.delayedCall(450, () => {
+        for (let k = 0; k < 6; k++) white?.explode(2, x + Phaser.Math.Between(-90, 90), y + Phaser.Math.Between(-60, 80));
+      });
+    }
+  }
+
+  /** Victoire : faisceau du phare, feu d'artifice, confettis, cubes et habitants qui dansent, fanfare. */
+  private celebrate(done: () => void): void {
+    this.busy = true;
+    this.enemyWalking = false;
+    this.waveText.setText('Victoire !');
+    this.sfx.victoryJingle();
+    // Bannière.
+    const rib = this.add.image(880, 190, this.tex('w-ribbon-big', () => Wd.ribbon(520, 74))).setScale(0).setDepth(75);
+    const t = this.add.text(880, 186, 'Le phare est sauvé !', style(36, B.C.ink, 800)).setOrigin(0.5).setScale(0).setDepth(76);
+    this.wreck.push(rib, t);
+    this.tweens.add({ targets: rib, scale: K, duration: 420, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, scale: 1, duration: 420, ease: 'Back.easeOut' });
+    // Le phare balaie le ciel de son faisceau.
+    const beam = this.add.image(L.towerX, this.lanternGlow.y, this.tex('w-beam', Wd.beam)).setOrigin(0, 0.5).setBlendMode(Phaser.BlendModes.ADD).setDepth(3).setAlpha(0);
+    this.wreck.push(beam);
+    this.tweens.add({ targets: beam, alpha: 0.9, duration: 300 });
+    if (!this.reducedMotion) this.tweens.add({ targets: beam, angle: { from: -35, to: 10 }, duration: 1100, yoyo: true, repeat: 1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: this.lanternGlow, alpha: 1, scale: 1.4, duration: 400, yoyo: true, repeat: 4 });
+    // Feu d'artifice multicolore.
+    const all = ['#ff4d6d', '#ff8fb1', '#ffc94a', '#ffffff', '#5fd3bc', '#b79ad8'];
+    const bursts = this.reducedMotion ? 2 : 9;
+    for (let i = 0; i < bursts; i++) {
+      const x = Phaser.Math.Between(560, 1220);
+      const y = Phaser.Math.Between(90, 330);
+      const pal = [all[i % all.length], all[(i + 2) % all.length], '#ffffff'];
+      this.time.delayedCall(250 + i * 380, () => this.fireworkBurst(x, y, pal));
+      this.sfx.firework(0.25 + i * 0.38);
+    }
+    // Pluie de confettis.
+    if (!this.reducedMotion) {
+      const colors = ['#ff4d6d', '#ffc94a', '#5fd3bc', '#b79ad8', '#f6ecd8'];
+      colors.forEach((col, i) => {
+        const em = this.add.particles(0, 0, this.tex(`w-confetti-${i}`, () => Wd.confetti(col)), {
+          x: { min: 0, max: W },
+          y: -20,
+          speedY: { min: 90, max: 200 },
+          speedX: { min: -50, max: 50 },
+          rotate: { start: 0, end: 720 },
+          scaleX: { start: 0.6, end: 0.2, random: true },
+          lifespan: 4500,
+          frequency: 90,
+          duration: 3200,
+        }).setDepth(74);
+        this.wreck.push(em);
+      });
+    }
+    // Les cubes sautent en vague, la chouette et l'escargot dansent.
+    if (!this.reducedMotion) {
+      this.cubes.forEach((c, i) => {
+        const col = i % this.tier.cols;
+        const row = Math.floor(i / this.tier.cols);
+        this.tweens.add({ targets: c.obj, y: c.y - 26, duration: 200, yoyo: true, repeat: 4, repeatDelay: 220, delay: (col + row) * 70, ease: 'Quad.easeOut' });
+      });
+      this.owlImg.setTexture('w-owl-contente');
+      this.tweens.add({ targets: this.owlImg, y: this.owlHome.y - 22, duration: 220, yoyo: true, repeat: 7, ease: 'Quad.easeOut' });
+      this.tweens.add({ targets: this.owlImg, angle: 360, duration: 700, delay: 900 });
+      this.snailHidden = false;
+      this.snailImg.setTexture('w-snail-0');
+      this.tweens.add({ targets: this.snailImg, y: this.snailImg.y - 24, duration: 260, yoyo: true, repeat: 5, ease: 'Quad.easeOut' });
+    }
+    this.moonReact('clin', 2000);
+    this.time.delayedCall(2000, () => this.moonReact('rougit', 2000));
+    this.time.delayedCall(4600, () => {
+      this.owlImg.setTexture('w-owl-ouvert');
+      done();
     });
   }
 
