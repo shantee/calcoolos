@@ -1,0 +1,134 @@
+# MISSION CLAUDE CODE CLOUD : PLATEFORME « PROJET ARCHIPEL »
+
+Tu es une petite équipe de production de jeu vidéo et de logiciel réunissant : directeur artistique exigeant, game designer, développeur Phaser/TypeScript, développeur backend PHP, spécialiste UX enfants/adultes, ingénieur qualité et ingénieur sécurité. Tu dois produire du CODE QUI FONCTIONNE, pas seulement un plan ou des maquettes.
+
+IMPORTANT : lis l'intégralité de cette mission, puis commence à travailler dans le dépôt GitHub sélectionné. Tu peux prendre des décisions techniques créatives. N'attends pas mon accord à chaque détail ; mais respecte absolument les POINTS DE CONTRÔLE ci-dessous, ne déploie jamais sur mon serveur et ne touche pas à d'autres dépôts ou services.
+
+## 1. VISION
+
+Créer une plateforme francophone de mini-jeux de calcul mental accessible sur navigateur, prioritairement pour les 7-12 ans et également plaisante pour les adolescents et les adultes. Le jeu ne doit jamais ressembler à un questionnaire scolaire avec un décor ajouté après coup. Les opérations mathématiques sont les ACTIONS du jeu : combats, sorts, combos, ressources, énigmes et progression. L'univers est fantastique, original, légèrement étrange, humoristique, vivant et agréable à explorer.
+
+Le joueur doit pouvoir jouer sans compte. Plus tard, il pourra créer un compte et conserver sa progression. Le produit final visé comprend un hub/un monde à explorer, plusieurs mini-jeux, des réussites, statistiques, classements et défis. Mais la première version doit être volontairement réduite : UN mini-jeu complet et spectaculaire plutôt qu'une plateforme entière à moitié fonctionnelle.
+
+« Projet Archipel » est un nom de travail. Ne pas le figer comme marque définitive. Langue de l'interface : français. Tout texte visible doit être cohérent et correctement accentué.
+
+## 2. PRIORITÉ ABSOLUE : IDENTITÉ GRAPHIQUE ET PLAISIR DE JEU
+
+Je veux un rendu visuel ORIGINAL, PROPRE, COHÉRENT, PREMIUM, mémorable. N'emploie PAS par défaut le look enfantin générique : couleurs bonbon sans contraste, illustrations IA lisses et impersonnelles, faux rendu mobile freemium, ombres 3D plastifiées, interfaces surchargées. Le public commence à 7 ans, mais les adultes doivent aussi trouver ça beau et attirant.
+
+Références d'esprit et non modèles à copier : floor796.com (univers habité, micro-détails), Kingdom Rush (lisibilité des vagues), Adventure Time (fantaisie, étrangeté et humour). Ne copie aucune marque, personnage, illustration, sprites ou habillage protégé.
+
+Tu es libre de choisir la meilleure direction : pixel art de qualité, 2D illustrée au caractère fort, 2.5D subtile ou hybride. Tu peux créer tes propres outils (générateurs de sprites, procédural, SVG, canvas, shaders, palettes, animations, pipeline d'assets) si cela améliore fortement la qualité. Tu peux utiliser des assets externes uniquement si leurs droits sont compatibles et traçables ; documente leur licence et source. Pas de dépendance obligatoire à une API d'image payante ou à une clé non fournie. Si tu n'as pas accès à un générateur d'images, crée une esthétique de qualité avec les outils disponibles, sans prétendre que des assets ont été générés ailleurs.
+
+Ne cherche pas le « wow » par une quantité démesurée de détails : cherche-le par une direction cohérente, de bonnes silhouettes, une palette bien choisie, des micro-animations, un sound design convaincant, des effets précis et une excellente réactivité.
+
+GATE VISUEL OBLIGATOIRE : commence par réaliser au maximum DEUX variantes d'une même scène jouable ou représentative (A pixel art travaillé, B 2D illustrée ou hybride). Fournis si possible des captures REELLES de l'application exécutée dans un navigateur (ex. Playwright/Chromium ; si l'environnement ne le permet pas, explique pourquoi et prépare un aperçu exécutable). Documente le choix recommandé et ses raisons ; conserve les prototypes accessibles dans le dépôt. Ensuite, sélectionne la variante la plus prometteuse et continue dans cette direction. Ne consomme pas des dizaines de dollars à multiplier les variantes.
+
+## 3. LE PREMIER MINI-JEU : « CUBES DE SIÈGE » (NOM PROVISOIRE)
+
+Scène en 2D, lisible sur desktop et tablette : un ennemi fantastique avance vers un point à défendre. Un grand assemblage ou une grille de cubes chiffrés est au premier plan. L'ennemi affiche un nombre CIBLE, par exemple 18. Le joueur clique/touche des cubes pour former exactement cette somme. Exemple 9+9=18 : deux cubes sélectionnés donnent un coup plus puissant que 7+6+5=18. La vitesse, la précision et le nombre de cubes influent sur le score et les dégâts, avec des paramètres adaptés à l'âge.
+
+Mécaniques indispensables :
+- Grille de nombres parfaitement lisibles et facile à sélectionner (ex. 4x4 ; à adapter au style).
+- Calcul de la somme sélectionnée en direct, annulation simple, validation claire, feedback d'erreur bienveillant.
+- Générateur d'énigmes GARANTISSANT au moins une solution valide ; vérifier l'unicité d'utilisation des cubes et calculer le minimum possible de cubes pour la cible. Éviter les situations injustes ; pour les premiers niveaux, éviter les réponses triviales en un cube si elles ruinent le principe du mode.
+- Comparaison équitable des solutions : les ex aequo optimaux reçoivent la même récompense. Les solutions plus longues peuvent réussir, avec dégâts réduits/score inférieur.
+- Au moins trois archétypes d'ennemis avec vitesse, résistance ou comportement distincts. Un petit boss simple est un bonus, non une obligation prioritaire.
+- Plusieurs vagues courtes, une session complète de quelques minutes avec début, progression, fin, rejouabilité et score.
+- Animations et FX qualitatifs : compression du cube, sélection lisible, arc ou fusion magique, projectile, impact, réaction du monstre, particules mesurées, léger tremblement contrôlé, combo ; son désactivable.
+- Mode débutant non stressant ; le joueur peut apprendre même s'il ne va pas vite.
+- Contrôles souris, tactile et clavier lorsque pertinent.
+
+Élabore le barème et documente-le. Évite qu'un joueur soit récompensé pour cliquer au hasard. Pour chaque énigme générée, les tests doivent vérifier la possibilité d'une combinaison et le calcul de l'optimum.
+
+## 4. AUTRES MINI-JEUX PRÉVUS (NE PAS LES CODER AVANT QUE LE PREMIER SOIT SOLIDE)
+
+- Défense fantastique : vagues de créatures sur chemin ; les réponses à des additions, soustractions, multiplications et divisions déclenchent sorts, tirs, boucliers et combos.
+- Tour des multiplications : combats et mini-boss autour des tables.
+- Défis rapides / énigmes de décomposition / précision.
+
+Prévoir une architecture de mini-jeux sous forme de modules partageant compte, statistiques et progression. Le deuxième jeu est un objectif d'extension si le premier, le hub et les comptes sont déjà bien réalisés et si le crédit le permet.
+
+## 5. UNIVERS ET HUB
+
+Créer une page d'accueil qualitative qui ressemble à l'entrée d'un univers, et non à un banal tableau de cartes rectangulaires. Prévoir un hub/carte interactive qui peut devenir plus riche au fil du temps. En V1, un monde principal animé avec un ou deux lieux accessibles suffit ; la carte ne doit pas promettre vingt niveaux inexistants.
+
+Le monde peut avoir de petits secrets visuels, des éléments cliquables et des transitions. Mais ne sacrifie jamais la fluidité ou la lisibilité du gameplay pour des décorations gratuites.
+
+## 6. OBJECTIFS PÉDAGOGIQUES
+
+Éducation par le jeu : additions, soustractions, multiplications, divisions, décomposition des nombres, optimisation, rapidité et mémoire de travail mathématique. Étalonner différentes difficultés : 7-8 ans, 9-10 ans, 11-12 ans, niveau avancé/adultes. Ne pas demander une date de naissance complète pour régler la difficulté.
+
+Créer un moteur de difficulté adaptable simple (pas d'IA API nécessaire) : suivre réussite, erreurs typiques, opérations et éventuellement temps de réponse. Dans la première version, privilégier un système déterministe, compréhensible, testable, avec des paliers manuels et une adaptation prudente. Ne pas présenter de promesses de prévention des troubles cognitifs ou de bénéfices médicaux.
+
+## 7. FONCTIONNALITÉS DE LA PLATEFORME
+
+Par ordre de priorité :
+1. Mode invité : aucune inscription nécessaire pour lancer une partie ; statistiques temporaires ou sauvegarde locale, sans imposer de cookies publicitaires.
+2. Comptes adultes/parents : connexion simple par e-mail + mot de passe sécurisé, gestion de sessions, fonction de déconnexion.
+3. Profils de joueur privés attachés au compte, notamment pour plusieurs enfants d'une même famille ; uniquement pseudonyme et tranche de difficulté, pas de nom réel obligatoire.
+4. Sauvegarde : scores, niveaux, meilleur résultat, maîtrise par type d'opération, progression des sessions.
+5. Tableau de bord : graphique de réussite dans le temps, opérations entraînées, activités récentes, records ; Apache ECharts possible.
+6. Succès et défi du jour simple, si le temps le permet.
+7. Classements PAR MINI-JEU et PAR DIFFICULTÉ, avec protection des mineurs. Les profils enfants doivent être privés et absents des classements publics par défaut ; participation éventuellement sur autorisation parentale ultérieure. Ne pas exposer e-mail, âge exact ou identité. Pas de chat, messagerie entre joueurs, commentaires publics ou publication libre de contenu.
+
+Séparer score local et score considéré comme vérifié par le serveur. Prévoir validation côté serveur, limitation de débit et quelques garde-fous contre l'envoi de scores aberrants. Ne pas prétendre éliminer parfaitement la triche dans un jeu dont la logique s'exécute en partie dans le navigateur.
+
+Ne pas coder de paiement, publicité ou achat dans cette première version. Garder un socle évolutif, sans architecture marchande spéculative.
+
+## 8. ARCHITECTURE ET CONTRAINTES
+
+Hébergement final : mon propre Dell sous Ubuntu Server, sur lequel tournent déjà d'autres sites PHP et services. Je veux une application déployable proprement sans perturber l'existant. Une infrastructure Cloudflare existe déjà ; aucune modification de DNS ou tunnel sans mon approbation explicite.
+
+Recommandation initiale : Phaser (moteur 2D) + TypeScript/Vite pour le jeu, HTML/CSS pour la plateforme, PHP + MariaDB pour l'API et les comptes, ECharts pour les statistiques. Tu peux proposer une technologie meilleure à condition d'expliquer clairement pourquoi elle réduit le risque ou apporte un bénéfice notable et qu'elle se déploie facilement sur Ubuntu. Préférer une architecture simple, maintenable, sans services payants obligatoires, sans Kubernetes et sans backend Node permanent si une API PHP suffit.
+
+Le rendu du jeu doit se faire sur le navigateur ; le Dell héberge les fichiers, les API et la base, pas la simulation graphique complète. Site responsive au moins desktop, tablette et mobile en paysage si nécessaire. Choisis une résolution de référence et prévois scaling/netteté pixel art si cette voie est retenue. Effets réduits pour les appareils modestes.
+
+Développement local/cloud avec une base d'essai isolée (SQLite seulement si pertinent pour le développement) ; migrations reproductibles compatibles MariaDB sur le serveur final. Fournir des scripts d'installation et de déploiement sur Ubuntu, des fichiers .env.example SANS secrets, une stratégie de sauvegarde et de retour arrière. Ne jamais demander ou créer des mots de passe ou clés de production dans le dépôt. Ne pas accéder au serveur Dell, à Cloudflare ou aux autres projets ; livraison de code seulement tant que je n'ai pas validé explicitement le déploiement.
+
+Sécurité : hachage fort des mots de passe via les primitives modernes du framework, protections CSRF/XSS/injections, validation des entrées, cookies de session HttpOnly/SameSite/Secure en HTTPS, limitations de tentative et logs minimaux. RGPD et droits des enfants : collecte minimale, suppression/export, conception privée par défaut. Ne prétends pas que le site est légalement conforme sans audit humain.
+
+## 9. QUALITÉ ET TESTS
+
+Une partie n'est pas « faite » parce que le code compile. Chaque fonctionnalité annoncée doit marcher dans un navigateur réel ou être clairement signalée comme non validée.
+- Tests unitaires du générateur de calculs et de l'optimisation de combinaisons, plusieurs centaines de cas déterministes/générés si utile.
+- Tests de parcours mode invité, démarrage/fin de partie, score, compte, sauvegarde, séparation des profils.
+- Vérifier qu'aucun autre compte ne peut lire les données privées d'un enfant.
+- Vérifier les erreurs de console et les chargements d'assets.
+- Vérifier une taille d'écran de bureau et une tablette, et respecter l'option « réduire les animations » lorsque disponible.
+- Fournir de vraies captures d'écran à la fin de chaque étape, si l'environnement l'autorise.
+- Garder le projet utilisable même si certains effets WebGL ne sont pas disponibles : dégradation progressive élégante.
+
+## 10. PLAN D'EXÉCUTION ET CONTRÔLES
+
+Travaille réellement dans le dépôt, utilise des commits compréhensibles et vérifie le fonctionnement. Les documents doivent résumer le code réel. Ne perds pas l'essentiel du budget en plans, analyses concurrentielles ou variations inutiles.
+
+ÉTAPE A - Initialiser : architecture courte, README, scripts de démarrage, application qui tourne, hub minimal. Présenter les choix techniques et leurs risques.
+ÉTAPE B - Direction artistique : max deux essais visuels de la scène cube/ennemi ; captures réelles ; choisir une direction et documenter palette, échelle, style, FX. POINT DE CONTRÔLE : la priorité est d'obtenir une scène magnifique et lisible.
+ÉTAPE C - Jeu complet « Cubes de siège » : moteur de calculs testé, mini-jeu jouable, ennemis, vagues, scoring, difficulté, animations et son. POINT DE CONTRÔLE : une partie de début à fin sans intervention technique.
+ÉTAPE D - Plateforme minimale : mode invité, hub, comptes adultes/parents et profils privés, scores sauvegardés, historique et premiers graphiques. POINT DE CONTRÔLE : données réellement persistées et comptes isolés.
+ÉTAPE E - Finition : tests, corrections visuelles, accessibilité, performances, guide de déploiement Dell, inventaire des risques. Deuxième mini-jeu SEULEMENT si tout le reste est propre et que le budget le permet.
+
+À chaque point de contrôle, donne : ce qui fonctionne réellement ; comment le voir/lancer ; captures ou lien de prévisualisation si accessibles ; tests effectués ; limites ; prochaine priorité. Conserve toujours un état cohérent en branche GitHub. Ne te contente pas de déclarer qu'un jeu est joli : contrôle visuellement les captures et corrige les problèmes évidents. Si tu ne disposes pas d'un navigateur de test, indique la limite au lieu d'inventer une vérification.
+
+## 11. CRÉDITS CLOUD ET PRIORISATION
+
+Je dispose d'un crédit promotionnel annoncé de 100 USD pour les sessions Claude Code dans le cloud, sous réserve du solde effectif et des conditions de mon compte. Je veux l'exploiter intelligemment : aucune dépense volontaire de services externes, aucune dépendance payante. Je vérifierai moi-même la consommation dans l'interface Claude entre les étapes ; tu ne peux pas supposer connaître automatiquement mon solde si tu ne peux pas le lire.
+
+Si tu dois arbitrer, ordre strict : (1) qualité graphique du prototype ; (2) premier mini-jeu fini et amusant ; (3) hub et mode invité ; (4) comptes/profils/sauvegardes ; (5) graphiques/classements ; (6) deuxième mini-jeu et extensions. Ne crée jamais 8 écrans factices pour donner l'impression d'avancer. Préserve des ressources pour corriger les bugs et polir le ressenti. N'essaie pas de masquer ce qui n'a pas été fait.
+
+## 12. LIVRABLES ATTENDUS
+
+- Code de l'application et du serveur, organisé et documenté.
+- Une démo jouable en local depuis un README clair ; possibilité de prévisualisation cloud si disponible.
+- Assets nécessaires au jeu et document ART_ASSETS.md avec provenance/licences, y compris pour les éléments créés par code.
+- CAPTURES/ du prototype et des écrans importants si possible.
+- Tests automatisés, instructions d'exécution et résultats réels.
+- Schéma de données/migrations et exemples d'environnement sans secrets.
+- Guide DEPLOIEMENT_DELL.md (instructions, pas exécution).
+- JOURNAL_PROJET.md avec décisions, architecture, limites et prochaines étapes.
+- Rapport final honnête : fait / partiellement fait / non fait.
+
+## 13. DÉPART IMMÉDIAT
+
+Commence maintenant : inspecte le dépôt sélectionné, initialise-le s'il est vide, rédige un plan technique concis, puis construis une première scène exécutable. Ne passe pas la session à expliquer ce que tu pourrais faire. La première preuve de valeur doit être VISUELLE et JOUABLE. Ne déploie rien en production sans mon autorisation.

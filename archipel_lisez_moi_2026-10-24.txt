@@ -1,0 +1,22 @@
+PROJET ARCHIPEL — COMMENT UTILISER LE KIT
+24 octobre 2026
+
+CONTENU
+- vision_plateforme_jeux_math.pdf : présentation lisible sur 6 pages.
+- vision_plateforme_jeux_math.md : version texte modifiable de la vision.
+- mega_prompt_claude_cloud_archipel.txt : instructions à copier dans Claude Code cloud.
+
+DEMARRAGE
+1. Créer un dépôt GitHub PRIVÉ et vide (par exemple « projet-archipel »).
+2. Ouvrir https://claude.ai/code et relier son compte GitHub si nécessaire.
+3. Choisir ce dépôt et une branche de travail.
+4. Coller intégralement le contenu du fichier « mega_prompt_claude_cloud_archipel.txt ».
+5. Sélectionner un mode permettant les modifications, puis vérifier les branches et les changements.
+6. Examiner les premiers rendus du prototype visuel et l'essai jouable avant de poursuivre les sessions.
+7. Suivre dans le compte Claude la consommation du crédit ; garder un budget de réserve.
+8. Ne donner aucun secret de serveur ni autorisation de déploiement sur le Dell au prototype.
+
+NOTES
+- Nom du projet provisoire.
+- Aucun hébergement ni action sur GitHub ou le Dell n'a été réalisé depuis ChatGPT.
+- Le crédit promotionnel mentionné est soumis aux conditions et à la date d'expiration de l'offre ; le solde réel n'est pas vérifié ici.
