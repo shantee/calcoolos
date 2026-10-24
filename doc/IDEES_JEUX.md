@@ -1,7 +1,7 @@
 # Idées de prochains jeux
 
 Demande de Philippe (24/10/2026) : des jeux beaux, addictifs, plus « arcade », avec de l'action, toujours au service
-du calcul mental. Aucun n'est commencé : ce sont des pistes à choisir avant l'étape E.
+du calcul mental. Pluie de météores est réalisé ; les autres sont des pistes à choisir.
 
 Chaque idée réutilise le moteur partagé (énigmes garanties solubles, paliers, difficulté adaptative, sons
 synthétisés) et le monde de l'archipel (mêmes monstres rouges, même phare, même chouette).
