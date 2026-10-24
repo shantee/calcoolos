@@ -289,6 +289,11 @@ export class MeteorSession {
     return { kind: 'hit', meteor: m, points, destroyed, bossDone };
   }
 
+  /** Points bonus hors calcul (canard de l'espace attrapé). */
+  bonus(points: number): void {
+    if (this.phase === 'play') this.score += points;
+  }
+
   accuracy(): number {
     const tries = this.stats.hits + this.stats.errors;
     return tries === 0 ? 0 : this.stats.hits / tries;

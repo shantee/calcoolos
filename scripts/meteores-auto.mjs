@@ -36,6 +36,13 @@ await page.waitForFunction(() => window.__meteores !== undefined, null, { timeou
 await page.waitForTimeout(800);
 await shot('1-intro');
 await page.evaluate(() => window.__meteores.start('defi'));
+if (plan === 'gagner') {
+  // Les habitants du décor, appelés tout de suite pour la capture.
+  await page.evaluate(() => {
+    window.__meteores.spawnWhale();
+    window.__meteores.spawnDuck();
+  });
+}
 const t0 = Date.now();
 const taken = new Set();
 while (Date.now() - t0 < 240000) {
@@ -44,7 +51,7 @@ while (Date.now() - t0 < 240000) {
     const alive = s.alive.map((m) => ({ kind: m.kind, p: m.p, a: m.expr.answer }));
     return { phase: s.phase, ending: window.__meteores.ending(), overlay: window.__meteores.overlay(), alive, wave: s.wave };
   });
-  if (st.overlay && st.phase !== 'play') break;
+  if (st.overlay && (st.phase !== 'play' || st.ending)) break;
   if (st.ending) {
     if (!taken.has('fin')) {
       taken.add('fin');
@@ -73,7 +80,27 @@ while (Date.now() - t0 < 240000) {
         await page.waitForTimeout(120);
         await shot('4-erreur');
       }
-      await page.evaluate((a) => window.__meteores.type(String(a)), target.a);
+      const ans = String(target.a);
+      if (!taken.has('verrou') && ans.length > 1 && target.kind !== 'boss') {
+        // Premier chiffre seul : le viseur verrouille la cible, qui prend peur.
+        taken.add('verrou');
+        await page.evaluate((d) => window.__meteores.type(d), ans[0]);
+        await page.waitForTimeout(250);
+        await shot('2b-verrou');
+        await page.evaluate((rest) => window.__meteores.type(rest), ans.slice(1));
+      } else await page.evaluate((a) => window.__meteores.type(String(a)), target.a);
+      if (!taken.has('feu') && (await page.evaluate(() => window.__meteores.session().combo)) >= 8) {
+        taken.add('feu');
+        await page.waitForTimeout(250);
+        await shot('3c-en-feu');
+      }
+      if (!taken.has('pause') && st.wave >= 2) {
+        taken.add('pause');
+        await page.evaluate(() => window.__meteores.pause());
+        await page.waitForTimeout(300);
+        await shot('4b-pause');
+        await page.evaluate(() => window.__meteores.resume());
+      }
       if (!taken.has('tir')) {
         taken.add('tir');
         await page.waitForTimeout(170);
@@ -89,7 +116,7 @@ while (Date.now() - t0 < 240000) {
   await page.waitForTimeout(80);
 }
 await page.waitForFunction(() => window.__meteores.overlay(), null, { timeout: 20000 });
-await page.waitForTimeout(500);
+await page.waitForTimeout(1800);
 await shot(plan === 'perdre' ? '7-fin-defaite' : '7-fin');
 const summary = await page.evaluate(() => {
   const s = window.__meteores.session();

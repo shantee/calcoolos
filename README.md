@@ -68,7 +68,8 @@ Clavier : flèches, Espace (choisir), Entrée (lancer), Retour arrière ou Écha
 
 **Pluie de météores** : des météores et des robots tombent sur la station, chacun avec un calcul. Tape le résultat
 (pavé à l'écran ou chiffres du clavier) : le vaisseau tire dès que la réponse est complète. Le météore doré fait tout
-exploser ; le Robot-Mère demande six calculs.
+exploser ; le Robot-Mère demande six calculs. Pause : bouton « II », Échap ou P. Touche aussi la baleine, le chat
+astronaute, les petits robots… et attrape le canard s'il passe.
 
 ## Organisation
 

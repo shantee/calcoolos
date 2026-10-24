@@ -19,6 +19,39 @@
 - Accès GitHub en écriture rétabli par Philippe le 24/10/2026 ; branche `dev` poussée.
 - Aperçu jouable sans installation : page privée claude.ai https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh
 
+## 2026-10-24 : Claude, session 4 (Pluie de météores, effort « high »)
+
+**Demande de Philippe** : rendre Pluie de météores (« le jeu avec la fusée ») plus beau et plus agréable :
+effets visuels plus développés, petits détails marrants, créativité libre.
+
+**Fait**
+- **Le pilote** : un petit robot dans la bulle du vaisseau, dont le visage change (content quand on touche,
+  inquiet quand un météore approche, « oups » quand on se trompe) ; cliquer sur le vaisseau le fait sourire.
+- **Verrouillage** : dès que la saisie commence comme la réponse d'un ennemi, un viseur tournant le verrouille et
+  il prend peur (grands yeux, sueur) ; les robots s'écrient « Au secours ! », et narguent parfois (« Trop lent ! »).
+- **Danger** : un « ! » rouge clignote sur les calculs presque arrivés, un halo rouge borde l'écran, bip d'alerte.
+- **Explosions en plusieurs temps** : éclair, boule de feu, fumée, éclats, braises, onde, à-coup de caméra ; les
+  robots perdent boulons, ressorts et engrenages (« boing ») ; le météore doré lâche une pluie de pièces qui volent
+  jusqu'au score.
+- **Mode « EN FEU ! »** à partir d'une série de 8 : laser doré, aura d'étincelles, étoiles qui défilent plus vite,
+  musique plus rythmée.
+- **Musique** : boucle chiptune originale jouée en direct (3 intensités : calme, en feu, boss), coupée avec le son.
+- **Vaisseau** : gaz du réacteur, inclinaison vers la cible, recul au tir, toux de fumée en cas d'erreur.
+- **Décor vivant** : nébuleuses qui respirent, planète annelée, étoiles filantes, **baleine cosmique** qui traverse
+  le ciel et chante si on la touche, **chat astronaute** attaché à l'antenne par un câble (miaou et pirouette),
+  **deux petits robots** sur la station (sautent de joie aux séries de 5, paniquent aux impacts), **canard en
+  plastique** perdu dans l'espace (l'attraper rapporte 100 points) ; fissures sur le bouclier.
+- **Boss** : alerte rouge, « Rendez-vous, humains ! », panique quand il ne lui reste qu'un calcul, puis chapelet
+  d'explosions et dislocation en quatre morceaux.
+- **Fin** : 1 à 3 étoiles (victoire ; 85 % de calculs justes ; sans faute ni impact), qui tombent une à une ;
+  la baleine passe en chantant pendant la fête de victoire.
+- **Pause** (bouton, Échap ou P) qui fige toute la scène.
+- Captures : `CAPTURES/meteores-*.png`, planche des personnages `CAPTURES/espace-personnages.png`.
+
+**Limites** : sons et musique jamais écoutés par un humain ; testé seulement dans Chromium avec GPU logiciel ; le
+verrouillage montre quels ennemis commencent par le chiffre tapé (aide légère, à retirer si Philippe la juge trop
+généreuse).
+
 ## 2026-10-24 : Claude, session 3 (finitions et deuxième jeu)
 
 **Retours de Philippe** : Cubes de siège validé. Bug d'un boss superposé à un autre monstre ; effet plus

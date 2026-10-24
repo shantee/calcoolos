@@ -50,9 +50,9 @@ export class Sfx {
     this.master.connect(this.ctx.destination);
   }
 
-  private tone(freq: number, dur: number, opts: { wave?: Wave; gain?: number; slideTo?: number; delay?: number; attack?: number } = {}): void {
+  private tone(freq: number, dur: number, opts: { wave?: Wave; gain?: number; slideTo?: number; delay?: number; attack?: number; at?: number; out?: AudioNode } = {}): void {
     if (!this.ctx || !this.master || this._muted) return;
-    const t0 = this.ctx.currentTime + (opts.delay ?? 0);
+    const t0 = opts.at ?? this.ctx.currentTime + (opts.delay ?? 0);
     const osc = this.ctx.createOscillator();
     const g = this.ctx.createGain();
     osc.type = opts.wave ?? 'triangle';
@@ -62,14 +62,14 @@ export class Sfx {
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(peak, t0 + (opts.attack ?? 0.008));
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    osc.connect(g).connect(this.master);
+    osc.connect(g).connect(opts.out ?? this.master);
     osc.start(t0);
     osc.stop(t0 + dur + 0.02);
   }
 
-  private noise(dur: number, opts: { gain?: number; filter?: number; delay?: number; q?: number; type?: BiquadFilterType } = {}): void {
+  private noise(dur: number, opts: { gain?: number; filter?: number; delay?: number; q?: number; type?: BiquadFilterType; at?: number; out?: AudioNode } = {}): void {
     if (!this.ctx || !this.master || this._muted) return;
-    const t0 = this.ctx.currentTime + (opts.delay ?? 0);
+    const t0 = opts.at ?? this.ctx.currentTime + (opts.delay ?? 0);
     const len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
     const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const data = buf.getChannelData(0);
@@ -82,7 +82,7 @@ export class Sfx {
     f.Q.value = opts.q ?? 0.8;
     const g = this.ctx.createGain();
     g.gain.value = opts.gain ?? 0.4;
-    src.connect(f).connect(g).connect(this.master);
+    src.connect(f).connect(g).connect(opts.out ?? this.master);
     src.start(t0);
   }
 
@@ -288,6 +288,127 @@ export class Sfx {
     this.tone(880, 0.08, { wave: 'square', gain: 0.04 });
     this.tone(660, 0.08, { wave: 'square', gain: 0.04, delay: 0.1 });
     this.tone(990, 0.1, { wave: 'square', gain: 0.04, delay: 0.2 });
+  }
+
+  // --- Petits sons de Pluie de météores -------------------------------------------------------
+
+  /** Bip d'alerte : un météore approche dangereusement. */
+  danger(): void {
+    this.tone(1046, 0.07, { wave: 'square', gain: 0.04 });
+    this.tone(1046, 0.07, { wave: 'square', gain: 0.04, delay: 0.12 });
+  }
+
+  /** « Boing » d'un ressort qui s'échappe. */
+  boing(): void {
+    this.tone(180, 0.35, { wave: 'triangle', gain: 0.12, slideTo: 620 });
+    this.tone(620, 0.25, { wave: 'sine', gain: 0.06, slideTo: 260, delay: 0.18 });
+  }
+
+  /** Tintement d'une pièce qui rejoint le score (de plus en plus aigu). */
+  coinTick(i: number): void {
+    this.tone(1200 + i * 90, 0.08, { wave: 'square', gain: 0.035 });
+  }
+
+  /** Chant de la baleine cosmique. */
+  whale(): void {
+    this.tone(260, 1.2, { wave: 'sine', gain: 0.16, slideTo: 420, attack: 0.25 });
+    this.tone(420, 1.4, { wave: 'sine', gain: 0.12, slideTo: 200, delay: 1, attack: 0.25 });
+    this.tone(520, 0.9, { wave: 'triangle', gain: 0.05, slideTo: 640, delay: 0.4, attack: 0.2 });
+  }
+
+  /** Miaou du chat astronaute. */
+  meow(): void {
+    this.tone(700, 0.18, { wave: 'triangle', gain: 0.12, slideTo: 1100 });
+    this.tone(1100, 0.3, { wave: 'triangle', gain: 0.1, slideTo: 600, delay: 0.16 });
+  }
+
+  /** Coin-coin du canard. */
+  quack(): void {
+    for (const d of [0, 0.2]) {
+      this.tone(420, 0.12, { wave: 'sawtooth', gain: 0.08, slideTo: 300, delay: d });
+      this.noise(0.1, { gain: 0.1, filter: 900, q: 4, delay: d });
+    }
+  }
+
+  /** Passage en mode « en feu ». */
+  feverOn(): void {
+    [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.12, { wave: 'square', gain: 0.05, delay: i * 0.05 }));
+    this.noise(0.5, { gain: 0.2, filter: 3000, q: 0.5, delay: 0.1 });
+  }
+
+  /** Fin du mode « en feu ». */
+  feverOff(): void {
+    this.tone(400, 0.3, { wave: 'triangle', gain: 0.08, slideTo: 150 });
+  }
+
+  /** Étoile de fin de partie (n = 0, 1, 2). */
+  star(n: number): void {
+    [784, 988, 1175].slice(0, n + 1).forEach((f, i) => this.tone(f * (1 + n * 0.12), 0.2, { wave: 'square', gain: 0.05, delay: i * 0.06 }));
+    this.chime();
+  }
+
+  /** Apparition par téléportation. */
+  warp(): void {
+    this.tone(200, 0.25, { wave: 'sine', gain: 0.05, slideTo: 1200 });
+  }
+
+  // --- Musique rétro ------------------------------------------------------------------------------
+  private musicTimer: number | null = null;
+  private musicBus: GainNode | null = null;
+  private musicStep = 0;
+  private musicNext = 0;
+  private musicTempo = 112;
+  private musicIntensity = 0;
+
+  /**
+   * Petite boucle chiptune jouée en direct (basse, arpège, charleston), composée
+   * pour le jeu. `intensity` : 0 calme, 1 mode « en feu », 2 boss.
+   */
+  music(on: boolean, intensity = 0): void {
+    this.musicIntensity = intensity;
+    this.musicTempo = [112, 124, 136][intensity] ?? 112;
+    if (!on) {
+      if (this.musicTimer !== null) window.clearInterval(this.musicTimer);
+      this.musicTimer = null;
+      if (this.musicBus && this.ctx) this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.1);
+      return;
+    }
+    if (!this.ctx || !this.master) return;
+    if (!this.musicBus) {
+      this.musicBus = this.ctx.createGain();
+      this.musicBus.connect(this.master);
+    }
+    this.musicBus.gain.setTargetAtTime(0.55, this.ctx.currentTime, 0.2);
+    if (this.musicTimer !== null) return;
+    this.musicNext = this.ctx.currentTime + 0.05;
+    this.musicTimer = window.setInterval(() => this.scheduleMusic(), 30);
+  }
+
+  private scheduleMusic(): void {
+    if (!this.ctx || !this.musicBus) return;
+    const sixteenth = 60 / this.musicTempo / 4;
+    // La mineur, Fa, Do, Sol : une grille d'aventure spatiale.
+    const chords = [
+      [220, 262, 330],
+      [175, 220, 262],
+      [262, 330, 392],
+      [196, 247, 294],
+    ];
+    while (this.musicNext < this.ctx.currentTime + 0.12) {
+      const step = this.musicStep % 64;
+      const chord = chords[Math.floor(step / 16)];
+      const at = this.musicNext;
+      const out = this.musicBus;
+      if (step % 4 === 0) this.tone(chord[0] / 2, sixteenth * 3, { wave: 'triangle', gain: 0.16, at, out });
+      if (step % 8 === 6) this.tone(chord[0] / 2, sixteenth, { wave: 'triangle', gain: 0.1, at, out });
+      const arp = chord[[0, 1, 2, 1][step % 4]] * (this.musicIntensity > 0 && step % 8 >= 4 ? 4 : 2);
+      this.tone(arp, sixteenth * 0.8, { wave: 'square', gain: 0.018, at, out });
+      if (step % 2 === 1) this.noise(0.03, { gain: this.musicIntensity > 0 ? 0.07 : 0.04, filter: 7000, q: 1, at, out });
+      if (step % 8 === 4 && this.musicIntensity >= 1) this.noise(0.08, { gain: 0.12, filter: 1500, q: 0.7, at, out });
+      if (this.musicIntensity >= 2 && step % 16 === 0) this.tone(chord[2] * 2, sixteenth * 6, { wave: 'sawtooth', gain: 0.02, at, out });
+      this.musicNext += sixteenth;
+      this.musicStep++;
+    }
   }
 
   bump(): void {

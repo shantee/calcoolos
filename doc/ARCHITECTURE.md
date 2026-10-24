@@ -114,3 +114,7 @@ sont plutôt grands, et une même valeur ne peut pas apparaître trop souvent.
 | Vagues | 3 vagues (8, 12 et 14 objets dont un doré ; robots dès la 2ᵉ) puis le Robot-Mère (6 calculs) |
 | Modes | Tranquille : chute à 60 % de la vitesse, le bouclier bloque tout ; Défi : 3 boucliers |
 | Opérations | Éveil + et − jusqu'à 20 ; Explorateur + et − jusqu'à 50, tables de 2, 5, 10 ; Stratège + et − jusqu'à 100, tables 2 à 9, divisions ; Maître jusqu'à 200, tables jusqu'à 12 |
+| Verrouillage | dès que la saisie commence comme une réponse, l'ennemi correspondant est visé (viseur) et prend peur |
+| Mode « en feu » | série ≥ 8 : effets renforcés et musique plus rapide (pas de points en plus que la série elle-même) |
+| Bonus caché | canard de l'espace cliquable : + 100 points |
+| Étoiles de fin | 1 pour la victoire, + 1 si ≥ 85 % de calculs justes, + 1 si ≥ 95 % et aucun impact |
