@@ -163,6 +163,37 @@ h2 {
   background: linear-gradient(180deg, #120f33 0%, #1d1446 100%);
 }
 
+.lieu-dragon {
+  background: linear-gradient(180deg, #1b1d4f 0%, #4b2b6b 70%, #a84d72 100%);
+}
+
+.lanterne-ex {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2em;
+  height: 2.3em;
+  padding: 0 8px;
+  background: radial-gradient(circle at 50% 50%, #fff2c8 0 35%, #ff7a3d 75%);
+  color: var(--encre);
+  border: 3px solid var(--encre);
+  border-radius: 45%;
+  box-shadow: 0 4px 0 var(--encre);
+}
+
+.parchemin {
+  display: inline-grid;
+  place-items: center;
+  padding: 0 14px;
+  height: 2.2em;
+  background: #fbefd2;
+  color: #3a1a1a;
+  border: 3px solid var(--encre);
+  border-left: 8px solid #e2423a;
+  border-right: 8px solid #e2423a;
+  border-radius: 6px;
+  box-shadow: 0 4px 0 var(--encre);
+}
+
 .meteore {
   display: inline-grid;
   place-items: center;

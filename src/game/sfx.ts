@@ -359,14 +359,16 @@ export class Sfx {
   private musicNext = 0;
   private musicTempo = 112;
   private musicIntensity = 0;
+  private musicTrack: 'espace' | 'dragon' = 'espace';
 
   /**
    * Petite boucle chiptune jouée en direct (basse, arpège, charleston), composée
    * pour le jeu. `intensity` : 0 calme, 1 mode « en feu », 2 boss.
    */
-  music(on: boolean, intensity = 0): void {
+  music(on: boolean, intensity = 0, track: 'espace' | 'dragon' = 'espace'): void {
     this.musicIntensity = intensity;
-    this.musicTempo = [112, 124, 136][intensity] ?? 112;
+    this.musicTrack = track;
+    this.musicTempo = (track === 'dragon' ? [100, 112, 118] : [112, 124, 136])[intensity] ?? 112;
     if (!on) {
       if (this.musicTimer !== null) window.clearInterval(this.musicTimer);
       this.musicTimer = null;
@@ -386,6 +388,10 @@ export class Sfx {
 
   private scheduleMusic(): void {
     if (!this.ctx || !this.musicBus) return;
+    if (this.musicTrack === 'dragon') {
+      this.scheduleDragon();
+      return;
+    }
     const sixteenth = 60 / this.musicTempo / 4;
     // La mineur, Fa, Do, Sol : une grille d'aventure spatiale.
     const chords = [
@@ -409,6 +415,124 @@ export class Sfx {
       this.musicNext += sixteenth;
       this.musicStep++;
     }
+  }
+
+  /**
+   * Musique du Dragon gourmand (composée pour le jeu) : gamme pentatonique,
+   * cordes pincées, tambour grave et bloc de bois. En orage (intensité 2), la
+   * gamme passe en mineur.
+   */
+  private scheduleDragon(): void {
+    if (!this.ctx || !this.musicBus) return;
+    const sixteenth = 60 / this.musicTempo / 4;
+    const storm = this.musicIntensity >= 2;
+    const scale = storm
+      ? [293.66, 349.23, 392, 440, 523.25, 587.33, 698.46, 783.99, 880]
+      : [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.26, 739.99, 880];
+    const roots = storm ? [146.83, 116.54, 130.81, 110] : [146.83, 123.47, 98, 110];
+    // Mélodie en croches (indices de la gamme, -1 = silence).
+    const melody = [4, -1, 3, 2, 3, -1, 1, -1, 2, 3, 4, 6, 5, -1, 4, -1, 3, -1, 2, 1, 2, -1, 0, -1, 1, 2, 3, 1, 0, -1, -1, -1];
+    const answer = [5, 6, 5, 4, 3, -1, 4, -1, 5, -1, 7, 6, 5, -1, -1, -1, 6, 5, 4, 3, 4, -1, 2, -1, 3, 4, 2, 1, 0, -1, -1, -1];
+    while (this.musicNext < this.ctx.currentTime + 0.12) {
+      const step = this.musicStep % 128;
+      const bar = Math.floor((step % 64) / 16);
+      const at = this.musicNext;
+      const out = this.musicBus;
+      const root = roots[bar];
+      // Basse ronde.
+      if (step % 8 === 0) this.tone(root, sixteenth * 5, { wave: 'sine', gain: 0.22, at, out });
+      if (step % 8 === 6) this.tone(root * 1.5, sixteenth * 2, { wave: 'triangle', gain: 0.08, at, out });
+      // Mélodie pincée, puis sa réponse une octave plus haut en fièvre.
+      if (step % 2 === 0) {
+        const phrase = step < 64 ? melody : answer;
+        const deg = phrase[(step % 64) / 2];
+        if (deg >= 0) {
+          const f = scale[deg] * (this.musicIntensity === 1 && step >= 64 ? 2 : 1);
+          this.tone(f, sixteenth * 3, { wave: 'triangle', gain: 0.07, at, out });
+          this.tone(f * 2, sixteenth * 1.2, { wave: 'sine', gain: 0.02, at, out });
+        }
+      }
+      // Tambour grave et bloc de bois.
+      if (step % 16 === 0 || step % 16 === 10) this.tone(95, 0.22, { wave: 'sine', gain: 0.22, slideTo: 42, at, out });
+      if (step % 8 === 4) this.noise(0.04, { gain: 0.1, filter: 2600, q: 9, at, out });
+      if (this.musicIntensity >= 1 && step % 2 === 1) this.noise(0.025, { gain: 0.04, filter: 7000, q: 1, at, out });
+      if (storm && step % 32 === 0) this.tone(root / 2, sixteenth * 30, { wave: 'sawtooth', gain: 0.018, at, out, attack: 0.4 });
+      this.musicNext += sixteenth;
+      this.musicStep++;
+    }
+  }
+
+  // --- Petits sons du Dragon gourmand --------------------------------------------------------
+
+  /** « Crounch » : le dragon croque une lanterne. */
+  chomp(): void {
+    this.noise(0.08, { gain: 0.3, filter: 1400, q: 1.2 });
+    this.tone(320, 0.1, { wave: 'square', gain: 0.05, slideTo: 140 });
+  }
+
+  /** « Gloup » mélodieux : la hauteur monte avec le nombre de lanternes avalées. */
+  gulp(i: number): void {
+    const notes = [587, 659, 740, 880, 988, 1175, 1319];
+    const f = notes[Math.min(i, notes.length - 1)];
+    this.tone(f, 0.18, { wave: 'triangle', gain: 0.12, delay: 0.05 });
+    this.tone(f / 2, 0.14, { wave: 'sine', gain: 0.1, slideTo: f, delay: 0.02 });
+  }
+
+  /** Souffle de feu (plus long et grave pour un coup parfait). */
+  fireBreath(big: boolean): void {
+    const d = big ? 1.5 : 0.9;
+    this.noise(d, { gain: 0.5, filter: 700, type: 'lowpass' });
+    this.noise(d * 0.8, { gain: 0.25, filter: 2200, q: 0.4, delay: 0.05 });
+    this.tone(110, d, { wave: 'sawtooth', gain: 0.07, slideTo: 55 });
+    this.tone(220, d * 0.6, { wave: 'square', gain: 0.03, slideTo: 90 });
+  }
+
+  /** « Miam ! » : petite montée joyeuse. */
+  yum(): void {
+    [587, 740, 880, 1175].forEach((f, i) => this.tone(f, 0.14, { wave: 'square', gain: 0.045, delay: i * 0.06 }));
+  }
+
+  /** Hoquet. */
+  hiccup(delay = 0): void {
+    this.tone(380, 0.09, { wave: 'sine', gain: 0.2, slideTo: 980, delay });
+    this.noise(0.05, { gain: 0.12, filter: 1800, q: 3, delay });
+  }
+
+  /** Trombone triste (wah-wah-wah-waaah), en sourdine. */
+  sadTrombone(): void {
+    const notes: Array<[number, number, number]> = [[392, 370, 0], [370, 349, 0.3], [349, 330, 0.6], [330, 262, 0.9]];
+    for (const [a, b, t] of notes) this.tone(a, t < 0.9 ? 0.28 : 0.8, { wave: 'sawtooth', gain: 0.05, slideTo: b, delay: t, attack: 0.04 });
+  }
+
+  /** Cri de chauve-souris. */
+  batScreech(): void {
+    this.tone(1800, 0.07, { wave: 'square', gain: 0.03, slideTo: 2600 });
+    this.tone(2000, 0.07, { wave: 'square', gain: 0.03, slideTo: 2800, delay: 0.1 });
+  }
+
+  /** Chauve-souris roussie : « pouf » puis « couic ». */
+  batPoof(): void {
+    this.noise(0.25, { gain: 0.3, filter: 900, q: 0.6 });
+    this.tone(900, 0.12, { wave: 'square', gain: 0.05, slideTo: 1500, delay: 0.18 });
+  }
+
+  /** Tonnerre (craquement puis grondement). */
+  thunder(): void {
+    this.noise(0.2, { gain: 0.5, filter: 3200, q: 0.5 });
+    this.noise(2, { gain: 0.6, filter: 220, type: 'lowpass', delay: 0.05 });
+    this.tone(60, 1.4, { wave: 'sine', gain: 0.3, slideTo: 30, delay: 0.05 });
+  }
+
+  /** Grondement sourd (un nuage se charge). */
+  rumble(): void {
+    this.noise(0.9, { gain: 0.25, filter: 180, type: 'lowpass' });
+  }
+
+  /** Plouf dans la mer. */
+  splash(): void {
+    this.noise(0.6, { gain: 0.45, filter: 1300, q: 0.5 });
+    this.tone(500, 0.3, { wave: 'sine', gain: 0.12, slideTo: 150 });
+    this.bloop();
   }
 
   bump(): void {
