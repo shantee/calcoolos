@@ -1,0 +1,235 @@
+/* Accueil provisoire : sera refait dans la direction artistique retenue. */
+:root {
+  --encre: #1d1a2b;
+  --nuit: #0e2236;
+  --creme: #f6ecd8;
+  --safran: #ffc94a;
+  --sarcelle: #5fd3bc;
+  --brume: #9fc9c2;
+  --corail: #f0745e;
+  font-family: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+  color: var(--creme);
+  background: var(--nuit);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #0b1a2b 0%, #163c4c 55%, #2f6668 100%);
+  overflow-x: hidden;
+}
+
+.ciel {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff8 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 32% 8%, #fff8 50%, transparent 51%),
+    radial-gradient(2px 2px at 58% 22%, #ffc94acc 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 12%, #fff8 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 88% 30%, #fff8 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 22% 36%, #fff6 50%, transparent 51%);
+}
+
+.archipel {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 42vh;
+  opacity: 0.85;
+}
+
+.astre {
+  fill: #ffd66b;
+  filter: drop-shadow(0 0 40px #ffc94a88);
+}
+
+.ile path,
+.ile rect {
+  stroke: var(--encre);
+  stroke-width: 4;
+}
+
+.ile-loin {
+  fill: #2b5d6b;
+  opacity: 0.8;
+  animation: flotte 9s ease-in-out infinite alternate;
+}
+
+.ile-proche {
+  fill: #3e7a80;
+  animation: flotte 7s ease-in-out infinite alternate-reverse;
+}
+
+.ile-proche rect {
+  fill: var(--creme);
+}
+
+.toit {
+  fill: var(--safran);
+}
+
+.lanterne {
+  fill: var(--sarcelle);
+  stroke: none;
+  animation: lueur 2.4s ease-in-out infinite alternate;
+}
+
+@keyframes flotte {
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes lueur {
+  to {
+    opacity: 0.4;
+  }
+}
+
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 16px 34vh;
+}
+
+.surtitre {
+  margin: 0;
+  color: var(--brume);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+h1 {
+  margin: 4px 0 0;
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--safran);
+  text-shadow: 0 4px 0 var(--encre);
+}
+
+.accroche {
+  margin: 12px 0 40px;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.lieu {
+  background: rgb(14 34 54 / 0.88);
+  border: 4px solid var(--encre);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 8px 0 var(--encre);
+}
+
+h2 {
+  margin: 0 0 8px;
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.lieu p {
+  margin: 0 0 20px;
+  line-height: 1.5;
+  color: #dfeeea;
+}
+
+.niveau {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+select {
+  font: inherit;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 3px solid var(--encre);
+  background: var(--creme);
+  color: var(--encre);
+}
+
+.variantes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.variante {
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 4px solid var(--encre);
+  background: var(--creme);
+  color: var(--encre);
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--encre);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.variante:hover,
+.variante:focus-visible {
+  transform: translateY(-3px);
+  box-shadow: 0 9px 0 var(--encre);
+  outline: none;
+  background: var(--safran);
+}
+
+.lettre {
+  font-size: 2.4rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.nom {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.desc {
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.aide {
+  margin-top: 20px;
+  color: #dfeeea;
+}
+
+.aide summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.note {
+  margin-top: 28px;
+  color: var(--brume);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ile-loin,
+  .ile-proche,
+  .lanterne {
+    animation: none;
+  }
+  .variante {
+    transition: none;
+  }
+}

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>%BRAND_NAME% · %BRAND_TAGLINE%</title>
+    <meta name="description" content="%BRAND_DESCRIPTION%" />
+    <meta name="color-scheme" content="dark" />
+  </head>
+  <body>
+    <div class="ciel" aria-hidden="true">
+      <svg class="archipel" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax meet">
+        <circle class="astre" cx="1080" cy="70" r="46" />
+        <g class="ile ile-loin">
+          <path d="M120 250 q90-26 190 0 q-30 60-95 90 q-60-30-95-90z" />
+          <path d="M760 210 q60-18 130 0 q-20 40-65 60 q-45-20-65-60z" />
+        </g>
+        <g class="ile ile-proche">
+          <path d="M380 300 q170-40 330 0 q-50 90-165 130 q-115-40-165-130z" />
+          <rect x="530" y="232" width="22" height="60" rx="6" />
+          <path d="M520 236 l21-30 l21 30z" class="toit" />
+          <circle cx="541" cy="248" r="5" class="lanterne" />
+        </g>
+      </svg>
+    </div>
+
+    <main>
+      <header class="entete">
+        <p class="surtitre">Prototype · étape B</p>
+        <h1>%BRAND_NAME%</h1>
+        <p class="accroche">%BRAND_TAGLINE%</p>
+      </header>
+
+      <section class="lieu" aria-labelledby="atelier-titre">
+        <h2 id="atelier-titre">L’Atelier des Cubes</h2>
+        <p>
+          Un monstre approche du phare en brandissant un nombre. Choisis des cubes dont la somme fait
+          exactement ce nombre : moins tu utilises de cubes, plus ton tir est puissant.
+        </p>
+
+        <label class="niveau">
+          Niveau
+          <select id="niveau">
+            <option value="eveil">Éveil · 7-8 ans</option>
+            <option value="explorateur" selected>Explorateur · 9-10 ans</option>
+            <option value="stratege">Stratège · 11-12 ans</option>
+            <option value="maitre">Maître · ados et adultes</option>
+          </select>
+        </label>
+
+        <div class="variantes">
+          <a class="variante" data-proto href="prototypes/a.html">
+            <span class="lettre">A</span>
+            <span class="nom">Pixel art</span>
+            <span class="desc">Sprites dessinés pixel par pixel, tramage, effets « par pas ».</span>
+          </a>
+          <a class="variante" data-proto href="prototypes/b.html">
+            <span class="lettre">B</span>
+            <span class="nom">2D illustrée</span>
+            <span class="desc">Formes encrées, aplats d’ombre, mouvements souples.</span>
+          </a>
+        </div>
+
+        <details class="aide">
+          <summary>Commandes</summary>
+          <ul>
+            <li>Souris ou toucher : choisir un cube, « Lancer ! » pour tirer.</li>
+            <li>Clavier : flèches pour se déplacer, Espace pour choisir, Entrée pour lancer, Retour arrière pour effacer, M pour le son.</li>
+          </ul>
+        </details>
+      </section>
+
+      <p class="note">
+        Les autres lieux de l’archipel (forêt, tour des multiplications, observatoire…) viendront plus tard.
+        Le niveau choisi est seulement retenu dans ce navigateur : pas de compte, pas de cookie.
+      </p>
+    </main>
+
+    <script type="module" src="/src/entries/accueil.ts"></script>
+  </body>
+</html>
