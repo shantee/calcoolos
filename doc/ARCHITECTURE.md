@@ -1,4 +1,4 @@
-# Architecture (état au 24/10/2026, étape B)
+# Architecture (état au 24/10/2026, étape C)
 
 ## Vue d'ensemble
 
@@ -22,8 +22,12 @@ Navigateur                                         Serveur Dell (plus tard, éta
 |---|---|---|
 | `src/core/` | `rng` (hasard reproductible), `puzzle` (générateur et solveur), `scoring` (barème), `difficulty` (paliers) | non, testé seul |
 | `src/game/siege/round.ts` | état d'une partie (sélection, validation, score, série) | non, testé seul |
-| `src/game/siege/base-scene.ts` | scène commune : mise en page, entrées, enchaînement des actions | oui |
-| `src/game/siege/scene-a.ts`, `scene-b.ts` | rendu et effets propres à chaque variante | oui |
+| `src/core/adaptive.ts` | difficulté adaptative à l'intérieur d'un palier | non, testé seul |
+| `src/core/waves.ts` | types de monstres, vagues, modes Tranquille et Défi | non, testé seul |
+| `src/game/siege/session.ts` | partie complète : vagues, cœurs, statistiques | non, testé seul |
+| `src/game/siege/game-scene.ts` | **le jeu** : rendu, effets, écrans de début et de fin | oui |
+| `src/art/world-b.ts` | monstres, habitants du décor, destruction du phare | non |
+| `src/game/siege/base-scene.ts`, `scene-a.ts`, `scene-b.ts` | prototypes du point de contrôle B (figés) | oui |
 | `src/game/sfx.ts` | sons synthétisés (Web Audio), coupables | non |
 | `src/art/` | génération des visuels (aucun fichier image) | non |
 
@@ -48,12 +52,32 @@ Les modules partagés (profil, statistiques, progression) arriveront avec la pla
 | Somme exacte avec le minimum de cubes | 100 dégâts, « Parfait ! », série +1 |
 | Chaque cube en trop | −25 % de dégâts (plancher 40 %), série remise à 0 |
 | Points | `10 × cible × efficacité × multiplicateur de série` (série : +25 % par coup parfait, au plus ×2) |
-| Validation fausse | 0 point, série remise à 0, sélection conservée, message « il manque X » ou « X de trop » |
-| Vitesse | bonus seulement en mode chronométré (pas encore activé dans le prototype) |
+| Validation fausse | 0 point, série remise à 0, sélection conservée, message « Ce n'est pas N » sans donner l'écart |
+| Vitesse | bonus (jusqu'à 50 points) seulement en mode Défi |
+| Monstre vaincu | bonus : Mordillon 50, Trotte-menu 40, Carapaçon 90, Roi 200 |
 
 Cliquer au hasard n'est pas rentable : il faut valider explicitement, et une erreur casse la série.
-Ennemi : 200 points de vie, donc 2 coups parfaits. Dans ce prototype, il ne peut pas gagner : s'il atteint le phare,
-il est repoussé.
+La somme en cours n'est jamais affichée (« 6 + 5 = ? ») : le calcul se fait de tête.
+
+## Partie
+
+| Monstre | Points de vie | Vitesse | Particularité |
+|---|---|---|---|
+| Mordillon | 200 | normale | — |
+| Trotte-menu | 100 | rapide | tombe en un coup |
+| Carapaçon | 300 | lente | blindé : un coup imparfait ne fait que la moitié des dégâts |
+| Roi Mordillon | 400 | lente | boss de la dernière vague |
+
+4 vagues (3, 4, 4 et 1 monstres), soit environ 25 tirs. Mode **Tranquille** : monstres à 55 % de la vitesse, le
+phare repousse les monstres sans rien perdre. Mode **Défi** : vitesse normale, 3 cœurs ; un monstre qui atteint le
+phare coûte un cœur, et à zéro le phare s'écroule.
+
+**Difficulté adaptative** (`src/core/adaptive.ts`) : 3 coups parfaits d'affilée font monter d'un cran (au plus +2),
+2 erreurs sur les 3 dernières tentatives font descendre d'un cran (au plus −1). Un cran élargit ou réduit de 20 % la
+plage des cibles ; au cran +2, la meilleure solution peut demander un cube de plus.
+
+**Grille équilibrée** : les cubes utilisés sont remplacés ; si ceux qui restent sont petits en moyenne, les nouveaux
+sont plutôt grands, et une même valeur ne peut pas apparaître trop souvent.
 
 ## Paliers (réglés à la main)
 

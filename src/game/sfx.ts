@@ -67,7 +67,7 @@ export class Sfx {
     osc.stop(t0 + dur + 0.02);
   }
 
-  private noise(dur: number, opts: { gain?: number; filter?: number; delay?: number; q?: number } = {}): void {
+  private noise(dur: number, opts: { gain?: number; filter?: number; delay?: number; q?: number; type?: BiquadFilterType } = {}): void {
     if (!this.ctx || !this.master || this._muted) return;
     const t0 = this.ctx.currentTime + (opts.delay ?? 0);
     const len = Math.max(1, Math.floor(this.ctx.sampleRate * dur));
@@ -77,7 +77,7 @@ export class Sfx {
     const src = this.ctx.createBufferSource();
     src.buffer = buf;
     const f = this.ctx.createBiquadFilter();
-    f.type = 'bandpass';
+    f.type = opts.type ?? 'bandpass';
     f.frequency.value = opts.filter ?? 1200;
     f.Q.value = opts.q ?? 0.8;
     const g = this.ctx.createGain();
@@ -149,6 +149,69 @@ export class Sfx {
 
   victory(): void {
     [523, 659, 784, 1047, 784, 1047].forEach((f, i) => this.tone(f, 0.22, { wave: 'triangle', gain: 0.14, delay: i * 0.12 }));
+  }
+
+  /** Grognement d'un monstre qui arrive. */
+  growl(): void {
+    this.tone(120, 0.45, { wave: 'sawtooth', gain: 0.07, slideTo: 70 });
+    this.tone(126, 0.45, { wave: 'sawtooth', gain: 0.05, slideTo: 74 });
+    this.noise(0.4, { gain: 0.12, filter: 300, type: 'lowpass' });
+  }
+
+  /** « Aïe ! » du monstre touché : petit couinement rétro. */
+  ouch(): void {
+    this.tone(880, 0.12, { wave: 'square', gain: 0.06, slideTo: 300 });
+    this.tone(660, 0.1, { wave: 'square', gain: 0.05, slideTo: 220, delay: 0.1 });
+  }
+
+  /** Pièce rétro (bonus d'un monstre vaincu). */
+  coin(): void {
+    this.tone(988, 0.08, { wave: 'square', gain: 0.07 });
+    this.tone(1319, 0.3, { wave: 'square', gain: 0.07, delay: 0.08 });
+  }
+
+  /** Clochette de la lune. */
+  chime(): void {
+    [1568, 2093, 2637].forEach((f, i) => this.tone(f, 0.4, { wave: 'sine', gain: 0.07, delay: i * 0.07 }));
+  }
+
+  /** « Bloup » du poisson volant. */
+  bloop(): void {
+    this.tone(300, 0.12, { wave: 'sine', gain: 0.12, slideTo: 900 });
+  }
+
+  /** Cascade de pierres. */
+  stones(): void {
+    for (let i = 0; i < 6; i++) this.noise(0.07, { gain: 0.25, filter: 1800 + i * 300, q: 2, delay: 0.05 + i * 0.09 + Math.random() * 0.04 });
+  }
+
+  /** Cœur perdu. */
+  heartLost(): void {
+    [523, 392, 262].forEach((f, i) => this.tone(f, 0.18, { wave: 'square', gain: 0.06, delay: i * 0.11 }));
+  }
+
+  /** Effondrement du phare : grondement, fracas, chute de pierres. */
+  collapse(): void {
+    this.noise(2.2, { gain: 0.5, filter: 160, type: 'lowpass' });
+    this.tone(70, 1.6, { wave: 'sine', gain: 0.5, slideTo: 30 });
+    this.noise(0.6, { gain: 0.6, filter: 700, q: 0.4, delay: 0.7 });
+    this.tone(55, 0.8, { wave: 'sine', gain: 0.6, slideTo: 25, delay: 0.7 });
+    this.stones();
+    for (let i = 0; i < 5; i++) this.noise(0.08, { gain: 0.3, filter: 2500, q: 2, delay: 1 + i * 0.13 });
+  }
+
+  /** Ricanement « hé hé hé » des monstres. */
+  laugh(delay = 0): void {
+    [620, 540, 620, 540, 700].forEach((f, i) => this.tone(f, 0.09, { wave: 'square', gain: 0.05, slideTo: f * 0.85, delay: delay + i * 0.12 }));
+  }
+
+  /** Petite ritournelle de danse des monstres (rétro). */
+  danceTune(): void {
+    const notes = [262, 330, 392, 330, 294, 349, 440, 349, 262, 330, 392, 523, 392, 330, 262, 196];
+    notes.forEach((f, i) => {
+      this.tone(f, 0.14, { wave: 'square', gain: 0.045, delay: i * 0.18 });
+      if (i % 2 === 0) this.tone(f / 2, 0.12, { wave: 'triangle', gain: 0.08, delay: i * 0.18 });
+    });
   }
 
   bump(): void {

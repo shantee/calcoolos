@@ -3,7 +3,7 @@
  * monstres supplémentaires, petits habitants du décor et icônes.
  * Même technique que variant-b.ts : dessin Canvas 2D à ×2, contour encré.
  */
-import { C, FONT, RES, makeCanvas, paint, blobPath, roundRectPath, enemy as mordillon } from './variant-b';
+import { C, FONT, RES, makeCanvas, paint, blobPath, roundRectPath } from './variant-b';
 import { createRng } from '../core/rng';
 import type { EnemyKind } from '../core/waves';
 
@@ -28,44 +28,163 @@ function arms(ctx: CanvasRenderingContext2D, from: Array<[number, number]>, colo
   }
 }
 
-function eye(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, look = -0.4, lid = 0): void {
+/** Œil de monstre : jaune, pupille fendue, sourcil froncé. */
+function angryEye(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, look = -0.35, browTilt = 1): void {
   paint(ctx, () => {
     ctx.beginPath();
-    ctx.ellipse(x, y, r, r * 1.05, 0, 0, Math.PI * 2);
-  }, '#ffffff', { line: 3.5 });
+    ctx.ellipse(x, y, r, r * 0.9, 0, 0, Math.PI * 2);
+  }, '#ffd34a', { shade: '#e8a52c', shadeOffset: [-2, -3], line: 3.5 });
   ctx.fillStyle = C.ink;
   ctx.beginPath();
-  ctx.ellipse(x + look * r * 0.45, y + 1, r * 0.42, r * 0.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + look * r * 0.5, y + 1, r * 0.18, r * 0.62, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(x + look * r * 0.45 + 2, y - 2, r * 0.15, 0, Math.PI * 2);
+  ctx.arc(x + look * r * 0.5 + r * 0.3, y - r * 0.3, r * 0.14, 0, Math.PI * 2);
   ctx.fill();
-  if (lid > 0) {
-    // Paupière lourde : l'air endormi du Carapaçon.
-    ctx.save();
+  // Sourcil épais en V : l'air vraiment fâché.
+  ctx.fillStyle = C.ink;
+  ctx.beginPath();
+  const t = browTilt * r * 0.55;
+  ctx.moveTo(x - r * 1.15, y - r * 0.95 - t);
+  ctx.lineTo(x + r * 1.1, y - r * 0.55 + t * 0.6);
+  ctx.lineTo(x + r * 1.05, y - r * 0.2 + t * 0.6);
+  ctx.lineTo(x - r * 1.1, y - r * 0.6 - t);
+  ctx.closePath();
+  ctx.fill();
+}
+
+/** Grande gueule : intérieur sombre, rangées de crocs pointus. */
+function fangs(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number, topTeeth: number, bottomTeeth: number): void {
+  const mouth = () => {
     ctx.beginPath();
-    ctx.ellipse(x, y, r, r * 1.05, 0, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.fillStyle = '#5f8f88';
-    ctx.fillRect(x - r - 2, y - r - 2, r * 2 + 4, r * 2 * lid + 2);
-    ctx.restore();
+    ctx.moveTo(cx - w / 2, cy - h * 0.15);
+    ctx.quadraticCurveTo(cx, cy - h * 0.45, cx + w / 2, cy - h * 0.2);
+    ctx.quadraticCurveTo(cx + w * 0.3, cy + h * 0.75, cx, cy + h * 0.7);
+    ctx.quadraticCurveTo(cx - w * 0.35, cy + h * 0.7, cx - w / 2, cy - h * 0.15);
+    ctx.closePath();
+  };
+  paint(ctx, mouth, '#3a0f1a', { line: 4 });
+  ctx.save();
+  mouth();
+  ctx.clip();
+  // Langue.
+  ctx.fillStyle = '#c8405a';
+  ctx.beginPath();
+  ctx.ellipse(cx + w * 0.08, cy + h * 0.55, w * 0.22, h * 0.22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  const tooth = (x: number, y: number, tw: number, th: number, down: boolean) => {
+    ctx.beginPath();
+    ctx.moveTo(x - tw / 2, y);
+    ctx.lineTo(x + tw / 2, y);
+    ctx.lineTo(x + tw * 0.1, y + (down ? th : -th));
+    ctx.closePath();
+    ctx.fillStyle = '#fffaf0';
+    ctx.fill();
     ctx.strokeStyle = C.ink;
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.moveTo(x - r, y - r + r * 2 * lid);
-    ctx.lineTo(x + r, y - r + r * 2 * lid);
+    ctx.lineWidth = 2;
     ctx.stroke();
+  };
+  for (let i = 0; i < topTeeth; i++) {
+    const x = cx - w * 0.42 + ((i + 0.5) / topTeeth) * w * 0.84;
+    const yTop = cy - h * 0.32 + Math.abs(x - cx) * 0.08;
+    tooth(x, yTop - 2, (w / topTeeth) * 0.9, h * (i % 2 ? 0.38 : 0.5), true);
+  }
+  for (let i = 0; i < bottomTeeth; i++) {
+    const x = cx - w * 0.3 + ((i + 0.5) / bottomTeeth) * w * 0.6;
+    tooth(x, cy + h * 0.72, (w / bottomTeeth) * 0.55, h * 0.3, false);
+  }
+  ctx.restore();
+}
+
+/** Rangée de piquants sur le dos. */
+function spikes(ctx: CanvasRenderingContext2D, cx: number, cy: number, rx: number, ry: number, n: number, len: number, color: string): void {
+  for (let i = 0; i < n; i++) {
+    const a = Math.PI * (1.12 + (i / (n - 1)) * 0.76);
+    const x = cx + Math.cos(a) * rx;
+    const y = cy + Math.sin(a) * ry;
+    const nx = Math.cos(a);
+    const ny = Math.sin(a);
+    paint(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(x - ny * 7, y + nx * 7);
+      ctx.lineTo(x + nx * len, y + ny * len);
+      ctx.lineTo(x + ny * 7, y - nx * 7);
+      ctx.closePath();
+    }, color, { line: 3.5 });
   }
 }
 
-/** Trotte-menu : petit, lilas, grandes jambes, toujours pressé. */
+const RED = { body: '#d8433b', shade: '#9e2a2f', light: '#ff8466', dark: '#5e1a22' };
+
+/** Mordillon : boule rouge hérissée, gueule énorme. */
+function mordillon(frame: 0 | 1, crown = false): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(CREATURE_W, CREATURE_H);
+  const cx = 75;
+  const cy = 100;
+  const legs = frame === 0 ? [0, -7] : [-7, 0];
+  [[50, legs[0]], [88, legs[1]]].forEach(([x, dy]) => {
+    paint(ctx, () => roundRectPath(ctx, x, 126 + dy, 18, 26, 7), RED.shade, { line: 4 });
+    // Griffes.
+    for (let k = 0; k < 3; k++) {
+      paint(ctx, () => {
+        ctx.beginPath();
+        ctx.moveTo(x + 1 + k * 7, 150 + dy);
+        ctx.lineTo(x + 4 + k * 7, 158 + dy);
+        ctx.lineTo(x + 7 + k * 7, 150 + dy);
+        ctx.closePath();
+      }, '#fffaf0', { line: 2 });
+    }
+  });
+  arms(ctx, [[32, 96], [118, 96]], RED.body);
+  spikes(ctx, cx, cy - 2, 46, 40, 7, 18, RED.dark);
+  const body = () => blobPath(ctx, cx, cy, 50, 42, createRng(7), 0.04, 16);
+  paint(ctx, body, RED.body, { shade: RED.shade, shadeOffset: [-9, -9], light: RED.light, line: 5 });
+  // Cornes noires recourbées.
+  [[-28, -1], [28, 1]].forEach(([dx, dir]) => {
+    paint(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx + dx - 8, cy - 36);
+      ctx.quadraticCurveTo(cx + dx + dir * 6, cy - 72, cx + dx + dir * 22, cy - 66);
+      ctx.quadraticCurveTo(cx + dx + dir * 6, cy - 54, cx + dx + 8, cy - 34);
+      ctx.closePath();
+    }, '#3a3550', { shade: C.ink, shadeOffset: [-3, 0], line: 4 });
+  });
+  angryEye(ctx, cx - 18, cy - 14, 12, -0.5, 1);
+  angryEye(ctx, cx + 16, cy - 16, 10, -0.5, -1);
+  fangs(ctx, cx - 2, cy + 16, 64, 30, 7, 4);
+  if (crown) {
+    paint(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx - 26, cy - 46);
+      ctx.lineTo(cx - 30, cy - 76);
+      ctx.lineTo(cx - 13, cy - 60);
+      ctx.lineTo(cx, cy - 82);
+      ctx.lineTo(cx + 13, cy - 60);
+      ctx.lineTo(cx + 30, cy - 76);
+      ctx.lineTo(cx + 26, cy - 46);
+      ctx.closePath();
+    }, C.saffron, { shade: C.saffronShade, shadeOffset: [-6, 0], line: 4 });
+    ctx.fillStyle = '#5fd3bc';
+    for (const x of [cx - 13, cx, cx + 13]) {
+      ctx.beginPath();
+      ctx.arc(x, cy - 52, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = C.ink;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+  }
+  return c;
+}
+
+/** Trotte-menu : petit diablotin cramoisi sur grandes pattes, sourire carnassier. */
 function trotteur(frame: 0 | 1): HTMLCanvasElement {
   const [c, ctx] = makeCanvas(CREATURE_W, CREATURE_H);
   const cx = 76;
   const cy = 98;
-  const body = '#b79ad8';
-  // Longues jambes en compas.
+  const body = '#c2365a';
+  const shade = '#87203f';
   const stride = frame === 0 ? [-14, 12] : [12, -14];
   [[62, stride[0]], [90, stride[1]]].forEach(([x, dx]) => {
     ctx.strokeStyle = C.ink;
@@ -74,112 +193,103 @@ function trotteur(frame: 0 | 1): HTMLCanvasElement {
     ctx.moveTo(x, 118);
     ctx.lineTo(x + dx, 152);
     ctx.stroke();
-    ctx.strokeStyle = '#8a6bb3';
+    ctx.strokeStyle = shade;
     ctx.lineWidth = 4;
     ctx.stroke();
     paint(ctx, () => {
       ctx.beginPath();
-      ctx.ellipse(x + dx - 4, 154, 11, 4.5, 0, 0, Math.PI * 2);
-    }, '#8a6bb3', { line: 3.5 });
+      ctx.moveTo(x + dx - 14, 157);
+      ctx.lineTo(x + dx + 6, 150);
+      ctx.lineTo(x + dx + 8, 157);
+      ctx.closePath();
+    }, shade, { line: 3.5 });
   });
   arms(ctx, [[50, 92], [102, 92]], body);
-  const shape = () => blobPath(ctx, cx, cy, 36, 30, createRng(3), 0.05, 14);
-  paint(ctx, shape, body, { shade: '#8a6bb3', shadeOffset: [-7, -7], light: '#dccbf2', line: 5 });
-  // Antenne à boule.
+  // Queue pointue.
   ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 3.5;
+  ctx.lineWidth = 7;
   ctx.beginPath();
-  ctx.moveTo(cx + 6, cy - 28);
-  ctx.quadraticCurveTo(cx + 18, cy - 50, cx + 30, cy - 44);
+  ctx.moveTo(cx + 30, cy + 14);
+  ctx.bezierCurveTo(cx + 60, cy + 20, cx + 50, cy - 20, cx + 66, cy - 26);
+  ctx.stroke();
+  ctx.strokeStyle = body;
+  ctx.lineWidth = 3;
   ctx.stroke();
   paint(ctx, () => {
     ctx.beginPath();
-    ctx.arc(cx + 30, cy - 44, 6, 0, Math.PI * 2);
-  }, C.saffron, { line: 3 });
-  // Deux yeux ronds qui louchent vers le phare.
-  eye(ctx, cx - 12, cy - 4, 11, -0.6);
-  eye(ctx, cx + 12, cy - 6, 9, -0.6);
-  // Petit sourire pressé.
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.moveTo(cx - 10, cy + 14);
-  ctx.quadraticCurveTo(cx, cy + 20, cx + 10, cy + 13);
-  ctx.stroke();
+    ctx.moveTo(cx + 60, cy - 22);
+    ctx.lineTo(cx + 74, cy - 34);
+    ctx.lineTo(cx + 70, cy - 18);
+    ctx.closePath();
+  }, shade, { line: 3 });
+  const shape = () => blobPath(ctx, cx, cy, 36, 31, createRng(3), 0.05, 14);
+  paint(ctx, shape, body, { shade, shadeOffset: [-7, -7], light: '#f06d8c', line: 5 });
+  // Petites cornes pointues.
+  [[-16, -1], [16, 1]].forEach(([dx, dir]) => {
+    paint(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx + dx - 6, cy - 26);
+      ctx.lineTo(cx + dx + dir * 6, cy - 50);
+      ctx.lineTo(cx + dx + 6, cy - 26);
+      ctx.closePath();
+    }, '#3a3550', { line: 3.5 });
+  });
+  angryEye(ctx, cx - 13, cy - 8, 10, -0.6, 1);
+  angryEye(ctx, cx + 13, cy - 9, 9, -0.6, -1);
+  fangs(ctx, cx, cy + 14, 46, 20, 6, 0);
   return c;
 }
 
-/** Carapaçon : lent, endormi, coiffé d'une lourde carapace. */
+/** Carapaçon : brute lourde à carapace cloutée, défenses qui dépassent. */
 function carapacon(frame: 0 | 1): HTMLCanvasElement {
   const [c, ctx] = makeCanvas(CREATURE_W, CREATURE_H);
   const cx = 75;
   const cy = 104;
-  const body = '#7fb3aa';
+  const body = '#b8463c';
+  const shade = '#7e2a2a';
   const legs = frame === 0 ? [0, -5] : [-5, 0];
-  [[48, legs[0]], [92, legs[1]]].forEach(([x, dy]) => {
-    paint(ctx, () => roundRectPath(ctx, x, 130 + dy, 20, 22, 8), '#5f8f88', { line: 4 });
+  [[46, legs[0]], [90, legs[1]]].forEach(([x, dy]) => {
+    paint(ctx, () => roundRectPath(ctx, x, 130 + dy, 22, 22, 8), shade, { line: 4 });
   });
   arms(ctx, [[30, 104], [120, 104]], body);
-  const shape = () => blobPath(ctx, cx, cy + 4, 52, 36, createRng(9), 0.03, 16);
-  paint(ctx, shape, body, { shade: '#5f8f88', shadeOffset: [-8, -8], light: '#c4e3dc', line: 5 });
-  // Carapace en dôme avec plaques et rivets.
+  const shape = () => blobPath(ctx, cx, cy + 4, 54, 36, createRng(9), 0.03, 16);
+  paint(ctx, shape, body, { shade, shadeOffset: [-8, -8], light: '#e07a62', line: 5 });
+  // Carapace sombre hérissée de pointes.
   const shell = () => {
     ctx.beginPath();
-    ctx.moveTo(cx - 60, cy - 2);
-    ctx.bezierCurveTo(cx - 56, cy - 66, cx + 56, cy - 66, cx + 60, cy - 2);
-    ctx.quadraticCurveTo(cx, cy + 10, cx - 60, cy - 2);
+    ctx.moveTo(cx - 62, cy - 2);
+    ctx.bezierCurveTo(cx - 58, cy - 68, cx + 58, cy - 68, cx + 62, cy - 2);
+    ctx.quadraticCurveTo(cx, cy + 8, cx - 62, cy - 2);
     ctx.closePath();
   };
-  paint(ctx, shell, '#6c7aa0', { shade: '#4c5878', shadeOffset: [-10, -8], light: '#a3b0d4', line: 5 });
+  spikes(ctx, cx, cy - 6, 52, 46, 6, 16, '#d9d2e6');
+  paint(ctx, shell, '#3f3b56', { shade: '#2a2740', shadeOffset: [-10, -8], light: '#6c6890', line: 5 });
+  ctx.fillStyle = '#d9d2e6';
   ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 3;
-  for (const [x0, y0, x1, y1] of [[cx - 30, cy - 46, cx - 22, cy], [cx + 2, cy - 54, cx + 2, cy + 4], [cx + 32, cy - 44, cx + 26, cy]]) {
+  ctx.lineWidth = 2;
+  for (const [x, y] of [[cx - 42, cy - 14], [cx - 14, cy - 34], [cx + 14, cy - 34], [cx + 42, cy - 14], [cx, cy - 16]]) {
     ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-  }
-  ctx.fillStyle = C.saffron;
-  for (const [x, y] of [[cx - 44, cy - 14], [cx - 12, cy - 30], [cx + 18, cy - 28], [cx + 44, cy - 14]]) {
-    ctx.beginPath();
-    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.arc(x, y, 4.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
   }
-  // Yeux mi-clos sous la carapace.
-  eye(ctx, cx - 16, cy + 14, 11, -0.5, 0.45);
-  eye(ctx, cx + 14, cy + 14, 11, -0.5, 0.45);
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 3.5;
-  ctx.beginPath();
-  ctx.moveTo(cx - 6, cy + 34);
-  ctx.lineTo(cx + 8, cy + 33);
-  ctx.stroke();
-  return c;
-}
-
-/** Roi Mordillon : un Mordillon couronné, dessiné plus grand. */
-function roi(frame: 0 | 1): HTMLCanvasElement {
-  const base = mordillon(frame);
-  const [c, ctx] = makeCanvas(CREATURE_W, CREATURE_H);
-  ctx.drawImage(base, 0, 0, CREATURE_W, CREATURE_H);
-  const cx = 75;
+  angryEye(ctx, cx - 18, cy + 14, 10, -0.5, 1.3);
+  angryEye(ctx, cx + 16, cy + 14, 10, -0.5, -1.3);
+  // Mâchoire inférieure prognathe avec deux défenses.
   paint(ctx, () => {
     ctx.beginPath();
-    ctx.moveTo(cx - 30, 52);
-    ctx.lineTo(cx - 34, 26);
-    ctx.lineTo(cx - 16, 40);
-    ctx.lineTo(cx, 20);
-    ctx.lineTo(cx + 16, 40);
-    ctx.lineTo(cx + 34, 26);
-    ctx.lineTo(cx + 30, 52);
+    ctx.moveTo(cx - 26, cy + 30);
+    ctx.quadraticCurveTo(cx, cy + 46, cx + 26, cy + 30);
     ctx.closePath();
-  }, C.saffron, { shade: C.saffronShade, shadeOffset: [-6, 0], line: 4 });
-  ctx.fillStyle = C.coral;
-  for (const x of [cx - 16, cx, cx + 16]) {
-    ctx.beginPath();
-    ctx.arc(x, 44, 4, 0, Math.PI * 2);
-    ctx.fill();
+  }, '#3a0f1a', { line: 3.5 });
+  for (const dx of [-18, 18]) {
+    paint(ctx, () => {
+      ctx.beginPath();
+      ctx.moveTo(cx + dx - 5, cy + 36);
+      ctx.lineTo(cx + dx + (dx < 0 ? -3 : 3), cy + 20);
+      ctx.lineTo(cx + dx + 5, cy + 36);
+      ctx.closePath();
+    }, '#fffaf0', { line: 2.5 });
   }
   return c;
 }
@@ -191,7 +301,7 @@ export function creature(kind: EnemyKind, frame: 0 | 1): HTMLCanvasElement {
     case 'carapacon':
       return carapacon(frame);
     case 'roi':
-      return roi(frame);
+      return mordillon(frame, true);
     default:
       return mordillon(frame);
   }
@@ -435,3 +545,73 @@ export function dialogPanel(w: number, h: number): HTMLCanvasElement {
   return c;
 }
 
+
+// --- Destruction du phare --------------------------------------------------------------------
+
+/** Petite pierre de maçonnerie (plusieurs formes selon la graine). */
+export function rock(seed: number): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(30, 26);
+  const r = createRng(seed);
+  paint(ctx, () => blobPath(ctx, 15, 13, 10 + r.int(0, 3), 8 + r.int(0, 3), createRng(seed * 3), 0.25, 7), seed % 3 === 0 ? C.coral : C.cream, {
+    shade: seed % 3 === 0 ? C.coralShade : C.creamShade,
+    shadeOffset: [-3, -3],
+    line: 3,
+  });
+  return c;
+}
+
+/** Fissures dessinées par-dessus le phare (niveau 1 ou 2), même cadre que tower(). */
+export function cracks(level: number): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(150, 300);
+  ctx.strokeStyle = C.ink;
+  ctx.lineCap = 'round';
+  const lines: Array<Array<[number, number]>> = [
+    [[60, 128], [70, 146], [62, 160], [74, 178], [68, 196]],
+    [[96, 220], [88, 236], [98, 250], [90, 268]],
+    [[52, 238], [62, 252], [56, 270], [66, 286]],
+    [[84, 140], [92, 156], [86, 170]],
+  ];
+  lines.slice(0, level === 1 ? 2 : 4).forEach((pts, i) => {
+    ctx.lineWidth = i < 2 ? 3.5 : 3;
+    ctx.beginPath();
+    pts.forEach(([x, y], k) => (k === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
+    ctx.stroke();
+  });
+  return c;
+}
+
+/** Tas de gravats après l'effondrement. */
+export function rubble(): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(200, 70);
+  const r = createRng(66);
+  for (let i = 0; i < 16; i++) {
+    const x = 20 + r.int(0, 160);
+    const y = 40 + r.int(0, 22) - Math.max(0, 30 - Math.abs(x - 100) / 3);
+    paint(ctx, () => blobPath(ctx, x, y, 12 + r.int(0, 8), 9 + r.int(0, 5), createRng(i + 5), 0.2, 7), i % 3 === 0 ? C.coral : C.cream, {
+      shade: i % 3 === 0 ? C.coralShade : C.creamShade,
+      shadeOffset: [-3, -3],
+      line: 3,
+    });
+  }
+  // La lanterne éteinte, posée de travers au sommet du tas.
+  paint(ctx, () => roundRectPath(ctx, 86, 6, 26, 28, 5), '#3f7f7a', { line: 3.5 });
+  return c;
+}
+
+/** Bulle de moquerie au-dessus d'un monstre qui danse. */
+export function bubble(w: number, h: number): HTMLCanvasElement {
+  const [c, ctx] = makeCanvas(w + 10, h + 22);
+  paint(ctx, () => {
+    roundRectPath(ctx, 5, 5, w, h, 16);
+  }, C.cream, { line: 3.5 });
+  paint(ctx, () => {
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - 8, h + 3);
+    ctx.lineTo(w / 2, h + 18);
+    ctx.lineTo(w / 2 + 10, h + 3);
+    ctx.closePath();
+  }, C.cream, { line: 3.5 });
+  ctx.fillStyle = C.cream;
+  ctx.fillRect(w / 2 - 6, h - 2, 14, 7);
+  return c;
+}

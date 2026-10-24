@@ -3,8 +3,8 @@
 Plateforme francophone de jeux de calcul mental, pensée d'abord pour les 7-12 ans et agréable pour les plus grands.
 Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer sur un monstre, et non pour répondre à un questionnaire.
 
-> **État : prototype, étape B (point de contrôle visuel).** Deux directions graphiques jouables de la scène
-> « Cubes de siège » attendent un choix. Pas encore de comptes ni de serveur.
+> **État : étape C faite.** Le premier jeu, « Cubes de siège », est complet et jouable (direction 2D illustrée).
+> Pas encore de comptes ni de serveur.
 > Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md).
 
 ## Lancer le projet
@@ -28,12 +28,13 @@ Autres commandes :
 
 Pages :
 
-- `/` : accueil provisoire, choix du niveau ;
-- `/prototypes/a.html` : variante A, pixel art ;
-- `/prototypes/b.html` : variante B, 2D illustrée.
+- `/` : accueil, aide et choix du niveau ;
+- `/jeu/cubes-de-siege.html` : le jeu ;
+- `/prototypes/a.html`, `/prototypes/b.html` : prototypes du choix de direction artistique (figés).
 
 Paramètres d'URL utiles : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123` (partie reproductible),
-`?calme` (animations réduites, comme le réglage système « réduire les animations »).
+`?calme` (animations réduites, comme le réglage système « réduire les animations »), `?accelere=4` (monstres
+accélérés, pour les tests).
 
 ### Captures
 
@@ -42,14 +43,22 @@ npm run build && npm run preview &
 node scripts/captures.mjs http://localhost:4173 CAPTURES
 ```
 
-Le script utilise le Playwright installé sur la machine (il n'est pas une dépendance du projet). Il signale toute
+Partie complète jouée automatiquement (gagnée, ou perdue avec `perdre`) :
+
+```bash
+node scripts/partie-auto.mjs http://localhost:4173 CAPTURES tranquille explorateur
+node scripts/partie-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
+```
+
+Ces scripts utilisent le Playwright installé sur la machine (il n'est pas une dépendance du projet). Il signale toute
 erreur de console ou tout fichier qui n'a pas pu se charger.
 
 ## Comment jouer
 
-Un monstre approche du phare avec un nombre sur sa pancarte. Choisis des cubes dont la somme fait exactement ce nombre,
+Un monstre approche du phare avec un nombre sur sa pancarte. Additionne des cubes pour obtenir exactement ce nombre,
 puis « Lancer ! ». Moins tu utilises de cubes, plus le coup est fort : deux solutions au nombre minimal de cubes valent
-exactement la même chose. Une erreur ne coûte rien d'autre que la série en cours, et le jeu indique ce qui manque.
+exactement la même chose. La somme n'est jamais affichée : le calcul se fait de tête. Une erreur ne coûte que la série
+en cours.
 
 Clavier : flèches, Espace (choisir), Entrée (lancer), Retour arrière ou Échap (effacer), M (son).
 
@@ -58,12 +67,13 @@ Clavier : flèches, Espace (choisir), Entrée (lancer), Retour arrière ou Écha
 ```
 brand.json            nom et slogan de la plateforme (le seul endroit à modifier pour renommer)
 index.html            accueil
-prototypes/           pages des deux variantes graphiques
+jeu/                  page du jeu « Cubes de siège »
+prototypes/           pages des deux variantes graphiques (figées)
 src/core/             logique pure et testée : hasard reproductible, énigmes, barème, paliers
-src/game/             jeu Phaser : scène commune, variantes A et B, sons synthétisés
-src/art/              « PixelForge » (pixel art procédural) et dessins de la variante B
+src/game/             jeu Phaser : Cubes de siège (game-scene, session), prototypes A et B, sons synthétisés
+src/art/              « PixelForge » (pixel art procédural), dessins de la variante B et du monde du jeu
 tests/                tests Vitest
-scripts/captures.mjs  captures Playwright
+scripts/              captures Playwright et partie automatique
 CAPTURES/             captures réelles des écrans
 doc/                  cahier des charges d'origine + documents de conception
 ```

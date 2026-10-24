@@ -7,6 +7,7 @@ import {
   generatePuzzle,
   minCubesFor,
   refillAndNext,
+  maxDuplicates,
   validateConfig,
   type PuzzleConfig,
 } from '../src/core/puzzle';
@@ -129,6 +130,28 @@ describe('générateur', () => {
       const kept = before.filter((_, i) => !used.includes(i) && p.cubes[i] === before[i]).length;
       expect(kept).toBeGreaterThanOrEqual(before.length - used.length - 3);
       expect(minCubesFor(p.cubes, p.target)).toBe(p.optimalCount);
+    }
+  });
+
+  it('la grille ne se remplit pas de doublons au fil d’une longue partie (tous paliers, jeu parfait)', () => {
+    for (const tier of Object.values(TIERS)) {
+      const cfg = tier.puzzle;
+      const rng = createRng(99);
+      let p = generatePuzzle(cfg, rng);
+      const max = maxDuplicates(cfg.cubeCount);
+      const means: number[] = [];
+      for (let k = 0; k < 400; k++) {
+        p = refillAndNext(p.cubes, p.solution, cfg, rng);
+        const counts = new Map<number, number>();
+        for (const v of p.cubes) counts.set(v, (counts.get(v) ?? 0) + 1);
+        // pickTarget peut relancer un cube en secours : on tolère un exemplaire de plus.
+        expect(Math.max(...counts.values())).toBeLessThanOrEqual(max + 1);
+        means.push(p.cubes.reduce((a, b) => a + b, 0) / p.cubes.length);
+      }
+      // En moyenne sur la partie, la grille reste centrée sur la plage du palier.
+      const mid = (cfg.minValue + cfg.maxValue) / 2;
+      const avg = means.reduce((a, b) => a + b, 0) / means.length;
+      expect(avg).toBeGreaterThan(mid * 0.8);
     }
   });
 

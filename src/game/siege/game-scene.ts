@@ -89,6 +89,14 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private moonFace!: Phaser.GameObjects.Image;
   private snailImg!: Phaser.GameObjects.Image;
   private snailHidden = false;
+  private crackImg!: Phaser.GameObjects.Image;
+  private owlHome = new Phaser.Math.Vector2();
+  private lanternTween: Phaser.Tweens.Tween | null = null;
+  /** Débris, gravats et danseurs à effacer quand on rejoue. */
+  private wreck: Phaser.GameObjects.GameObject[] = [];
+  private loops: Phaser.Time.TimerEvent[] = [];
+  /** Accélération des monstres, pour les tests automatiques seulement (?accelere=4). */
+  private speedBoost = 1;
 
   // Interface
   private scoreText!: Phaser.GameObjects.Text;
@@ -118,6 +126,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.seed = Number(params.get('graine')) || Math.floor(Math.random() * 1e9);
     this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.explorateur;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || params.has('calme');
+    this.speedBoost = Math.min(10, Math.max(1, Number(params.get('accelere')) || 1));
 
     this.buildWorld();
     this.buildCritters();
@@ -142,7 +151,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const e = this.enemy;
     if (!e || !this.session) return;
     if (this.enemyWalking && e.walking) {
-      e.obj.x -= (this.session.enemySpeed * delta) / 1000;
+      e.obj.x -= (this.session.enemySpeed * this.speedBoost * delta) / 1000;
       if (e.obj.x <= L.enemyStopX) {
         e.obj.x = L.enemyStopX;
         this.onEnemyReachesTower();
@@ -173,7 +182,10 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.add.image(L.gridX - 20, 126, this.tex('b-workshop', B.workshop)).setOrigin(0).setScale(K).setDepth(5);
     this.towerImg = this.add.image(L.towerX, L.groundY + 26, this.tex('b-tower', B.tower)).setOrigin(0.5, 1).setScale(K).setDepth(4);
     this.lanternGlow = this.add.image(L.towerX, L.groundY + 26 - B.TOWER_H + 76, this.tex('b-glow', () => B.softGlow(128, '#5fd3bc'))).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5).setDepth(4);
-    if (!this.reducedMotion) this.tweens.add({ targets: this.lanternGlow, alpha: 0.8, scale: 1.1, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.pulseLantern();
+    this.tex('w-cracks-1', () => Wd.cracks(1));
+    this.tex('w-cracks-2', () => Wd.cracks(2));
+    this.crackImg = this.add.image(L.towerX, L.groundY + 26, 'w-cracks-1').setOrigin(0.5, 1).setScale(K).setDepth(4).setVisible(false);
 
     const fire = this.tex('b-spark-2', () => B.sparkle(B.C.teal));
     if (!this.reducedMotion) {
@@ -210,17 +222,30 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.add.image(0, 0, this.tex('b-grain', () => B.grain(W, H))).setOrigin(0).setBlendMode(Phaser.BlendModes.MULTIPLY).setAlpha(0.12).setDepth(90);
   }
 
+  private pulseLantern(): void {
+    this.lanternTween?.stop();
+    this.lanternGlow.setAlpha(0.5).setScale(1);
+    this.lanternTween = this.reducedMotion
+      ? null
+      : this.tweens.add({ targets: this.lanternGlow, alpha: 0.8, scale: 1.1, duration: 1600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
   /** Petits habitants : lune, chouette, escargot, poisson volant. Tous cliquables. */
   private buildCritters(): void {
     // La lune dort ; elle fait un clin d'œil aux coups parfaits et rougit si on la touche.
     ['dort', 'clin', 'rougit'].forEach((s) => this.tex(`w-moon-${s}`, () => Wd.moonFace(s as 'dort')));
     this.moonFace = this.add.image(L.moonX, L.moonY + 6, 'w-moon-dort').setScale(K).setDepth(2);
     const moonHit = this.add.zone(L.moonX, L.moonY, 150, 150).setInteractive({ useHandCursor: true }).setDepth(2);
-    moonHit.on('pointerdown', () => this.moonReact('rougit', 1600));
+    moonHit.on('pointerdown', () => {
+      this.sfx.unlock();
+      this.sfx.chime();
+      this.moonReact('rougit', 1600);
+    });
 
     // La chouette du phare.
     ['ouvert', 'cligne', 'contente'].forEach((s) => this.tex(`w-owl-${s}`, () => Wd.owl(s as 'ouvert')));
     const owlY = L.groundY + 26 - B.TOWER_H + 102;
+    this.owlHome.set(L.towerX + 44, owlY);
     this.owlImg = this.add.image(L.towerX + 44, owlY, 'w-owl-ouvert').setOrigin(0.5, 1).setScale(K).setDepth(6).setInteractive({ useHandCursor: true });
     this.owlImg.on('pointerdown', () => {
       this.sfx.unlock();
@@ -267,6 +292,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         const dir = Math.random() < 0.5 ? -1 : 1;
         const p = { t: 0 };
         fish.setVisible(true).setFlipX(dir > 0);
+        this.sfx.bloop();
         this.tweens.add({
           targets: p,
           t: 1,
@@ -398,10 +424,10 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   }
 
   // --- Écrans de début et de fin ---------------------------------------------------------------
-  private openOverlay(h: number): Phaser.GameObjects.Container {
+  private openOverlay(h: number, veilAlpha = 0.62): Phaser.GameObjects.Container {
     this.closeOverlay();
     const c = this.add.container(0, 0).setDepth(100);
-    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x0b1a2b, 0.62).setInteractive();
+    const veil = this.add.rectangle(W / 2, H / 2, W, H, 0x0b1a2b, veilAlpha).setInteractive();
     const panel = this.add.image(W / 2, H / 2, this.tex(`w-dialog-${h}`, () => Wd.dialogPanel(700, h))).setScale(K);
     c.add([veil, panel]);
     this.overlay = c;
@@ -472,7 +498,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         /* stockage indisponible : record non conservé */
       }
     }
-    const c = this.openOverlay(520);
+    const c = this.openOverlay(520, won ? 0.62 : 0.3);
     const top = H / 2 - 260;
     c.add(this.add.text(W / 2, top + 58, won ? 'Le phare est sauvé !' : 'Le phare s’est éteint…', style(44, won ? B.C.saffron : B.C.coralLight, 800, 7)).setOrigin(0.5));
     c.add(this.add.text(W / 2, top + 116, `Score ${s.score}`, style(34, B.C.cream, 800, 5)).setOrigin(0.5));
@@ -509,6 +535,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     for (const o of this.enemy?.extras ?? []) o.destroy();
     this.enemy = null;
     this.warnedArmor = false;
+    this.resetWorld();
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new SiegeSession(this.tier, this.seed, mode);
     this.session.round.cubes.forEach((v, i) => {
@@ -556,6 +583,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     }
     this.enemy = this.makeEnemy(a.kind);
     this.setEnemyTarget(this.enemy, s.round.target, false);
+    this.time.delayedCall(500, () => this.sfx.growl());
     this.enemyWalking = false;
     this.tweens.add({
       targets: this.enemy.obj,
@@ -806,6 +834,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         this.tweens.add({ targets: e.sign, angle: { from: perfect ? -24 : -12, to: 0 }, duration: 700, ease: 'Elastic.easeOut' });
       }
       this.floatDamage(to.x + 90, to.y - 10, res.damage, perfect);
+      if (!res.killed) this.time.delayedCall(120, () => this.sfx.ouch());
       if (perfect) this.toast(s.round.combo > 1 ? `Parfait ! Série ×${s.round.combo}` : 'Parfait !', 'perfect');
       else if (res.armoredHalved) this.toast('La carapace a amorti le coup !', 'good');
       else this.toast('Touché ! Avec moins de cubes, ça frappe plus fort', 'good');
@@ -847,6 +876,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.dust.explode(this.reducedMotion ? 2 : 10, e.obj.x, e.obj.y - 10);
     const bounty = this.session?.enemy?.bounty;
     if (bounty) {
+      this.time.delayedCall(350, () => this.sfx.coin());
       const t = this.add.text(e.obj.x, e.obj.y - 200 * e.scale, `+${bounty}`, style(34, B.C.saffron, 800, 6)).setOrigin(0.5).setDepth(70);
       this.tweens.add({ targets: t, y: t.y - 60, alpha: 0, delay: 400, duration: 900, onComplete: () => t.destroy() });
     }
@@ -866,43 +896,209 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const e = this.enemy;
     if (!s || !e) return;
     this.enemyWalking = false;
-    this.sfx.bump();
-    this.flash(e);
-    this.towerImg.setTint(0xffb08f);
-    this.time.delayedCall(140, () => this.towerImg.clearTint());
-    this.tweens.add({ targets: this.towerImg, angle: { from: -2, to: 0 }, duration: 500, ease: 'Elastic.easeOut' });
-    this.tweens.add({ targets: this.lanternGlow, alpha: 0.1, duration: 90, yoyo: true, repeat: 2 });
-    if (!this.reducedMotion) this.cameras.main.shake(180, 0.004);
+    // Le monstre se jette sur le phare.
+    if (!this.reducedMotion) this.tweens.add({ targets: e.obj, x: e.obj.x - 34, duration: 120, yoyo: true, ease: 'Quad.easeOut' });
+    this.time.delayedCall(120, () => this.towerDamage(s.hearts !== null));
     const leaves = s.enemyReachedTower();
     if (!leaves) {
       // Mode Tranquille : le monstre est repoussé et revient.
       this.toast('Le phare le repousse !');
-      this.tweens.add({ targets: e.obj, x: L.enemyStopX + 260, duration: 700, ease: 'Cubic.easeOut', onComplete: () => {
+      this.tweens.add({ targets: e.obj, x: L.enemyStopX + 260, delay: 200, duration: 700, ease: 'Cubic.easeOut', onComplete: () => {
         this.enemyWalking = true;
       } });
       return;
     }
-    // Mode Défi : un cœur perdu, le monstre s'enfuit en ricanant.
+    // Mode Défi : un cœur perdu.
     this.refreshHearts();
+    this.sfx.heartLost();
     const lost = this.hearts[s.hearts ?? 0];
     if (lost && !this.reducedMotion) this.tweens.add({ targets: lost, scale: { from: K * 1.6, to: K }, duration: 400, ease: 'Back.easeOut' });
-    this.toast(s.phase === 'lost' ? 'Plus de cœurs !' : 'Aïe, le phare perd un cœur');
     for (const i of s.round.selected) this.setCubeSelected(i, false);
     s.round.clear();
     this.refreshEquation();
     this.busy = true;
+    if (s.phase === 'lost') {
+      this.toast('Plus de cœurs !');
+      e.walking = false;
+      this.time.delayedCall(500, () => this.collapseTower(() => this.showEnd(false)));
+      return;
+    }
+    this.toast('Aïe, le phare perd un cœur');
+    this.time.delayedCall(300, () => this.sfx.laugh());
     e.walking = false;
     e.body.setFlipX(true);
-    this.tweens.add({ targets: e.obj, x: W + 200, duration: 1200, ease: 'Quad.easeIn', onComplete: () => {
+    this.tweens.add({ targets: e.obj, x: W + 200, delay: 300, duration: 1200, ease: 'Quad.easeIn', onComplete: () => {
       e.obj.destroy();
       if (this.enemy === e) this.enemy = null;
-      if (s.phase === 'lost') {
-        this.showEnd(false);
-        return;
-      }
       this.busy = false;
       this.spawnNext();
     } });
+  }
+
+  /** Le phare encaisse : secousse, pierres qui tombent, poussière, fissures. */
+  private towerDamage(lostHeart: boolean): void {
+    this.sfx.bump();
+    this.sfx.stones();
+    this.towerImg.setTint(0xffb08f);
+    this.time.delayedCall(140, () => this.towerImg.clearTint());
+    this.tweens.add({ targets: [this.towerImg, this.crackImg], angle: { from: -3, to: 0 }, duration: 600, ease: 'Elastic.easeOut' });
+    this.tweens.add({ targets: this.lanternGlow, alpha: 0.1, duration: 90, yoyo: true, repeat: 2 });
+    if (!this.reducedMotion) this.cameras.main.shake(220, 0.006);
+    this.dropStones(this.reducedMotion ? 2 : lostHeart ? 7 : 4, 50);
+    this.dust.explode(this.reducedMotion ? 3 : 14, L.towerX, L.groundY + 10);
+    const s = this.session;
+    const max = s ? MODES[s.mode].hearts : null;
+    if (s && max !== null && s.hearts !== null) {
+      const level = Math.min(2, max - s.hearts);
+      if (level > 0) this.crackImg.setTexture(`w-cracks-${level}`).setVisible(true);
+    }
+    // L'escargot et la chouette n'aiment pas ça.
+    this.hideSnail(2500);
+    this.tweens.add({ targets: this.owlImg, y: this.owlHome.y - 26, duration: 200, yoyo: true, ease: 'Quad.easeOut' });
+  }
+
+  /** Pierres qui se détachent du phare et rebondissent au sol. */
+  private dropStones(n: number, spread: number): void {
+    for (let i = 0; i < n; i++) {
+      const key = this.tex(`w-rock-${i % 4}`, () => Wd.rock((i % 4) + 1));
+      const x0 = L.towerX + Phaser.Math.Between(-32, 32);
+      const y0 = Phaser.Math.Between(320, 520);
+      const r = this.add.image(x0, y0, key).setScale(K * Phaser.Math.FloatBetween(0.8, 1.5)).setDepth(8);
+      const ground = L.groundY + Phaser.Math.Between(0, 16);
+      const dur = 450 + (ground - y0) * 1.4;
+      this.tweens.add({ targets: r, x: x0 + Phaser.Math.Between(-spread, spread * 2), duration: dur });
+      this.tweens.add({ targets: r, y: ground, angle: Phaser.Math.Between(-400, 400), duration: dur, ease: 'Quad.easeIn', onComplete: () => {
+        this.dust.explode(2, r.x, ground);
+        this.tweens.add({ targets: r, y: ground - 12, duration: 140, yoyo: true, ease: 'Quad.easeOut' });
+        this.tweens.add({ targets: r, alpha: 0, delay: 1800, duration: 500, onComplete: () => r.destroy() });
+      } });
+    }
+  }
+
+  /** Défaite : le phare tremble, explose en morceaux, puis les monstres dansent. */
+  private collapseTower(done: () => void): void {
+    this.busy = true;
+    this.enemyWalking = false;
+    this.sfx.collapse();
+    this.lanternTween?.stop();
+    this.tweens.add({ targets: this.lanternGlow, alpha: 0, duration: 700 });
+    // La chouette s'envole, l'escargot se cache.
+    this.hideSnail(8000);
+    this.tweens.add({ targets: this.owlImg, x: this.owlHome.x - 700, y: -120, angle: -25, duration: 1600, ease: 'Quad.easeIn' });
+    if (!this.reducedMotion) this.cameras.main.shake(900, 0.01);
+    this.tweens.add({ targets: [this.towerImg, this.crackImg], angle: { from: -3, to: 3 }, duration: 60, yoyo: true, repeat: 7 });
+    this.crackImg.setTexture('w-cracks-2').setVisible(true);
+    this.dropStones(this.reducedMotion ? 3 : 10, 90);
+    this.time.delayedCall(800, () => this.explodeTower());
+    this.time.delayedCall(1500, () => this.monstersDance());
+    this.time.delayedCall(6200, done);
+  }
+
+  private explodeTower(): void {
+    const tex = this.textures.get('b-tower');
+    const src = tex.getSourceImage() as HTMLCanvasElement;
+    const slices = 6;
+    const sh = Math.floor(src.height / slices);
+    const top = L.groundY + 26 - B.TOWER_H;
+    const pieceH = B.TOWER_H / slices;
+    this.towerImg.setVisible(false);
+    this.crackImg.setVisible(false);
+    const g = 1500;
+    for (let i = 0; i < slices; i++) {
+      const name = `piece-${i}`;
+      if (!tex.has(name)) tex.add(name, 0, 0, i * sh, src.width, sh);
+      const y0 = top + (i + 0.5) * pieceH;
+      const piece = this.add.image(L.towerX, y0, 'b-tower', name).setScale(K).setDepth(8);
+      this.wreck.push(piece);
+      const height = 1 - i / slices;
+      const vx = Phaser.Math.Between(-120, 320) * (0.4 + height);
+      const vy = -Phaser.Math.Between(250, 560) * (0.3 + height);
+      const spin = Phaser.Math.Between(-540, 540);
+      const ground = L.groundY + 8 - Phaser.Math.Between(0, 10);
+      const p = { t: 0 };
+      this.tweens.add({
+        targets: p,
+        t: 1.8,
+        duration: 1800,
+        onUpdate: () => {
+          const t = p.t;
+          const y = y0 + vy * t + 0.5 * g * t * t;
+          if (y >= ground && t > 0.1) {
+            if (piece.getData('landed')) return;
+            piece.setData('landed', true).setY(ground);
+            this.dust.explode(this.reducedMotion ? 1 : 5, piece.x, ground);
+            return;
+          }
+          piece.setPosition(L.towerX + vx * t, y).setAngle(spin * t);
+        },
+      });
+    }
+    if (!this.reducedMotion) {
+      this.cameras.main.shake(500, 0.016);
+      const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xffd6a0, 0.35).setDepth(80).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 400, onComplete: () => flash.destroy() });
+      for (let k = 0; k < 4; k++) this.dust.explode(18, L.towerX + Phaser.Math.Between(-40, 40), top + k * 70);
+      this.sparks.explode(40, L.towerX, top + 60);
+    }
+    this.dropStones(this.reducedMotion ? 3 : 12, 160);
+    const rub = this.add.image(L.towerX, L.groundY + 24, this.tex('w-rubble', Wd.rubble)).setOrigin(0.5, 1).setScale(0).setDepth(7);
+    this.wreck.push(rub);
+    this.tweens.add({ targets: rub, scale: K, delay: 500, duration: 500, ease: 'Back.easeOut' });
+  }
+
+  /** Les monstres arrivent en sautillant et dansent sur les ruines. */
+  private monstersDance(): void {
+    if (this.enemy) {
+      this.enemy.obj.destroy();
+      this.enemy = null;
+    }
+    this.sfx.danceTune();
+    this.sfx.laugh(0.4);
+    this.sfx.laugh(1.9);
+    const kinds: EnemyKind[] = ['trotteur', 'mordillon', 'carapacon', 'mordillon', 'trotteur'];
+    kinds.forEach((kind, i) => {
+      this.tex(`w-${kind}-0`, () => Wd.creature(kind, 0));
+      this.tex(`w-${kind}-1`, () => Wd.creature(kind, 1));
+      const x = 690 + i * 115;
+      const sc = K * Wd.CREATURE_SCALE[kind] * 0.85;
+      const d = this.add.image(W + 60 + i * 40, L.groundY + 24, `w-${kind}-0`).setOrigin(0.5, 1).setScale(sc).setDepth(11);
+      this.wreck.push(d);
+      this.tweens.add({ targets: d, x, delay: i * 80, duration: 520, ease: 'Quad.easeOut', onComplete: () => {
+        if (this.reducedMotion) return;
+        this.tweens.add({ targets: d, y: L.groundY + 24 - Phaser.Math.Between(22, 40), duration: 240 + i * 20, yoyo: true, repeat: -1, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: d, angle: { from: -10, to: 10 }, duration: 480, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.loops.push(this.time.addEvent({ delay: 480, loop: true, callback: () => {
+          if (!d.active) return;
+          d.setFlipX(!d.flipX);
+          d.setTexture(`w-${kind}-${d.flipX ? 1 : 0}`);
+        } }));
+      } });
+      if (i === 1 || i === 3) {
+        const bx = x;
+        const by = L.groundY - 200;
+        const bub = this.add.image(bx, by, this.tex('w-bubble', () => Wd.bubble(130, 54))).setScale(0).setDepth(12);
+        const t = this.add.text(bx, by - 6, i === 1 ? 'Ha ha ha !' : 'Hé hé !', style(22, B.C.ink, 800)).setOrigin(0.5).setScale(0).setDepth(13);
+        this.wreck.push(bub, t);
+        this.tweens.add({ targets: bub, scale: K, delay: 600 + i * 200, duration: 300, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: t, scale: 1, delay: 600 + i * 200, duration: 300, ease: 'Back.easeOut' });
+      }
+    });
+  }
+
+  /** Remet le décor en état pour une nouvelle partie. */
+  private resetWorld(): void {
+    for (const l of this.loops) l.remove();
+    this.loops = [];
+    for (const o of this.wreck) {
+      this.tweens.killTweensOf(o);
+      o.destroy();
+    }
+    this.wreck = [];
+    this.towerImg.setVisible(true).setAngle(0);
+    this.crackImg.setVisible(false).setAngle(0);
+    this.pulseLantern();
+    this.tweens.killTweensOf(this.owlImg);
+    this.owlImg.setPosition(this.owlHome.x, this.owlHome.y).setAngle(0);
   }
 
   private fireVolley(used: number[], target: number, perfect: boolean, to: Phaser.Math.Vector2, onImpact: () => void): void {
@@ -939,7 +1135,9 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const launch = () => {
       const rune = this.add.image(fuse.x, fuse.y, this.tex(`b-rune-${target}`, () => B.rune(target))).setScale(0).setDepth(45);
       const halo = this.add.image(fuse.x, fuse.y, 'b-glow').setBlendMode(Phaser.BlendModes.ADD).setScale(0).setDepth(44);
-      this.sparks.explode(this.reducedMotion ? 2 : 5, fuse.x, fuse.y);
+      // Anneau discret autour de la rune : rien ne doit masquer le nombre.
+      const ring = this.add.circle(fuse.x, fuse.y, 30).setStrokeStyle(4, 0x5fd3bc).setDepth(44);
+      this.tweens.add({ targets: ring, scale: 2.2, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
       this.tweens.add({ targets: rune, scale: K, duration: 220, ease: 'Back.easeOut' });
       this.tweens.add({ targets: halo, scale: perfect ? 0.9 : 0.6, duration: 220, ease: 'Sine.easeOut' });
       const trail = this.add.particles(0, 0, glowKey, {

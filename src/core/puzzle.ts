@@ -171,6 +171,7 @@ export function pickTarget(cubes: number[], cfg: PuzzleConfig, rng: Rng): Puzzle
 export function generatePuzzle(cfg: PuzzleConfig, rng: Rng): Puzzle {
   validateConfig(cfg);
   const cubes = Array.from({ length: cfg.cubeCount }, () => randomCube(cfg, rng));
+  diversify(cubes, cfg, rng);
   return pickTarget(cubes, cfg, rng);
 }
 
@@ -180,6 +181,40 @@ export function generatePuzzle(cfg: PuzzleConfig, rng: Rng): Puzzle {
  */
 export function refillAndNext(cubes: readonly number[], used: readonly number[], cfg: PuzzleConfig, rng: Rng): Puzzle {
   const next = cubes.slice();
-  for (const i of used) next[i] = randomCube(cfg, rng);
+  // Les solutions optimales consomment surtout les gros cubes : si ceux qui
+  // restent sont trop petits en moyenne, on remplace plutôt par de grandes valeurs.
+  const kept = cubes.filter((_, i) => !used.includes(i));
+  const mid = (cfg.minValue + cfg.maxValue) / 2;
+  const keptMean = kept.length ? kept.reduce((a, b) => a + b, 0) / kept.length : mid;
+  for (const i of used) {
+    next[i] = keptMean < mid && rng.next() < 0.7 ? rng.int(Math.ceil(mid), cfg.maxValue) : randomCube(cfg, rng);
+  }
+  diversify(next, cfg, rng);
   return pickTarget(next, cfg, rng);
+}
+
+/** Nombre maximal d'exemplaires d'une même valeur dans une grille. */
+export function maxDuplicates(cubeCount: number): number {
+  return Math.max(2, Math.ceil(cubeCount / 6));
+}
+
+/**
+ * Évite qu'une grille s'appauvrisse au fil des tirs : les meilleures solutions
+ * consomment surtout les gros cubes, et les petits finiraient par s'accumuler.
+ * Une valeur présente trop souvent voit ses exemplaires en trop relancés.
+ */
+export function diversify(cubes: number[], cfg: PuzzleConfig, rng: Rng): void {
+  const max = maxDuplicates(cubes.length);
+  const range = cfg.maxValue - cfg.minValue + 1;
+  if (range * max < cubes.length) return; // impossible de respecter la limite avec si peu de valeurs
+  for (let guard = 0; guard < 200; guard++) {
+    const counts = new Map<number, number[]>();
+    cubes.forEach((v, i) => counts.set(v, [...(counts.get(v) ?? []), i]));
+    const over = [...counts.values()].find((idx) => idx.length > max);
+    if (!over) return;
+    const i = over[over.length - 1];
+    let v = randomCube(cfg, rng);
+    for (let k = 0; k < 20 && (counts.get(v)?.length ?? 0) >= max; k++) v = randomCube(cfg, rng);
+    cubes[i] = v;
+  }
 }

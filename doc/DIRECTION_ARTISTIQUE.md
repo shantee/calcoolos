@@ -1,4 +1,10 @@
-# Direction artistique : point de contrôle B
+# Direction artistique
+
+> **Décision du 24/10/2026 : variante B retenue par Philippe.** Les monstres ont ensuite été redessinés en rouge,
+> avec des crocs, pour qu'on comprenne tout de suite que ce sont des ennemis ; les alliés (phare, chouette, cubes)
+> restent crème, safran et sarcelle.
+
+## Point de contrôle B (historique)
 
 Deux variantes de la **même scène jouable** : même règle, même mise en page, même ennemi (le « Mordillon à
 pancarte »), même phare à défendre. Seuls le rendu et le style des mouvements changent. Captures réelles (Chromium)
@@ -54,7 +60,7 @@ du hub harmonisée.
 |---|---|
 | Encre | `#1d1a2b`, 4-5 px pour les personnages, 3 px pour les détails |
 | Ombre | aplat plus foncé, décalé vers le bas-droite (lumière en haut à gauche) |
-| Couleurs d'action | safran = sélection et récompense, sarcelle = magie et validation, corail = ennemis et « trop » |
+| Couleurs d'action | safran = sélection et récompense, sarcelle = magie et alliés, rouge (`#d8433b`) = ennemis |
 | Chiffres | Bricolage Grotesque 800, jamais recouverts par un effet, jamais en rotation pendant un vol |
 | Échelle | scène 1280×720 ; tuile 84 px ; ennemi environ 150 px |
 | Effets | courts (moins d'une seconde), éclair limité à 16 % d'opacité, secousses supprimées si « réduire les animations » |

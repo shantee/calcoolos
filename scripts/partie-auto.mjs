@@ -19,6 +19,8 @@ const base = process.argv[2] ?? 'http://localhost:5173';
 const out = process.argv[3] ?? 'CAPTURES';
 const mode = process.argv[4] ?? 'tranquille';
 const niveau = process.argv[5] ?? 'explorateur';
+// « perdre » : mode Défi sans jamais répondre, monstres accélérés, pour filmer la défaite.
+const perdre = mode === 'perdre';
 mkdirSync(out, { recursive: true });
 const problems = [];
 
@@ -35,11 +37,36 @@ const shot = async (name) => {
   console.log('capture :', `${out}/jeu-${name}.png`);
 };
 
-await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=${niveau}&graine=18`, { waitUntil: 'networkidle' });
+await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=${niveau}&graine=18${perdre ? '&accelere=6' : ''}`, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => window.__siege !== undefined, null, { timeout: 15000 });
 await page.waitForTimeout(1200);
 await shot('1-intro');
-await page.evaluate((m) => window.__siege.start(m), mode);
+await page.evaluate((m) => window.__siege.start(m), perdre ? 'defi' : mode);
+if (perdre) {
+  await page.waitForFunction(() => window.__siege.session().hearts === 2, null, { timeout: 60000 });
+  await page.waitForTimeout(250);
+  await shot('p1-phare-touche');
+  await page.waitForFunction(() => window.__siege.session().phase === 'lost', null, { timeout: 90000 });
+  await page.waitForTimeout(1250);
+  await shot('p2-explosion');
+  await page.waitForTimeout(3000);
+  await shot('p3-danse');
+  await page.waitForFunction(() => window.__siege.overlay(), null, { timeout: 15000 });
+  await page.waitForTimeout(700);
+  await shot('p4-fin');
+  // Rejouer remet le phare debout.
+  await page.evaluate(() => window.__siege.start('tranquille'));
+  await page.waitForTimeout(2500);
+  await shot('p5-rejouer');
+  await browser.close();
+  const real = problems;
+  if (real.length) {
+    console.log('Problèmes relevés :');
+    for (const p of real) console.log(' -', p);
+    process.exitCode = 1;
+  } else console.log('Aucune erreur de console ni de chargement.');
+  process.exit();
+}
 
 const ready = () =>
   page.waitForFunction(() => {
