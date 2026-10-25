@@ -72,7 +72,7 @@ for (const f of FORMATS) {
     const ratio = e.canvas.w / e.canvas.h;
     check(Math.abs(ratio - 16 / 9) < 0.01, `${j.id}/${f.nom} : proportions gardées (${ratio.toFixed(3)})`);
     check(e.canvas.x >= -0.5 && e.canvas.y >= -0.5 && e.canvas.x + e.canvas.w <= e.vw + 0.5 && e.canvas.y + e.canvas.h <= e.vh + 0.5, `${j.id}/${f.nom} : jeu entièrement visible`);
-    check(e.barre && e.barre.x >= e.canvas.x && e.barre.y >= e.canvas.y && e.barre.x + e.barre.w <= e.canvas.x + e.canvas.w, `${j.id}/${f.nom} : boutons posés dans le jeu`);
+    check(e.barre && e.barre.x >= e.canvas.x && e.barre.y >= e.canvas.y && e.barre.x + e.barre.w <= e.canvas.x + e.canvas.w && e.barre.y + e.barre.h <= e.canvas.y + e.canvas.h, `${j.id}/${f.nom} : boutons posés dans le jeu`);
     if (f.nom === 'ordi' || f.nom === 'ipad-paysage' || f.nom === 'telephone-paysage') await page.screenshot({ path: `${out}/pe-${j.id}-${f.nom}.png` });
     await page.close();
   }

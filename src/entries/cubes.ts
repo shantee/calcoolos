@@ -26,7 +26,7 @@ async function start(): Promise<void> {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [CubesDeSiegeScene],
   });
-  installerPleinEcran(game);
+  installerPleinEcran(game, { droite: 1268, milieu: 688 });
 }
 
 void start();

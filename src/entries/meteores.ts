@@ -26,7 +26,7 @@ async function start(): Promise<void> {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [MeteorScene],
   });
-  installerPleinEcran(game);
+  installerPleinEcran(game, { droite: 962, milieu: 690 });
 }
 
 void start();

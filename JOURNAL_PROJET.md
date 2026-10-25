@@ -50,7 +50,7 @@ plein écran dans les quatre jeux, pensé pour la tablette.
     prochain coup réussi fait double dégâts (le score ne change pas), tampon « MÉGA ! ».
   - Correction au passage : Phaser pouvait relire deux fois la file clavier quand une image est lente (un chiffre
     comptait double) ; les touches sont désormais dédoublonnées.
-- **Plein écran** (`src/game/plein-ecran.ts`, quatre jeux) : deux boutons ronds en haut du jeu (Accueil, Plein
+- **Plein écran** (`src/game/plein-ecran.ts`, quatre jeux) : deux boutons ronds en bas à droite (Accueil, Plein
   écran entrer/sortir) remplacent le lien du bas qui chevauchait « Son ». Plein écran demandé en lançant la partie
   (clic, doigt — au lever du doigt pour Chrome —, clavier), jamais forcé : refus du navigateur = le jeu continue ;
   sortie volontaire (Échap, bouton) = plus de demande dans cet onglet. Page entière en plein écran (les boutons

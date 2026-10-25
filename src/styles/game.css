@@ -24,7 +24,7 @@ body {
   background: #0d0a1c;
 }
 
-/* Boutons « Accueil » et « Plein écran », posés en haut du jeu par plein-ecran.ts. Sans
+/* Boutons « Accueil » et « Plein écran », posés en bas à droite du jeu par plein-ecran.ts. Sans
    JavaScript, le lien d'accueil reste en bas à droite. */
 .retour {
   position: fixed;

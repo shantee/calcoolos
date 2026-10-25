@@ -1,7 +1,7 @@
 /**
  * Plein écran et retour à l'accueil, communs aux quatre jeux.
  *
- * - Deux boutons ronds discrets en haut du jeu : « Accueil » et « Plein écran » (entrer / sortir).
+ * - Deux boutons ronds discrets en bas à droite du jeu : « Accueil » et « Plein écran » (entrer / sortir).
  * - Le jeu passe en plein écran quand on clique ou touche « Jouer », si le navigateur l'accepte.
  *   Les navigateurs n'autorisent le plein écran que juste après un geste (clic, toucher, touche) :
  *   on ne contourne jamais cette règle ; si la demande échoue, le jeu continue dans la page.
@@ -107,11 +107,17 @@ function icone(nom: keyof typeof ICONES): SVGSVGElement {
   return svg;
 }
 
+/** Coin où poser les boutons, en unités de la scène (1280 × 720) : bord droit et milieu vertical. */
+export interface Coin {
+  droite: number;
+  milieu: number;
+}
+
 /**
- * Installe les boutons sur la page d'un jeu. `ancre` : position des boutons, en fraction de la largeur
- * du jeu (le haut du jeu est libre dans les quatre jeux entre 20 % et 33 % de la largeur environ).
+ * Installe les boutons sur la page d'un jeu, en bas à droite, à l'endroit libre de chaque jeu
+ * (le coin même est souvent pris par « Son », un pavé ou un panneau).
  */
-export function installerPleinEcran(game: Phaser.Game, ancre = 0.2): void {
+export function installerPleinEcran(game: Phaser.Game, coin: Coin = { droite: 1268, milieu: 690 }): void {
   if (installe) return;
   installe = true;
   const barre = document.createElement('nav');
@@ -161,8 +167,11 @@ export function installerPleinEcran(game: Phaser.Game, ancre = 0.2): void {
     const r = canvas.getBoundingClientRect();
     const petit = r.height < 480;
     barre.classList.toggle('petit', petit);
-    barre.style.left = `${Math.round(r.left + r.width * ancre)}px`;
-    barre.style.top = `${Math.round(r.top + Math.max(6, r.height * 0.014))}px`;
+    const b = barre.getBoundingClientRect();
+    barre.style.left = `${Math.round(r.left + (coin.droite / 1280) * r.width - b.width)}px`;
+    // Jamais sous le bord du jeu (petits écrans : les boutons sont alors plus grands que l'espace prévu).
+    const haut = Math.min(r.top + (coin.milieu / 720) * r.height - b.height / 2, r.bottom - b.height - 4);
+    barre.style.top = `${Math.round(haut)}px`;
   };
   const surChangement = () => {
     // Sortie par Échap ou par le système : on ne réimpose plus le plein écran dans cet onglet.

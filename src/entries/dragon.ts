@@ -26,7 +26,7 @@ async function start(): Promise<void> {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [DragonScene],
   });
-  installerPleinEcran(game);
+  installerPleinEcran(game, { droite: 1000, milieu: 694 });
 }
 
 void start();
