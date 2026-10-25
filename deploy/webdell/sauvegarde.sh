@@ -23,7 +23,7 @@ printf '[client]\nuser=%s\npassword=%s\nhost=%s\n' "$(val DB_USER)" "$(val DB_PA
 
 umask 077
 file="$dir/calcoolos-$(date +%Y%m%d-%H%M%S).sql.gz"
-mariadb-dump --defaults-extra-file="$cnf" --single-transaction --no-tablespaces \
+mariadb-dump --defaults-file="$cnf" --single-transaction --no-tablespaces \
   --default-character-set=utf8mb4 "$dbname" | gzip -9 > "$file"
 find "$dir" -name 'calcoolos-*.sql.gz' -mtime +14 -delete
 echo "Sauvegarde : $file"
