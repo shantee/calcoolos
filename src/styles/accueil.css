@@ -167,6 +167,23 @@ h2 {
   background: linear-gradient(180deg, #1b1d4f 0%, #4b2b6b 70%, #a84d72 100%);
 }
 
+.lieu-fusee {
+  background: linear-gradient(180deg, #14152a 0%, #29366f 45%, #41a6f6 100%);
+}
+
+.pixel {
+  display: inline-grid;
+  place-items: center;
+  padding: 0 12px;
+  height: 2.2em;
+  font-family: 'Pixelify Sans', monospace;
+  background: #29366f;
+  color: var(--creme);
+  border: 3px solid var(--encre);
+  border-radius: 4px;
+  box-shadow: 0 4px 0 var(--encre);
+}
+
 .lanterne-ex {
   display: inline-grid;
   place-items: center;

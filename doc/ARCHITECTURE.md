@@ -201,3 +201,22 @@ dernières parties.
 Voir `doc/DEPLOIEMENT.md` (« Sécurité : ce qui est en place ») : argon2id, cookie HttpOnly + SameSite (+ Secure),
 CSRF par en-tête dédié et jeton, vérification de l'origine, limites de débit, SQL préparé, CSP stricte vérifiée par
 `scripts/csp-check.mjs`, pool PHP isolé.
+
+## Décollage !
+
+Jeu en **pixel art** (1 pixel d'art = 4 pixels d'écran, Phaser en mode `pixelArt`). Logique : `src/game/rocket/session.ts`
+(testée) ; scène : `src/game/rocket/rocket-scene.ts` ; dessins : `src/art/pixel-rocket.ts`.
+
+| Élément | Règle |
+|---|---|
+| Boucle | un calcul est toujours affiché ; bonne réponse = poussée (vitesse verticale 600 px/s, environ 280 px de hauteur) ; mauvaise réponse ou temps écoulé = pas de poussée (la bonne réponse est montrée) |
+| Réponse | jugée dès qu'elle a le bon nombre de chiffres ; clavier (rangée du haut sans Maj, même en AZERTY, ou pavé) ou pavé à l'écran |
+| Temps | court pour les calculs faciles (2 à 3 s pour 4 + 3), plus long pour les tables difficiles et les divisions ; × 1,5 en Tranquille, un peu plus court en altitude ; borné entre 2 et 11 s |
+| Calculs | menu du niveau (`src/core/expressions.ts`) ; au-dessus du ciel des dirigeables, 30 % viennent du niveau suivant |
+| Pilotage | gauche/droite en vol (accélération, glisse, vitesse plafonnée) ; posée, la fusée suit sa plateforme |
+| Monde | 5 étages jusqu'à 7 600 px : village, mer de nuages, ciel des dirigeables, espace, planète Bonbon ; plateformes plus étroites en montant, mobiles et fragiles dès les nuages ; chaque plateforme est à portée d'une seule poussée (testé sur 200 mondes) |
+| Chute | se poser plus bas sauve ; tomber de plus de 820 px sous la dernière plateforme sûre : la montgolfière de secours ramène la fusée (Défi : −1 cœur, sauf bouclier) ; atterrissage brutal (chute de plus de 520 px depuis le plus haut point du saut, soit plus de deux étages) : −1 cœur en Défi ; une plateforme fragile se reforme 4 s après sa chute |
+| Bonus | bouclier (protège d'une chute), sablier (5 calculs avec plus de temps), turbo (poussée × 1,35), étoile (+200), cœur ; étoiles à attraper en vol (+25) |
+| Points | `(20 + 30 × rapidité) × série` par calcul, +50 par nouvelle plateforme, +1 000 à l'arrivée (+300 par cœur restant) |
+| Étoiles | 1 pour la planète, + 1 si ≥ 85 % de calculs justes, + 1 si ≥ 95 % sans chute |
+| Police | les nombres utilisent une police pixel dessinée pour le projet (chiffres de PixelForge et signes + − × ÷ = ?) : avec la police pixel courante, le 5 ressemblait à un S |

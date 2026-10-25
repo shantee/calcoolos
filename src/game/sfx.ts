@@ -359,16 +359,16 @@ export class Sfx {
   private musicNext = 0;
   private musicTempo = 112;
   private musicIntensity = 0;
-  private musicTrack: 'espace' | 'dragon' = 'espace';
+  private musicTrack: 'espace' | 'dragon' | 'fusee' = 'espace';
 
   /**
    * Petite boucle chiptune jouée en direct (basse, arpège, charleston), composée
    * pour le jeu. `intensity` : 0 calme, 1 mode « en feu », 2 boss.
    */
-  music(on: boolean, intensity = 0, track: 'espace' | 'dragon' = 'espace'): void {
+  music(on: boolean, intensity = 0, track: 'espace' | 'dragon' | 'fusee' = 'espace'): void {
     this.musicIntensity = intensity;
     this.musicTrack = track;
-    this.musicTempo = (track === 'dragon' ? [100, 112, 118] : [112, 124, 136])[intensity] ?? 112;
+    this.musicTempo = (track === 'dragon' ? [100, 112, 118] : track === 'fusee' ? [128, 140, 104] : [112, 124, 136])[intensity] ?? 112;
     if (!on) {
       if (this.musicTimer !== null) window.clearInterval(this.musicTimer);
       this.musicTimer = null;
@@ -390,6 +390,10 @@ export class Sfx {
     if (!this.ctx || !this.musicBus) return;
     if (this.musicTrack === 'dragon') {
       this.scheduleDragon();
+      return;
+    }
+    if (this.musicTrack === 'fusee') {
+      this.scheduleRocket();
       return;
     }
     const sixteenth = 60 / this.musicTempo / 4;
@@ -533,6 +537,113 @@ export class Sfx {
     this.noise(0.6, { gain: 0.45, filter: 1300, q: 0.5 });
     this.tone(500, 0.3, { wave: 'sine', gain: 0.12, slideTo: 150 });
     this.bloop();
+  }
+
+  /**
+   * Musique de « Décollage ! » (composée pour le jeu) : chiptune joyeuse en do
+   * majeur (do, sol, la mineur, fa). Intensité 0 : village et nuages ; 1 : haut
+   * du ciel, plus de batterie ; 2 : espace, arpèges rêveurs et plus lents.
+   */
+  private scheduleRocket(): void {
+    if (!this.ctx || !this.musicBus) return;
+    const sixteenth = 60 / this.musicTempo / 4;
+    const space = this.musicIntensity >= 2;
+    const chords = [
+      [262, 330, 392],
+      [196, 247, 294],
+      [220, 262, 330],
+      [175, 220, 262],
+    ];
+    // Mélodie en doubles croches (demi-tons au-dessus du do 4, -1 = silence).
+    const tune = [12, -1, 7, -1, 9, 7, 4, -1, 7, -1, 12, 14, 16, -1, 14, 12, 11, -1, 7, -1, 11, 12, 14, -1, 11, -1, 7, -1, 2, 4, 7, -1, 9, -1, 12, -1, 9, 7, 9, -1, 16, -1, 14, 12, 9, -1, 12, -1, 5, -1, 9, -1, 12, 9, 7, 5, 4, -1, 5, 7, 9, 11, 12, -1];
+    while (this.musicNext < this.ctx.currentTime + 0.12) {
+      const step = this.musicStep % 64;
+      const chord = chords[Math.floor(step / 16)];
+      const at = this.musicNext;
+      const out = this.musicBus;
+      if (space) {
+        // Arpège rêveur, notes longues.
+        const f = chord[[0, 1, 2, 1][step % 4]] * (step % 8 < 4 ? 2 : 4);
+        this.tone(f, sixteenth * 3, { wave: 'triangle', gain: 0.05, at, out });
+        if (step % 16 === 0) this.tone(chord[0] / 2, sixteenth * 15, { wave: 'sine', gain: 0.14, at, out, attack: 0.2 });
+        if (step % 8 === 0 && tune[step] >= 0) this.tone(262 * 2 ** (tune[step] / 12), sixteenth * 6, { wave: 'sine', gain: 0.05, at, out, attack: 0.05 });
+      } else {
+        // Basse sautillante.
+        if (step % 2 === 0) this.tone(chord[(step / 2) % 2 === 0 ? 0 : 2] / 2, sixteenth * 1.6, { wave: 'triangle', gain: 0.15, at, out });
+        const n = tune[step];
+        if (n >= 0) this.tone(262 * 2 ** (n / 12), sixteenth * 1.8, { wave: 'square', gain: 0.03, at, out });
+        if (step % 4 === 0) this.tone(110, 0.09, { wave: 'sine', gain: 0.2, slideTo: 45, at, out });
+        if (step % 8 === 4) this.noise(0.07, { gain: 0.1, filter: 1800, q: 0.8, at, out });
+        if (this.musicIntensity >= 1 && step % 2 === 1) this.noise(0.025, { gain: 0.05, filter: 7500, q: 1, at, out });
+        if (this.musicIntensity >= 1 && step % 4 === 2) this.tone(chord[1] * 2, sixteenth, { wave: 'square', gain: 0.015, at, out });
+      }
+      this.musicNext += sixteenth;
+      this.musicStep++;
+    }
+  }
+
+  // --- Petits sons de « Décollage ! » ---------------------------------------------------------
+
+  /** Poussée du réacteur (plus grave et plus longue en turbo). */
+  thrust(turbo = false): void {
+    this.noise(turbo ? 0.7 : 0.45, { gain: 0.35, filter: turbo ? 600 : 900, q: 0.6 });
+    this.tone(turbo ? 160 : 220, turbo ? 0.6 : 0.4, { wave: 'square', gain: 0.05, slideTo: turbo ? 900 : 700 });
+  }
+
+  /** Atterrissage : « pouf » doux, ou « bong » brutal. */
+  land(hard: boolean): void {
+    this.noise(hard ? 0.3 : 0.12, { gain: hard ? 0.5 : 0.25, filter: hard ? 400 : 700, type: 'lowpass' });
+    this.tone(hard ? 90 : 180, hard ? 0.3 : 0.12, { wave: 'square', gain: hard ? 0.08 : 0.05, slideTo: hard ? 45 : 120 });
+    if (!hard) this.tone(660, 0.08, { wave: 'square', gain: 0.025, delay: 0.05 });
+  }
+
+  /** Tic-tac quand le temps presse. */
+  tick(high: boolean): void {
+    this.tone(high ? 1320 : 990, 0.04, { wave: 'square', gain: 0.03 });
+  }
+
+  /** Temps écoulé : petit glissando qui descend. */
+  timeout(): void {
+    this.tone(520, 0.25, { wave: 'square', gain: 0.04, slideTo: 200 });
+  }
+
+  /** Bonus ramassé : arpège qui monte. */
+  powerUp(): void {
+    [523, 659, 784, 1047, 1319].forEach((f, i) => this.tone(f, 0.1, { wave: 'square', gain: 0.045, delay: i * 0.05 }));
+  }
+
+  /** Sifflement de chute. */
+  whistle(): void {
+    this.tone(1400, 0.9, { wave: 'sine', gain: 0.06, slideTo: 300 });
+  }
+
+  /** Le petit drone de secours qui ramène la fusée (teuf-teuf). */
+  rescue(): void {
+    for (let i = 0; i < 6; i++) this.tone(140 + (i % 2) * 30, 0.06, { wave: 'square', gain: 0.05, delay: i * 0.09 });
+    this.tone(880, 0.15, { wave: 'triangle', gain: 0.05, delay: 0.6 });
+  }
+
+  /** Une plateforme fragile s'effrite. */
+  crumble(): void {
+    for (let i = 0; i < 5; i++) this.noise(0.06, { gain: 0.2, filter: 1200 + i * 400, q: 2, delay: i * 0.07 });
+  }
+
+  /** Meuh ! */
+  moo(): void {
+    this.tone(150, 0.7, { wave: 'sawtooth', gain: 0.06, slideTo: 110, attack: 0.1 });
+    this.tone(152, 0.7, { wave: 'sawtooth', gain: 0.04, slideTo: 112, attack: 0.1 });
+  }
+
+  /** Piou-piou d'oiseau. */
+  chirp(): void {
+    this.tone(2200, 0.06, { wave: 'sine', gain: 0.06, slideTo: 2800 });
+    this.tone(2400, 0.06, { wave: 'sine', gain: 0.06, slideTo: 3000, delay: 0.1 });
+  }
+
+  /** « Youpi » aigu d'un habitant content. */
+  yay(): void {
+    this.tone(700, 0.08, { wave: 'square', gain: 0.03, slideTo: 1100 });
+    this.tone(1100, 0.12, { wave: 'square', gain: 0.03, slideTo: 1500, delay: 0.09 });
   }
 
   bump(): void {

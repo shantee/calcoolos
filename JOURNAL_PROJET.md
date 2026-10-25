@@ -9,6 +9,7 @@
 | C. Jeu complet « Cubes de siège » | fait : jouable de bout en bout, victoire et défaite testées dans le navigateur |
 | Deuxième jeu « Pluie de météores » | fait : jouable de bout en bout, victoire et défaite testées |
 | Troisième jeu « Le Dragon gourmand » | fait : jouable de bout en bout, victoire et défaite testées |
+| Quatrième jeu « Décollage ! » (pixel art, idée de Philippe) | fait : jouable de bout en bout, testé dans Chromium |
 | D. Plateforme (invité, comptes, profils, sauvegardes) | fait : API PHP + MariaDB, parcours complet testé, comptes isolés |
 | E. Finition, déploiement Dell | kit et guide prêts, répétés dans un conteneur ; **rien installé sur le Dell** |
 
@@ -22,6 +23,34 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Avant la mise en ligne** : choisir le nom de domaine, donner l'accord pour le branchement au tunnel Cloudflare,
   faire relire la page de confidentialité (identité du responsable, hébergement). Voir `doc/DEPLOIEMENT.md`.
+
+## 2026-10-25 : Claude, session 6 (quatrième jeu « Décollage ! »)
+
+**Demande de Philippe** : un jeu de pur calcul mental en pixel art, plein de petits détails marrants : les calculs
+restent peu de temps (moins pour les faciles), chaque bonne réponse propulse une fusée qu'il faut piloter pour se poser
+sur des plateformes ; un monde vertical à explorer (village, nuages habités, espace) jusqu'à une planète ; bonus sur
+les plateformes. Dernier jeu pour le moment.
+
+**Fait**
+- **Décollage !** (`jeu/decollage.html`) : logique pure testée (`src/game/rocket/session.ts`, 13 tests dont un
+  pilote automatique qui atteint la planète dans 80 mondes avec une seule poussée par plateforme), scène pixel art,
+  musique chiptune et sons dédiés.
+- Le temps dépend du calcul (2 à 3 s pour 4 + 3, davantage pour 7 × 8 ou 56 ÷ 8), plus long en Tranquille, un peu
+  plus court en altitude ; en haut, des calculs du niveau suivant s'invitent. En cas d'erreur, la bonne réponse
+  s'affiche.
+- Cinq étages : le village (maisons, moulin, vache qui meugle, enfants, cerf-volant), la mer de nuages (habitants
+  nuageux, moutons, arc-en-ciel), le ciel des dirigeables (château du roi des nuages, dirigeable), l'espace (satellite,
+  soucoupe, lune qui fait un clin d'œil, astronaute, le canard perdu de Pluie de météores), la planète Bonbon
+  (sucettes, maisons en guimauve, oursons qui dansent à l'arrivée).
+- Plateformes en terre, en nuage, planches tenues par des ballons, métal ; mobiles à hélice, fragiles qui s'effritent ;
+  habitants qui saluent quand on se pose ; bonus bouclier, sablier, turbo, étoile, cœur ; étoiles à attraper en vol.
+- Chute : une montgolfière de secours ramène la fusée au bout d'une corde (Défi : −1 cœur, sauf bouclier).
+- Police pixel des nombres dessinée pour le jeu : avec la police pixel habituelle, le 5 ressemblait à un S.
+- Chiffres du clavier acceptés sans Maj sur un clavier AZERTY (aussi dans Pluie de météores).
+- Plateforme : résultats, classements, tableau de bord et succès (« Astronaute ») connaissent le nouveau jeu.
+
+**Limites** : sons et musique non écoutés par un humain ; sur téléphone, piloter et taper en même temps demande deux
+mains (boutons à gauche, pavé à droite).
 
 ## 2026-10-24 : Claude, session 5 (troisième jeu, étape D, kit de déploiement)
 

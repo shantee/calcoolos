@@ -1,4 +1,5 @@
 import '@fontsource-variable/bricolage-grotesque';
+import '@fontsource/pixelify-sans/700.css';
 import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';

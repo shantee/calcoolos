@@ -670,8 +670,10 @@ export class MeteorScene extends Phaser.Scene {
     const kb = this.input.keyboard;
     if (!kb) return;
     kb.on('keydown', (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key)) {
-        this.onDigit(e.key);
+      // Chiffres : rangée du haut (même sans Maj sur un clavier AZERTY) ou pavé numérique.
+      const digit = /^(?:Digit|Numpad)([0-9])$/.exec(e.code)?.[1] ?? (/^[0-9]$/.test(e.key) ? e.key : null);
+      if (digit) {
+        this.onDigit(digit);
         return;
       }
       if (e.key === 'Backspace') this.onBackspace();

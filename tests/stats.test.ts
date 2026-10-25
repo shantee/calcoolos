@@ -58,9 +58,9 @@ describe('tableau de bord', () => {
 
   it('attribue les badges', () => {
     const many = Array.from({ length: 10 }, (_, i) => ({ ...base, date: `2026-10-${String(10 + i).padStart(2, '0')}T10:00:00.000Z` }));
-    const s = summarize([...many, { ...base, jeu: 'cubes' as const }, { ...base, jeu: 'meteores' as const, etoiles: 3 }], now);
+    const s = summarize([...many, { ...base, jeu: 'cubes' as const }, { ...base, jeu: 'meteores' as const, etoiles: 3 }, { ...base, jeu: 'fusee' as const }], now);
     const earned = s.badges.filter((b) => b.earned).map((b) => b.id);
-    expect(earned).toEqual(expect.arrayContaining(['premiere', 'dix', 'phare', 'station', 'dragon', 'trois-jeux', 'etoiles', 'defi', 'regulier']));
+    expect(earned).toEqual(expect.arrayContaining(['premiere', 'dix', 'phare', 'station', 'dragon', 'fusee', 'trois-jeux', 'etoiles', 'defi', 'regulier']));
     expect(earned).not.toContain('tables');
     expect(summarize([], now).badges.every((b) => !b.earned)).toBe(true);
   });

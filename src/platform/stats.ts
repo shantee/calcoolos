@@ -9,6 +9,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   cubes: 'Cubes de siège',
   meteores: 'Pluie de météores',
   dragon: 'Le Dragon gourmand',
+  fusee: 'Décollage !',
 };
 
 export const TIER_NAMES: Record<string, string> = {
@@ -101,7 +102,8 @@ export function summarize(results: readonly StoredResult[], now = new Date()): S
     { id: 'phare', name: 'Gardien du phare', hint: 'Gagner à Cubes de siège', earned: wonGame('cubes') },
     { id: 'station', name: 'Pilote de la station', hint: 'Gagner à Pluie de météores', earned: wonGame('meteores') },
     { id: 'dragon', name: 'Ami du dragon', hint: 'Gagner au Dragon gourmand', earned: wonGame('dragon') },
-    { id: 'trois-jeux', name: 'Tour de l’archipel', hint: 'Gagner aux trois jeux', earned: wonGame('cubes') && wonGame('meteores') && wonGame('dragon') },
+    { id: 'fusee', name: 'Astronaute', hint: 'Atteindre la planète Bonbon', earned: wonGame('fusee') },
+    { id: 'trois-jeux', name: 'Tour de l’archipel', hint: 'Gagner aux quatre jeux', earned: wonGame('cubes') && wonGame('meteores') && wonGame('dragon') && wonGame('fusee') },
     { id: 'etoiles', name: 'Trois étoiles', hint: 'Finir une partie avec 3 étoiles', earned: sorted.some((r) => r.etoiles >= 3) },
     { id: 'defi', name: 'Défi relevé', hint: 'Gagner une partie en mode Défi', earned: sorted.some((r) => r.gagne && r.mode === 'defi') },
     { id: 'tables', name: 'As des tables', hint: '50 multiplications justes à 90 %', earned: !!mul && mul.ok >= 50 && mul.ok / (mul.ok + mul.ko) >= 0.9 },

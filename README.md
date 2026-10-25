@@ -3,8 +3,8 @@
 Plateforme francophone de jeux de calcul mental, pensée d'abord pour les 7-12 ans et agréable pour les plus grands.
 Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer sur un monstre, et non pour répondre à un questionnaire.
 
-> **État : trois jeux complets et jouables** (direction 2D illustrée) : « Cubes de siège », « Pluie de météores » et
-> « Le Dragon gourmand », plus la plateforme (invité, espace famille, profils, progrès, classements) avec son API PHP.
+> **État : quatre jeux complets et jouables** : « Cubes de siège », « Pluie de météores », « Le Dragon gourmand »
+> (2D illustrée) et « Décollage ! » (pixel art), plus la plateforme (invité, espace famille, profils, progrès, classements) avec son API PHP.
 > **Pas encore en ligne** : le kit d'installation est prêt (`doc/DEPLOIEMENT.md`) et attend le feu vert.
 > Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md).
 
@@ -39,6 +39,7 @@ Pages :
 - `/jeu/cubes-de-siege.html` : Cubes de siège ;
 - `/jeu/pluie-de-meteores.html` : Pluie de météores ;
 - `/jeu/dragon-gourmand.html` : Le Dragon gourmand ;
+- `/jeu/decollage.html` : Décollage ! ;
 - `/compte.html` (espace parents), `/tableau.html` (mes progrès), `/classements.html`, `/confidentialite.html` ;
 - `/prototypes/a.html`, `/prototypes/b.html` : prototypes du choix de direction artistique (figés).
 
@@ -63,6 +64,7 @@ node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
 node scripts/test-un-seul-monstre.mjs http://localhost:4173
 node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES gagner stratege
 node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES perdre explorateur
+node scripts/fusee-auto.mjs http://localhost:5173 CAPTURES gagner explorateur
 node scripts/plateforme-e2e.mjs http://localhost:5173 CAPTURES   # parcours complet (npm run api + npm run dev)
 node scripts/csp-check.mjs                                        # dist/ avec les en-têtes de sécurité de Nginx
 ```
@@ -87,6 +89,11 @@ astronaute, les petits robots… et attrape le canard s'il passe.
 **Le Dragon gourmand** : guide le dragon (souris, doigt ou flèches) et avale des lanternes pour faire exactement le
 nombre demandé (en additionnant, ou en multipliant aux niveaux Stratège et Maître). Les lanternes avalées restent
 visibles dans son corps ; s'il dépasse, il a le hoquet et recrache tout. Moins de lanternes = coup parfait.
+
+**Décollage !** : un calcul apparaît, avec peu de temps pour répondre (moins pour les calculs faciles). Chaque bonne
+réponse fait décoller la fusée ; pilote-la (flèches, Q et D, ou les boutons) pour te poser sur une plateforme. Du
+village jusqu'à la planète Bonbon, en passant par la mer de nuages, le ciel des dirigeables et l'espace. Bonus sur
+certaines plateformes : bouclier, sablier (plus de temps), turbo, étoile, cœur.
 
 **Plateforme** : sans compte, tout reste dans le navigateur (aucun cookie). Un adulte peut créer un espace famille :
 un profil par enfant (pseudo, avatar, niveau), progrès sur tous les appareils, classements publics seulement sur

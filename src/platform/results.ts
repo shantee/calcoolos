@@ -6,7 +6,7 @@
 import { api, accountState } from './api';
 import { activePlayer } from './player';
 
-export type GameId = 'cubes' | 'meteores' | 'dragon';
+export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee';
 
 export interface GameResult {
   jeu: GameId;

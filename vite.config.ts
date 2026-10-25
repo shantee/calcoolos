@@ -25,6 +25,9 @@ export default defineConfig({
   build: {
     target: 'es2022',
     chunkSizeWarningLimit: 2000,
+    // Jamais de fichier intégré en data: (les petites polices le seraient) : la CSP du
+    // serveur n'autorise que les polices servies par le site lui-même.
+    assetsInlineLimit: 0,
     rollupOptions: {
       // Phaser dans son propre fichier : mis en cache une fois pour tous les jeux.
       output: {
@@ -39,6 +42,7 @@ export default defineConfig({
         cubes: resolve(import.meta.dirname, 'jeu/cubes-de-siege.html'),
         meteores: resolve(import.meta.dirname, 'jeu/pluie-de-meteores.html'),
         dragon: resolve(import.meta.dirname, 'jeu/dragon-gourmand.html'),
+        fusee: resolve(import.meta.dirname, 'jeu/decollage.html'),
         compte: resolve(import.meta.dirname, 'compte.html'),
         tableau: resolve(import.meta.dirname, 'tableau.html'),
         classements: resolve(import.meta.dirname, 'classements.html'),
