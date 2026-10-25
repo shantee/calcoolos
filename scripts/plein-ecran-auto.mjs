@@ -45,6 +45,8 @@ const FORMATS = [
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
 
 /** Mesures utiles : canvas, boutons, plein écran. */
+/** Attend que le plein écran soit (ou ne soit plus) actif, 3 s au plus. */
+const attendrePE = (page, voulu) => page.waitForFunction((v) => !!document.fullscreenElement === v, voulu, { timeout: 3000 }).catch(() => {});
 const etat = (page) =>
   page.evaluate(() => {
     const c = document.querySelector('canvas').getBoundingClientRect();
@@ -91,13 +93,13 @@ for (const f of FORMATS) {
     await page.waitForTimeout(600);
     await page.locator('canvas').focus().catch(() => {});
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(900);
+    await attendrePE(page, true);
     let e = await etat(page);
     check(e.pe, `${j.id} : plein écran en lançant la partie au clavier`);
     const avant = await page.evaluate((h) => JSON.stringify(window[h].session?.()?.phase ?? null), j.hook);
     // Sortie par le bouton : la partie continue.
     await page.click('.commandes-jeu button');
-    await page.waitForTimeout(500);
+    await attendrePE(page, false);
     e = await etat(page);
     check(!e.pe, `${j.id} : bouton « quitter le plein écran »`);
     const apres = await page.evaluate((h) => JSON.stringify(window[h].session?.()?.phase ?? null), j.hook);
@@ -105,7 +107,7 @@ for (const f of FORMATS) {
     check(Math.abs(e.canvas.w / e.canvas.h - 16 / 9) < 0.01, `${j.id} : proportions gardées après la sortie`);
     // Retour en plein écran par le bouton.
     await page.click('.commandes-jeu button');
-    await page.waitForTimeout(500);
+    await attendrePE(page, true);
     check((await etat(page)).pe, `${j.id} : bouton « plein écran »`);
     if (j.id === 'cubes') await page.screenshot({ path: `${out}/pe-cubes-plein-ecran.png` });
     await page.evaluate(() => document.exitFullscreen());
