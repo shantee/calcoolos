@@ -26,7 +26,7 @@ for (const m of conf.matchAll(/add_header\s+([\w-]+)\s+"([^"]+)"\s+always;/g)) h
 if (!headers['Content-Security-Policy']) throw new Error('CSP introuvable dans deploy/nginx-calcoolos.conf');
 
 const root = new URL('../dist/', import.meta.url).pathname;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json' };
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   if (url.pathname.startsWith('/api/')) {
@@ -69,6 +69,13 @@ for (const p of pages) {
   });
   await page.mouse.click(400, 300);
   await page.waitForTimeout(1500);
+  if (p === 'index.html') {
+    // Accueil : les illustrations (chargement différé) doivent toutes s'afficher une fois la page parcourue.
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await page.waitForTimeout(1500);
+    const broken = await page.$$eval('img', (imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.currentSrc || i.src));
+    for (const b of broken) problems.push(`${p} : image non chargée ${b}`);
+  }
   console.log('ok :', p);
 }
 await browser.close();

@@ -7,113 +7,211 @@
     <meta name="description" content="%BRAND_DESCRIPTION%" />
     <meta name="color-scheme" content="dark" />
   </head>
-  <body>
-    <div class="ciel" aria-hidden="true">
-      <svg class="archipel" viewBox="0 0 1200 420" preserveAspectRatio="xMidYMax meet">
-        <circle class="astre" cx="1080" cy="70" r="46" />
-        <g class="ile ile-loin">
-          <path d="M120 250 q90-26 190 0 q-30 60-95 90 q-60-30-95-90z" />
-          <path d="M760 210 q60-18 130 0 q-20 40-65 60 q-45-20-65-60z" />
-        </g>
-        <g class="ile ile-proche">
-          <path d="M380 300 q170-40 330 0 q-50 90-165 130 q-115-40-165-130z" />
-          <rect x="530" y="232" width="22" height="60" rx="6" />
-          <path d="M520 236 l21-30 l21 30z" class="toit" />
-          <circle cx="541" cy="248" r="5" class="lanterne" />
-        </g>
-      </svg>
-    </div>
-
+  <body class="accueil">
+    <a class="evitement" href="#jeux">Aller directement aux jeux</a>
     <header id="barre"></header>
 
     <main>
-      <header class="entete">
-        <h1>%BRAND_NAME%</h1>
-        <p class="accroche">%BRAND_TAGLINE%</p>
-      </header>
+      <!-- Ouverture : titre, niveau, et les quatre jeux en vignettes (on voit tout de suite qu'il y en a quatre). -->
+      <section class="ouverture" aria-labelledby="titre">
+        <div class="ouverture-texte">
+          <p class="surtitre">Jeux de calcul mental, pour les enfants et les grands</p>
+          <h1 id="titre">%BRAND_NAME%</h1>
+          <p class="accroche">%BRAND_TAGLINE%</p>
+          <p class="intro">
+            Ici, le calcul est l’action du jeu : on additionne des cubes pour repousser un monstre, on tape un résultat
+            pour pulvériser un météore. Quatre jeux, aucun questionnaire.
+          </p>
 
-      <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
-        <h2 id="qui-joue-titre">Qui joue ?</h2>
-        <div class="qui-joue" id="qui-joue"></div>
+          <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
+            <h2 id="qui-joue-titre">Qui joue ?</h2>
+            <div class="qui-joue" id="qui-joue"></div>
+          </section>
+
+          <fieldset class="niveau">
+            <legend>Ton niveau</legend>
+            <div class="niveaux">
+              <label><input type="radio" name="niveau" value="eveil" /><span>Éveil</span><small>7-8 ans</small></label>
+              <label><input type="radio" name="niveau" value="explorateur" checked /><span>Explorateur</span><small>9-10 ans</small></label>
+              <label><input type="radio" name="niveau" value="stratege" /><span>Stratège</span><small>11-12 ans</small></label>
+              <label><input type="radio" name="niveau" value="maitre" /><span>Maître</span><small>ados et adultes</small></label>
+            </div>
+          </fieldset>
+
+          <a class="explorer" href="#jeu-cubes">Explore les 4 jeux <span class="fleche" aria-hidden="true">↓</span></a>
+        </div>
+
+        <nav class="mosaique" aria-label="Les quatre jeux">
+          <a class="vignette" href="#jeu-cubes" style="--i: 0">
+            <img src="/src/images/accueil/cubes-de-siege-480.webp" width="480" height="360" alt="" />
+            <span>Cubes de siège</span>
+          </a>
+          <a class="vignette" href="#jeu-meteores" style="--i: 1">
+            <img src="/src/images/accueil/pluie-de-meteores-480.webp" width="480" height="360" alt="" />
+            <span>Pluie de météores</span>
+          </a>
+          <a class="vignette" href="#jeu-dragon" style="--i: 2">
+            <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
+            <span>Le Dragon gourmand</span>
+          </a>
+          <a class="vignette" href="#jeu-fusee" style="--i: 3">
+            <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
+            <span>Décollage !</span>
+          </a>
+        </nav>
       </section>
 
-      <label class="niveau" for="niveau">
-        Niveau
-        <select id="niveau">
-          <option value="eveil">Éveil · 7-8 ans</option>
-          <option value="explorateur" selected>Explorateur · 9-10 ans</option>
-          <option value="stratege">Stratège · 11-12 ans</option>
-          <option value="maitre">Maître · ados et adultes</option>
-        </select>
-      </label>
+      <!-- Repère de progression (grands écrans) : le jeu en cours de lecture est mis en avant. -->
+      <nav class="reperes" aria-label="Aller à un jeu">
+        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
+        <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
+        <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
+        <a href="#jeu-fusee" data-repere="jeu-fusee"><span class="visuel-masque">Décollage !</span></a>
+      </nav>
 
-      <div class="jeux">
-        <section class="lieu" aria-labelledby="cubes-titre">
-          <p class="surtitre">L’Atelier des Cubes</p>
-          <h2 id="cubes-titre">Cubes de siège</h2>
-          <div class="aide" role="note" aria-label="Comment jouer à Cubes de siège">
-            <p>
+      <div class="jeux" id="jeux">
+        <section class="vitrine" id="jeu-cubes" data-univers="cubes" aria-labelledby="cubes-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/cubes-de-siege-800.webp"
+              srcset="/src/images/accueil/cubes-de-siege-480.webp 480w, /src/images/accueil/cubes-de-siege-800.webp 800w, /src/images/accueil/cubes-de-siege-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              fetchpriority="high"
+              alt="Un chat réfléchit devant un plateau de cubes numérotés, près d’un phare ; sur un rocher, un monstre rouge brandit une pancarte « 29 »."
+            />
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>01</span> / 04</p>
+            <p class="surtitre">L’Atelier des Cubes</p>
+            <h2 id="cubes-titre">Cubes de siège</h2>
+            <p class="pitch">
               Un monstre approche du phare avec un nombre sur sa pancarte.
-              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong> : moins tu utilises de cubes, plus ton tir est fort !
+              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
+              Moins tu utilises de cubes, plus ton tir est fort.
             </p>
             <p class="exemple" aria-hidden="true">
               <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
             </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Cubes de siège</span></a>
+              <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
+            </div>
           </div>
-          <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer</a>
         </section>
 
-        <section class="lieu lieu-espace" aria-labelledby="meteores-titre">
-          <p class="surtitre">Au-dessus de l’archipel</p>
-          <h2 id="meteores-titre">Pluie de météores</h2>
-          <div class="aide" role="note" aria-label="Comment jouer à Pluie de météores">
-            <p>
-              Météores et robots foncent sur la station, chacun porte un calcul.
-              <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt ! Le météore doré fait tout exploser.
+        <section class="vitrine" id="jeu-meteores" data-univers="meteores" aria-labelledby="meteores-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/pluie-de-meteores-800.webp"
+              srcset="/src/images/accueil/pluie-de-meteores-480.webp 480w, /src/images/accueil/pluie-de-meteores-800.webp 800w, /src/images/accueil/pluie-de-meteores-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Une fusée pilotée par un chat attend sur son pas de tir ; deux météores rouges portant « 7 × 8 » et « 2 × 5 » foncent vers elle, à côté d’un pavé numérique."
+            />
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>02</span> / 04</p>
+            <p class="surtitre">Au-dessus de l’archipel</p>
+            <h2 id="meteores-titre">Pluie de météores</h2>
+            <p class="pitch">
+              Météores et robots foncent sur la station, et chacun porte un calcul.
+              <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt !
+              Le météore doré, lui, fait tout exploser.
             </p>
             <p class="exemple" aria-hidden="true">
               <span class="meteore">7 × 8</span> → <span class="cube">56</span>
             </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/pluie-de-meteores.html">Jouer<span class="visuel-masque"> à Pluie de météores</span></a>
+              <p class="commandes">Pavé à l’écran, ou chiffres + Retour arrière</p>
+            </div>
           </div>
-          <a class="jouer" data-jeu href="jeu/pluie-de-meteores.html">Jouer</a>
         </section>
-        <section class="lieu lieu-dragon" aria-labelledby="dragon-titre">
-          <p class="surtitre">Dans le ciel du soir</p>
-          <h2 id="dragon-titre">Le Dragon gourmand</h2>
-          <div class="aide" role="note" aria-label="Comment jouer au Dragon gourmand">
-            <p>
-              Guide le dragon et avale des lanternes.
-              <strong>Ensemble, elles doivent faire exactement le nombre demandé</strong> : s’il en mange trop, il a le hoquet !
+
+        <section class="vitrine" id="jeu-dragon" data-univers="dragon" aria-labelledby="dragon-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/dragon-gourmand-800.webp"
+              srcset="/src/images/accueil/dragon-gourmand-480.webp 480w, /src/images/accueil/dragon-gourmand-800.webp 800w, /src/images/accueil/dragon-gourmand-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un dragon rouge et vert vole, gueule ouverte, vers des lanternes numérotées 8, 12 et 5, au-dessus d’un lac au crépuscule."
+            />
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>03</span> / 04</p>
+            <p class="surtitre">Dans le ciel du soir</p>
+            <h2 id="dragon-titre">Le Dragon gourmand</h2>
+            <p class="pitch">
+              Guide le dragon et fais-lui avaler des lanternes.
+              <strong>Ensemble, elles doivent faire exactement le nombre demandé.</strong>
+              S’il en mange trop, il a le hoquet !
             </p>
             <p class="exemple" aria-hidden="true">
               <span class="lanterne-ex">9</span> + <span class="lanterne-ex">8</span> = <span class="parchemin">17</span>
             </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer<span class="visuel-masque"> au Dragon gourmand</span></a>
+              <p class="commandes">Souris, doigt ou flèches</p>
+            </div>
           </div>
-          <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer</a>
         </section>
-        <section class="lieu lieu-fusee" aria-labelledby="fusee-titre">
-          <p class="surtitre">Du village jusqu’aux étoiles</p>
-          <h2 id="fusee-titre">Décollage !</h2>
-          <div class="aide" role="note" aria-label="Comment jouer à Décollage !">
-            <p>
-              Chaque bonne réponse fait décoller la fusée : <strong>réponds vite, puis pilote-la pour te poser sur une plateforme</strong>.
-              Monte jusqu’à la planète Bonbon !
+
+        <section class="vitrine" id="jeu-fusee" data-univers="fusee" aria-labelledby="fusee-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/decollage-800.webp"
+              srcset="/src/images/accueil/decollage-480.webp 480w, /src/images/accueil/decollage-800.webp 800w, /src/images/accueil/decollage-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Une petite fusée décolle d’une île flottante sous un panneau « 2 × 4 = ? », au-dessus d’un village avec un moulin et une vache."
+            />
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>04</span> / 04</p>
+            <p class="surtitre">Du village jusqu’aux étoiles</p>
+            <h2 id="fusee-titre">Décollage !</h2>
+            <p class="pitch">
+              Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
+              Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’à la planète Bonbon !
             </p>
             <p class="exemple" aria-hidden="true">
-              <span class="pixel">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
+              <span class="pixel pixel-nombre">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
             </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/decollage.html">Jouer<span class="visuel-masque"> à Décollage !</span></a>
+              <p class="commandes">Chiffres, puis flèches (ou Q et D)</p>
+            </div>
           </div>
-          <a class="jouer" data-jeu href="jeu/decollage.html">Jouer</a>
         </section>
       </div>
 
-      <p class="note">
-        Sans compte, tout reste dans ce navigateur : pas d’inscription, pas de cookie.
-        Un parent peut créer un <a href="compte.html">espace famille</a> pour garder les progrès de chaque enfant
-        (<a href="confidentialite.html">confidentialité</a>).
-        Clavier : flèches, Espace et Entrée dans Cubes de siège ; chiffres et Retour arrière dans Pluie de météores ; souris, doigt ou flèches pour le dragon ; chiffres et flèches (ou Q et D) pour la fusée ; M coupe le son.
-        <a href="prototypes/a.html">Prototype A</a> · <a href="prototypes/b.html">Prototype B</a>
-      </p>
+      <footer class="parents" aria-labelledby="parents-titre">
+        <h2 id="parents-titre">Pour les parents</h2>
+        <p>
+          Sans compte, tout reste dans ce navigateur : pas d’inscription, pas de cookie.
+          Un espace famille garde les progrès de chaque enfant, sous un simple pseudo.
+        </p>
+        <p class="parents-liens">
+          <a class="bouton-secondaire" href="compte.html">Espace famille</a>
+          <a href="confidentialite.html">Confidentialité</a>
+        </p>
+        <p class="discret">
+          Dans tous les jeux, M coupe le son.
+          Archives : <a href="prototypes/a.html">prototype A</a> · <a href="prototypes/b.html">prototype B</a>
+        </p>
+      </footer>
     </main>
 
     <script type="module" src="/src/entries/accueil.ts"></script>

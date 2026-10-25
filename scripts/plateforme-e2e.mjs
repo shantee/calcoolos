@@ -148,10 +148,10 @@ await page.waitForSelector('#qui-joue button');
 check((await page.textContent('.joueur'))?.includes('Lina'), 'le premier profil devient le joueur actif');
 await page.locator('#qui-joue button', { hasText: 'Noé' }).click();
 await page.waitForTimeout(300);
-check((await page.inputValue('#niveau')) === 'eveil', 'choisir Noé règle le niveau sur Éveil');
+check((await page.inputValue('input[name="niveau"]:checked')) === 'eveil', 'choisir Noé règle le niveau sur Éveil');
 await page.locator('#qui-joue button', { hasText: 'Lina' }).click();
 await page.waitForTimeout(300);
-check((await page.inputValue('#niveau')) === 'explorateur', 'choisir Lina règle le niveau sur Explorateur');
+check((await page.inputValue('input[name="niveau"]:checked')) === 'explorateur', 'choisir Lina règle le niveau sur Explorateur');
 await shot('6-accueil-lina', true);
 
 // --- 4. Partie enregistrée ------------------------------------------------------------------------

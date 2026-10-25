@@ -35,7 +35,8 @@ Autres commandes :
 
 Pages :
 
-- `/` : accueil, aide et choix du niveau ;
+- `/` : accueil (une grande vitrine illustrée par jeu, aide en 2-3 phrases, choix du niveau ; `?calme` y coupe aussi
+  les animations) ;
 - `/jeu/cubes-de-siege.html` : Cubes de siège ;
 - `/jeu/pluie-de-meteores.html` : Pluie de météores ;
 - `/jeu/dragon-gourmand.html` : Le Dragon gourmand ;
@@ -103,7 +104,7 @@ autorisation et sous un nom inventé.
 
 ```
 brand.json            nom et slogan de la plateforme (le seul endroit à modifier pour renommer)
-index.html            accueil
+index.html            accueil (illustrations : src/images/accueil/, originaux : sources-images/accueil/)
 jeu/                  pages des jeux
 prototypes/           pages des deux variantes graphiques (figées)
 compte.html, tableau.html, classements.html, confidentialite.html   pages de la plateforme

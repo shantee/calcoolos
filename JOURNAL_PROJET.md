@@ -11,6 +11,7 @@
 | Troisième jeu « Le Dragon gourmand » | fait : jouable de bout en bout, victoire et défaite testées |
 | Quatrième jeu « Décollage ! » (pixel art, idée de Philippe) | fait : jouable de bout en bout, testé dans Chromium |
 | D. Plateforme (invité, comptes, profils, sauvegardes) | fait : API PHP + MariaDB, parcours complet testé, comptes isolés |
+| Chantier 01 : refonte de l'accueil | fait sur la branche `refonte-accueil`, **à valider par Philippe** |
 | E. Finition, déploiement Dell | kit et guide prêts, répétés dans un conteneur ; **rien installé sur le Dell** |
 
 ## Rappels pour Philippe
@@ -23,6 +24,51 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Avant la mise en ligne** : choisir le nom de domaine, donner l'accord pour le branchement au tunnel Cloudflare,
   faire relire la page de confidentialité (identité du responsable, hébergement). Voir `doc/DEPLOIEMENT.md`.
+
+## 2026-10-25 : Claude, session 7 (chantier 01 : refonte de l'accueil)
+
+**Demande de Philippe** (zip « Chantier 01 », cahier des charges copié dans `doc/CHANTIER_01_ACCUEIL.md`) : refaire
+l'accueil avec un effet « wow » maîtrisé ; les quatre jeux présentés **un par un, verticalement**, chacun avec une grande
+illustration (quatre images fournies), 2-3 phrases et un bouton « Jouer » ; faire sentir qu'il y a d'autres jeux plus
+bas ; ne toucher ni aux jeux ni à la plateforme ; ne rien déployer.
+
+**Fait**
+- Projet repris en local par Claude Code (poste Fedora de Philippe) ; branche `refonte-accueil` créée depuis `main`
+  (= `dev`).
+- `index.html` réécrit : **ouverture** (titre, accroche, phrase d'intro, « Qui joue ? », niveau en 4 boutons radio,
+  lien « Explore les 4 jeux », mosaïque des 4 illustrations qui mène à chaque jeu), puis **4 vitrines** (image 4:3
+  encadrée, numéro « 01 / 04 », lieu, titre, aide, exemple de calcul décoratif, « Jouer », commandes du jeu), puis un
+  encadré **Pour les parents** (invité sans cookie, espace famille, confidentialité, prototypes).
+- Grand écran : image et texte côte à côte, en alternance gauche/droite. Téléphone : une colonne, image d'abord ;
+  la mosaïque remonte sous le titre pour que les 4 jeux soient visibles dès le premier écran.
+- Effets retenus (`src/entries/accueil.ts`) : le fond change doucement de couleur selon le jeu lu (nuit marine,
+  violet, prune, bleu) ; apparition des vitrines au défilement ; illustration qui suit légèrement la souris ;
+  bouton « Jouer » légèrement attiré par le curseur ; vignettes qui « respirent » ; repère de progression (4 traits) sur
+  le bord droit des grands écrans. Tout est coupé avec « réduire les animations » ou `?calme` (transmis aux jeux).
+- Ancien décor (îles, étoiles en SVG) retiré, comme demandé (« pas d'accumulation d'étoiles ni d'îles »).
+- Images : originaux PNG gardés dans `sources-images/accueil/`, versions WebP 480/800/1448 (`cwebp -q 80`, 23 à
+  116 Ko) servies avec `srcset`/`sizes`, dimensions explicites, chargement différé sauf la première ; images non
+  recadrées (le 4:3 d'origine tient partout, rien de l'action n'est coupé). Les 4 anciennes propositions ne sont pas
+  utilisées.
+- `scripts/plateforme-e2e.mjs` adapté au niveau en boutons radio ; `scripts/csp-check.mjs` sert le `.webp` et vérifie
+  que toutes les illustrations de l'accueil se chargent.
+
+**Vérifications**
+- `npm run typecheck` OK, `npm test` 82/82, `npm run build` OK, `scripts/csp-check.mjs` : aucune violation sur les
+  9 pages, toutes les images chargées.
+- Chrome (Playwright) à 1440×900, 1280×720, 768×1024, 390×844, 360×740 : aucun débordement horizontal, aucun texte ni
+  bouton coupé. Niveau retenu après rechargement et transmis aux 4 liens, flèches du clavier dans le choix du niveau,
+  lien d'évitement en premier Tab, focus visible, clic « Jouer » → bon jeu avec le bon niveau, `?calme` et mouvement
+  réduit vérifiés. Captures dans `CAPTURES/accueil-refonte/`.
+- Corrigé après lecture des captures : grand vide sous l'ouverture, police pixel en capitales peu lisible, « 9 + 9 »
+  lu « g + g » en Pixelify (défaut déjà présent dans l'ancien accueil), mosaïque invisible au premier écran sur
+  téléphone, marges trop grandes sur téléphone.
+
+**Limites honnêtes**
+- PHP absent du poste : `npm run test:api` et `scripts/plateforme-e2e.mjs` **non lancés** ; « Qui joue ? » (compte
+  connecté) n'a donc pas été vu à l'écran, seulement conservé tel quel dans le code.
+- Origine et droits des quatre illustrations à préciser par Philippe avant la mise en ligne (`ART_ASSETS.md`).
+- Pas d'AVIF (l'outil local ne l'encode pas ; le WebP suffit). Pas testé sur un vrai téléphone, ni Firefox/Safari.
 
 ## 2026-10-25 : Claude, session 6 (quatrième jeu « Décollage ! »)
 

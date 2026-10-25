@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 25/10/2026 (fin de la session 6, commit sur la branche `dev`).
+Dernière mise à jour : 25/10/2026 (session 7, chantier 01 « refonte de l'accueil », branche `refonte-accueil`).
 
 ---
 
@@ -32,8 +32,9 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 - **Une erreur coûte peu** (la série, un peu de temps), jamais une humiliation. Deux modes partout : **Tranquille**
   (rien à perdre, plus lent) et **Défi** (cœurs, chrono).
 - **Aide en deux phrases** sur l'accueil et dans l'écran de début de chaque jeu.
-- **Tout est fait maison** : aucun fichier image ni son importé. Les visuels sont dessinés par code (Canvas 2D ou
-  PixelForge), les sons et musiques sont synthétisés en direct (Web Audio). Pas de droits à gérer (`ART_ASSETS.md`).
+- **Tout est fait maison dans les jeux** : aucun fichier image ni son importé. Les visuels sont dessinés par code
+  (Canvas 2D ou PixelForge), les sons et musiques sont synthétisés en direct (Web Audio). **Exception voulue par
+  Philippe : les quatre illustrations de l'accueil** (chantier 01), fournies par lui (`ART_ASSETS.md`).
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
   classements publics sur autorisation de l'adulte et sous un **nom inventé**, export et suppression des données.
 - **Honnêteté** : on ne dit pas qu'une chose marche sans l'avoir vue marcher dans un vrai navigateur ; on écrit les
@@ -65,6 +66,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Jeu 3 **Le Dragon gourmand** | fait |
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
+| Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu ; branche `refonte-accueil`, à valider par Philippe |
 | Kit de déploiement + guide | fait, **répété dans un conteneur Ubuntu**, **jamais lancé sur le Dell** |
 | Mise en ligne | en attente : nom de domaine, accord de Philippe, relecture de la page de confidentialité |
 
@@ -115,7 +117,8 @@ réduites), `?accelere=N`, `?textures=N`. Chaque jeu expose des crochets de test
 
 ```
 brand.json                 nom, slogan (seul endroit à modifier pour renommer)
-index.html                 accueil : « Qui joue ? », niveau, 4 cartes de jeux
+index.html                 accueil : ouverture (titre, « Qui joue ? », niveau, vignettes) puis une vitrine par jeu
+src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
 src/core/                  logique pure partagée : rng (mulberry32), puzzle (somme minimale, sac à dos),
@@ -147,7 +150,7 @@ ART_ASSETS.md              inventaire des ressources et licences
 (déterministe avec graine, testée dans `tests/`, y compris un « pilote automatique » qui gagne), et une **scène**
 Phaser qui ne fait que montrer et animer. La scène, en fin de partie, appelle `reportResult()` avec le format commun
 (jeu, niveau, mode, score, gagne, etoiles, duree, precision, ops `{op: [justes, ratés]}`, details) et affiche
-`outcomeText()`. Puis brancher le jeu dans : `vite.config.ts` (input), `index.html` (carte + aide en deux phrases),
+`outcomeText()`. Puis brancher le jeu dans : `vite.config.ts` (input), `index.html` (vitrine + illustration + aide en 2-3 phrases),
 `GameId` (`src/platform/results.ts`), `GAME_NAMES` et succès (`src/platform/stats.ts`), `Games::CATALOG`
 (`server/src/Games.php`, bornes de vraisemblance), `scripts/csp-check.mjs`, docs.
 
@@ -202,6 +205,10 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Rechargement à chaud** : modifier un fichier pendant une partie automatique sur `npm run dev` recharge la page et
   casse le script. Pour les longues parties automatiques, construire puis utiliser `vite preview`.
 - **Claviers AZERTY** : lire les chiffres avec `e.code` (`Digit1`, `Numpad1`), pas `e.key`.
+- **Pixelify Sans dans les pages web aussi** : ses chiffres se confondent (« 9 + 9 » lu « g + g ») ; sur l'accueil,
+  elle ne sert qu'aux surtitres sans chiffres, les nombres utilisent `.pixel-nombre`.
+- **Niveau de l'accueil** : quatre boutons radio `input[name="niveau"]` (plus de `<select id="niveau">`) ; Playwright
+  doit cliquer la case elle-même (`page.click('input[value="stratege"]')`), l'étiquette est couverte par la case.
 - **Ne pas faire `pkill -f motif`** si le motif apparaît dans la commande en cours (le shell se tue lui-même).
 - **Tweens Phaser** : `killTweensOf` peut annuler un callback important (bug des météores fantômes) ; les actions de
   jeu ne doivent pas dépendre de la fin d'une animation décorative.
