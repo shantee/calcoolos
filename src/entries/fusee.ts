@@ -4,6 +4,7 @@ import '../styles/game.css';
 import Phaser from 'phaser';
 import { RocketScene, W, H } from '../game/rocket/rocket-scene';
 import { maxTextures } from '../game/render-config';
+import { installerPleinEcran } from '../game/plein-ecran';
 
 async function start(): Promise<void> {
   // Les polices doivent être prêtes avant que Phaser ne dessine du texte.
@@ -12,7 +13,7 @@ async function start(): Promise<void> {
   } catch {
     /* police de secours */
   }
-  new Phaser.Game({
+  const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: 'jeu',
     width: W,
@@ -24,6 +25,7 @@ async function start(): Promise<void> {
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     scene: [RocketScene],
   });
+  installerPleinEcran(game);
 }
 
 void start();

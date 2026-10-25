@@ -64,16 +64,17 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 |---|---|
 | Socle (Vite + TypeScript + Phaser 4.2.1), accueil, niveaux | fait |
 | Direction artistique | B « 2D illustrée gouache nocturne » retenue (prototypes A pixel et B figés dans `prototypes/`) |
-| Jeu 1 **Cubes de siège** | fait, validé par Philippe |
+| Jeu 1 **Cubes de siège** | fait, validé par Philippe ; **bonus volants** (Super Poussée, Gel, Méga-tir) ajoutés en session 8 |
 | Jeu 2 **Pluie de météores** | fait (grande passe d'effets) |
 | Jeu 3 **Le Dragon gourmand** | fait |
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
 | Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu, boutons lecture au survol ; en ligne |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
+| Plein écran + PWA légère | boutons Accueil / Plein écran dans les 4 jeux (`src/game/plein-ecran.ts`), manifeste et icônes, sans service worker |
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 
-Tests : 82 tests TypeScript (Vitest), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
+Tests : 98 tests TypeScript (Vitest), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
 plateforme dans Chromium (20 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
@@ -103,6 +104,8 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | Script | Rôle |
 |---|---|
 | `scripts/partie-auto.mjs` | Cubes de siège, partie gagnée ou perdue + captures |
+| `scripts/bonus-auto.mjs` | bonus volants : chaque bonus, clavier et doigt, échec, niches pleines, partie naturelle (`SEUL1=1` : rapide) |
+| `scripts/plein-ecran-auto.mjs` | plein écran et boutons des 4 jeux sur 6 formats |
 | `scripts/test-un-seul-monstre.mjs` | non-régression : jamais deux monstres à la fois |
 | `scripts/meteores-auto.mjs` | Pluie de météores, gagner / perdre |
 | `scripts/dragon-auto.mjs` | Dragon gourmand, gagner / perdre (le dragon vole vraiment vers les lanternes) |
@@ -216,6 +219,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   elle ne sert qu'aux surtitres sans chiffres, les nombres utilisent `.pixel-nombre`.
 - **Niveau de l'accueil** : quatre boutons radio `input[name="niveau"]` (plus de `<select id="niveau">`) ; Playwright
   doit cliquer la case elle-même (`page.click('input[value="stratege"]')`), l'étiquette est couverte par la case.
+- **Clavier Phaser** : quand une image est lente, la file d'événements peut être relue deux fois ; dédoublonner
+  (voir le gestionnaire des chiffres de Cubes de siège) toute touche qui compte.
+- **Plein écran** : seulement juste après un geste ; au doigt, Chrome ne reconnaît le geste qu'au lever du doigt.
 - **Ne pas faire `pkill -f motif`** si le motif apparaît dans la commande en cours (le shell se tue lui-même).
 - **Tweens Phaser** : `killTweensOf` peut annuler un callback important (bug des météores fantômes) ; les actions de
   jeu ne doivent pas dépendre de la fin d'une animation décorative.

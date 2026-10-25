@@ -26,6 +26,46 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-25 : Claude, session 8 (bonus volants et plein écran)
+
+**Demande** : des power-ups dans Cubes de siège (optionnels, peu nombreux, bien distincts des ennemis) et un vrai
+plein écran dans les quatre jeux, pensé pour la tablette.
+
+**Fait**
+- **Bonus volants** (Cubes de siège) : logique pure `src/game/siege/powerups.ts` (testée, `tests/powerups.test.ts`),
+  dessins `src/art/bonus-b.ts`, spectacle dans `game-scene.ts` (section « Bonus volants »).
+  - Deux passages au plus par partie (un en vague 2, un en vague 3 ou 4), jamais pendant une entrée de monstre, une
+    victoire, ni quand le monstre est déjà près du phare. Soucoupe (extraterrestre à trois yeux) puis ballon-poisson
+    (souris aviatrice), auréole et traînée dorées, étiquette « BONUS ! » : impossible de les confondre avec un monstre.
+  - Calcul adapté au niveau (jamais trivial), 7 s en Tranquille, 1,5 s de moins en Défi. Réponse au clavier (chiffres)
+    ou sur un pavé sombre et doré qui sort seulement pendant le passage ; la grille et le monstre continuent.
+    Deux erreurs ou temps écoulé : l'engin se moque (« Nananère ! ») et repart, aucune pénalité.
+  - Bonne réponse : le paquet tombe, rebondit, s'ouvre ; le bonus file dans l'une des deux niches au pied du phare
+    (touche B ou N, clic, doigt). Niches pleines : plus aucun engin (aucun bonus perdu). Un bonus inutile au moment
+    (monstre encore au fond, déjà gelé…) est gardé, avec une explication.
+  - **Super Poussée** (premier bonus toujours) : gant de boxe à ressort, « PAF ! », onde de choc, le monstre s'envole
+    en tournoyant avec des yeux exorbités jusqu'au fond, atterrit dans la poussière, étoiles et réplique vexée.
+    Carapaçon : roule ; Roi : trop lourd, ne recule qu'à moitié en freinant des talons.
+  - **Gel** : bloc de glace 6 s (5 s en Défi), se fissure puis éclate. **Méga-tir** : la lanterne se charge d'or, le
+    prochain coup réussi fait double dégâts (le score ne change pas), tampon « MÉGA ! ».
+  - Correction au passage : Phaser pouvait relire deux fois la file clavier quand une image est lente (un chiffre
+    comptait double) ; les touches sont désormais dédoublonnées.
+- **Plein écran** (`src/game/plein-ecran.ts`, quatre jeux) : deux boutons ronds en haut du jeu (Accueil, Plein
+  écran entrer/sortir) remplacent le lien du bas qui chevauchait « Son ». Plein écran demandé en lançant la partie
+  (clic, doigt — au lever du doigt pour Chrome —, clavier), jamais forcé : refus du navigateur = le jeu continue ;
+  sortie volontaire (Échap, bouton) = plus de demande dans cet onglet. Page entière en plein écran (les boutons
+  restent), Phaser recadre en gardant les proportions, zones sûres (encoche) respectées, paysage demandé sur tablette.
+- **Petite PWA** : manifeste produit depuis `brand.json` (plugin Vite), icônes du phare dans `public/icones/`,
+  balises « écran d'accueil » sur toutes les pages. **Pas de service worker** (le site reste toujours à jour).
+
+**Vérifié** : 98 tests Vitest ; `scripts/bonus-auto.mjs` (17 vérifications + partie naturelle gagnée sur tablette) ;
+`scripts/plein-ecran-auto.mjs` (4 jeux × 6 formats, clavier, souris, doigt, sortie, retour à l'accueil : 68 OK) ;
+parties automatiques des quatre jeux ; CSP.
+
+**Limites** : iPhone n'a pas de plein écran pour une page (bouton masqué) : l'ajouter à l'écran d'accueil donne un
+affichage sans barre. Le plein écran headless de Chromium ne change pas la taille de la fenêtre : le recadrage réel
+reste à voir sur une vraie tablette. Sons des bonus jamais écoutés par un humain.
+
 ## 2026-10-25 : Claude, session 7, suite (mise en ligne sur le serveur Dell)
 
 **Demande de Philippe** : installer Calcoolos sur le Dell à l'adresse https://calculos.zfx.fr. Il faut utiliser

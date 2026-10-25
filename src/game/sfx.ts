@@ -649,4 +649,99 @@ export class Sfx {
   bump(): void {
     this.tone(90, 0.3, { wave: 'sawtooth', gain: 0.12, slideTo: 60 });
   }
+
+  // --- Bonus volants de Cubes de siège ---------------------------------------------------------
+
+  /** Un engin bonus apparaît : carillon magique qui monte. */
+  bonusAppear(): void {
+    [880, 1109, 1319, 1760].forEach((f, i) => this.tone(f, 0.22, { wave: 'sine', gain: 0.09, delay: i * 0.07 }));
+    this.tone(1760, 0.5, { wave: 'triangle', gain: 0.04, delay: 0.3, slideTo: 2350 });
+  }
+
+  /** « Wiou-wiou » de la soucoupe. */
+  ufo(): void {
+    for (let i = 0; i < 3; i++) this.tone(620, 0.3, { wave: 'sine', gain: 0.06, slideTo: 1150, delay: i * 0.28 });
+  }
+
+  /** Teuf-teuf du moteur du dirigeable. */
+  putt(): void {
+    for (let i = 0; i < 8; i++) this.tone(110 + (i % 2) * 25, 0.05, { wave: 'square', gain: 0.04, delay: i * 0.08 });
+  }
+
+  /** Bonne réponse : la ficelle casse (ploc), puis arpège. */
+  bonusCaught(): void {
+    this.tone(900, 0.08, { wave: 'square', gain: 0.05, slideTo: 300 });
+    [784, 988, 1175, 1568].forEach((f, i) => this.tone(f, 0.14, { wave: 'triangle', gain: 0.1, delay: 0.08 + i * 0.06 }));
+  }
+
+  /** Le paquet touche le sol. */
+  crateLand(): void {
+    this.tone(170, 0.15, { wave: 'triangle', gain: 0.2, slideTo: 80 });
+    this.noise(0.1, { gain: 0.15, filter: 800 });
+  }
+
+  /** Le paquet s'ouvre. */
+  crateOpen(): void {
+    this.noise(0.12, { gain: 0.2, filter: 3000, q: 1 });
+    [1047, 1319, 1568, 2093].forEach((f, i) => this.tone(f, 0.16, { wave: 'sine', gain: 0.07, delay: 0.05 + i * 0.05 }));
+  }
+
+  /** Le bonus se range dans sa niche. */
+  slotIn(): void {
+    this.tone(1568, 0.12, { wave: 'sine', gain: 0.08 });
+    this.tone(2093, 0.22, { wave: 'sine', gain: 0.06, delay: 0.08 });
+  }
+
+  /** « Na-na-nè-re » de l'engin qui s'enfuit avec son paquet. */
+  taunt(): void {
+    [[660, 0], [550, 0.16], [740, 0.32], [550, 0.5]].forEach(([f, d]) => this.tone(f, 0.15, { wave: 'square', gain: 0.035, delay: d }));
+  }
+
+  /** Ballon qui se dégonfle en filant. */
+  deflate(): void {
+    this.noise(0.9, { gain: 0.12, filter: 700, q: 3 });
+    this.tone(520, 0.9, { wave: 'sawtooth', gain: 0.035, slideTo: 140 });
+  }
+
+  /** Ressort qui se détend (Super Poussée). */
+  spring(): void {
+    this.tone(120, 0.22, { wave: 'triangle', gain: 0.16, slideTo: 900 });
+    this.tone(900, 0.3, { wave: 'sine', gain: 0.06, slideTo: 300, delay: 0.18 });
+  }
+
+  /** Gros « PAF ! » du gant. */
+  punch(): void {
+    this.noise(0.3, { gain: 0.8, filter: 400, q: 0.4 });
+    this.tone(95, 0.4, { wave: 'sine', gain: 0.55, slideTo: 35 });
+    this.noise(0.15, { gain: 0.3, filter: 2500, q: 1, delay: 0.02 });
+  }
+
+  /** Sifflement du monstre qui s'envole. */
+  fly(): void {
+    this.tone(700, 0.6, { wave: 'sine', gain: 0.07, slideTo: 1700 });
+  }
+
+  /** Atterrissage lourd. */
+  thud(): void {
+    this.tone(75, 0.3, { wave: 'sine', gain: 0.4, slideTo: 40 });
+    this.noise(0.25, { gain: 0.3, filter: 300, type: 'lowpass' });
+  }
+
+  /** Gel : cristaux qui tintent. */
+  freeze(): void {
+    [2093, 2637, 3136, 2349, 2794].forEach((f, i) => this.tone(f, 0.25, { wave: 'sine', gain: 0.05, delay: i * 0.05 }));
+    this.noise(0.5, { gain: 0.15, filter: 6000, q: 0.5 });
+  }
+
+  /** La glace se brise. */
+  shatter(): void {
+    for (let i = 0; i < 6; i++) this.noise(0.08, { gain: 0.2, filter: 4000 + i * 600, q: 2, delay: i * 0.03 });
+    this.tone(2600, 0.2, { wave: 'triangle', gain: 0.05, slideTo: 1200 });
+  }
+
+  /** Méga-tir chargé. */
+  megaCharge(): void {
+    this.tone(220, 0.6, { wave: 'sawtooth', gain: 0.05, slideTo: 880 });
+    [880, 1109, 1319].forEach((f, i) => this.tone(f, 0.2, { wave: 'square', gain: 0.04, delay: 0.5 + i * 0.06 }));
+  }
 }

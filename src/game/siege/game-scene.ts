@@ -8,12 +8,15 @@
 import Phaser from 'phaser';
 import * as B from '../../art/variant-b';
 import * as Wd from '../../art/world-b';
+import * as Bn from '../../art/bonus-b';
 import { SiegeSession } from './session';
+import { POWERS, PowerUps, freezeMs, pushTarget, type Flight, type PowerKind } from './powerups';
 import { Sfx } from '../sfx';
 import { Fireworks } from '../fx';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import { ARCHETYPES, MODES, WAVES, type EnemyKind, type Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
 export const H = 720;
@@ -35,6 +38,49 @@ const L = {
   moonX: 1010,
   moonY: 150,
 };
+
+/** Bonus volants : trajet de l'engin, niches de rangement et pavé de réponse. */
+const BONUS = {
+  y: 96,
+  enterX: 1000,
+  leaveX: 560,
+  slotX: [500, 580],
+  slotY: 656,
+  keyX0: 676,
+  keyPitch: 72,
+  keyRows: [634, 688],
+};
+
+/** Yeux des monstres (par rapport au centre de leur dessin, à l'échelle 1), pour les yeux exorbités. */
+const EYES: Record<EnemyKind, Array<[number, number]>> = {
+  mordillon: [[-18, 6], [16, 4]],
+  trotteur: [[-12, 10], [14, 9]],
+  carapacon: [[-18, 38], [16, 38]],
+  roi: [[-18, 6], [16, 4]],
+};
+
+interface FlightView {
+  box: Phaser.GameObjects.Container;
+  craft: Phaser.GameObjects.Image;
+  crate: Phaser.GameObjects.Image;
+  link: Phaser.GameObjects.GameObject;
+  tag: Phaser.GameObjects.Container;
+  label: Phaser.GameObjects.Text;
+  fuse: Phaser.GameObjects.Rectangle;
+  trail: Phaser.GameObjects.Particles.ParticleEmitter;
+  move: Phaser.Tweens.Tween | null;
+  flight: Flight;
+  done: boolean;
+  /** Animations en boucle à arrêter quand l'engin disparaît. */
+  loops: Phaser.Tweens.Tween[];
+}
+
+interface SlotView {
+  box: Phaser.GameObjects.Container;
+  icon: Phaser.GameObjects.Image;
+  glow: Phaser.GameObjects.Image;
+  pulse: Phaser.Tweens.Tween | null;
+}
 
 function style(size: number, color: string, weight = 700, stroke = 0): Phaser.Types.GameObjects.Text.TextStyle {
   return { fontFamily: B.FONT, fontSize: `${size}px`, fontStyle: String(weight), color, stroke: B.C.ink, strokeThickness: stroke, resolution: 2 };
@@ -103,6 +149,25 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   /** Accélération des monstres, pour les tests automatiques seulement (?accelere=4). */
   private speedBoost = 1;
 
+  // Bonus volants
+  private powers: PowerUps | null = null;
+  /** Rang du monstre courant dans la partie (0 = premier). */
+  private enemyIndex = -1;
+  private enemyArrivedAt = 0;
+  private passDelay = 0;
+  private flightView: FlightView | null = null;
+  private slots: SlotView[] = [];
+  /** Niches dont le bonus est encore en train d'arriver. */
+  private arriving = new Set<number>();
+  private keypad!: Phaser.GameObjects.Container;
+  private keypadShown = false;
+  private frozenUntil = 0;
+  private ice: { img: Phaser.GameObjects.Image; frost: Phaser.GameObjects.Particles.ParticleEmitter; timers: Phaser.Time.TimerEvent[] } | null = null;
+  private pushing = false;
+  private bonusExplained = false;
+  private megaAura: Phaser.GameObjects.Image | null = null;
+  private launchButton!: Phaser.GameObjects.Container;
+
   // Interface
   private scoreText!: Phaser.GameObjects.Text;
   private comboText!: Phaser.GameObjects.Text;
@@ -137,6 +202,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.buildCritters();
     this.buildHud();
     this.buildGrid();
+    this.buildBonusUi();
     this.bindKeys();
     this.input.on('pointerdown', () => this.sfx.unlock());
     this.showIntro();
@@ -149,15 +215,48 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       validate: () => this.validate(),
       busy: () => this.busy,
       overlay: () => this.overlay !== null,
+      startButton: () => {
+        const c = this.overlayButtons[0]?.c;
+        if (!c) return null;
+        const m = c.getWorldTransformMatrix();
+        return { x: m.tx, y: m.ty };
+      },
       monstres: () => this.children.list.filter((o) => o.name === 'monstre' && o.active).length,
       enemyX: () => this.enemy?.obj.x ?? null,
+      // Bonus volants (tests automatiques).
+      bonus: () => ({
+        flight: this.powers?.flight ? { ...this.powers.flight, expr: { ...this.powers.flight.expr } } : null,
+        slots: this.powers ? [...this.powers.slots] : [],
+        launched: this.powers?.launched ?? 0,
+        caught: this.powers?.caught ?? 0,
+        plan: this.powers ? [...this.powers.plan] : [],
+        enemyIndex: this.enemyIndex,
+        frozen: this.isFrozen(),
+        pushing: this.pushing,
+        charged: this.session?.charged ?? false,
+        keypad: this.keypadShown,
+        arriving: [...this.arriving],
+      }),
+      forceBonus: (cargo?: PowerKind) => {
+        const f = this.powers?.launch(true);
+        if (f && cargo) f.cargo = cargo;
+        if (f) this.launchFlight(f);
+        return !!f;
+      },
+      answerBonus: () => String(this.powers?.flight?.expr.answer ?? '').split('').forEach((d) => this.bonusKey(d)),
+      typeBonus: (d: string) => this.bonusKey(d),
+      usePower: (i: number) => this.usePower(i),
+      slotPos: (i: number) => ({ x: BONUS.slotX[i], y: BONUS.slotY }),
+      keyPos: (d: string) => this.keyPos(d),
+      enemyWalking: () => !!this.enemy && this.enemyWalking && this.enemy.walking && !this.isFrozen(),
     };
   }
 
   update(time: number, delta: number): void {
     const e = this.enemy;
     if (!e || !this.session) return;
-    if (this.enemyWalking && e.walking) {
+    this.bonusTick(time);
+    if (this.enemyWalking && e.walking && !this.isFrozen()) {
       e.obj.x -= (this.session.enemySpeed * this.speedBoost * delta) / 1000;
       if (e.obj.x <= L.enemyStopX) {
         e.obj.x = L.enemyStopX;
@@ -355,7 +454,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.toastText = this.add.text(880, 250, '', style(26, B.C.cream, 800)).setOrigin(0.5).setDepth(70).setAlpha(0);
 
     this.makeButton(L.gridX + 88, L.buttonsY, 'Effacer', false, () => this.clearSelection());
-    this.makeButton(L.gridX + 278, L.buttonsY, 'Lancer !', true, () => this.validate());
+    this.launchButton = this.makeButton(L.gridX + 278, L.buttonsY, 'Lancer !', true, () => this.validate());
   }
 
   private setMuted(m: boolean): void {
@@ -493,6 +592,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     if (!s) return;
     this.busy = true;
     this.enemyWalking = false;
+    this.abortFlight();
     const key = `${this.tier.id}-${s.mode}`;
     const rec = this.records();
     const best = rec[key] ?? 0;
@@ -543,7 +643,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       duree: (Date.now() - this.startedAt) / 1000,
       precision: s.accuracy(),
       ops: { '+': [s.stats.hits, s.stats.misses] },
-      details: { monstres: s.stats.defeated, parfaits: s.stats.perfects, serie: s.stats.bestCombo },
+      details: { monstres: s.stats.defeated, parfaits: s.stats.perfects, serie: s.stats.bestCombo, bonus: this.powers?.caught ?? 0 },
     }).then((o) => status.active && status.setText(`${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}   ${outcomeText(o)}`));
     this.overlayButton(W / 2 - 130, top + 440, 'Accueil', false, () => {
       window.location.href = '../index.html';
@@ -557,6 +657,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
 
   // --- Partie ---------------------------------------------------------------------------------
   private startGame(mode: Mode): void {
+    pleinEcranAuDemarrage();
     this.closeOverlay();
     this.enemy?.obj.destroy();
     for (const o of this.enemy?.extras ?? []) o.destroy();
@@ -565,6 +666,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.resetWorld();
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new SiegeSession(this.tier, this.seed, mode);
+    this.resetBonus(mode);
     this.startedAt = Date.now();
     this.session.round.cubes.forEach((v, i) => {
       this.cubes[i].base.setTexture('b-tile');
@@ -612,6 +714,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     }
     const e = this.makeEnemy(a.kind);
     this.enemy = e;
+    this.enemyIndex++;
     this.setEnemyTarget(e, s.round.target, false);
     this.time.delayedCall(500, () => this.sfx.growl());
     this.enemyWalking = false;
@@ -623,6 +726,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       onComplete: () => {
         e.entering = false;
         if (this.enemy !== e) return;
+        this.enemyArrivedAt = this.time.now;
+        this.passDelay = this.powers?.delayAfterEnemy() ?? 0;
         // Si un tir est en vol, la marche reprendra après l'impact.
         if (!this.busy) this.enemyWalking = true;
         s.markShown(this.time.now);
@@ -758,7 +863,23 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       }
       this.validate();
     });
-    kb.on('keydown-BACKSPACE', () => this.clearSelection());
+    kb.on('keydown-BACKSPACE', () => {
+      if (!this.bonusErase()) this.clearSelection();
+    });
+    // Chiffres : réponse au calcul bonus (la grille ne s'en sert pas). B et N : utiliser un bonus.
+    // Quand une image est lente, Phaser peut relire la même file d'événements : chaque touche
+    // n'est comptée qu'une fois (sinon un chiffre tapé compterait double).
+    const seen = new WeakSet<KeyboardEvent>();
+    kb.on('keydown', (ev: KeyboardEvent) => {
+      if (seen.has(ev)) return;
+      seen.add(ev);
+      const digit = /^(?:Digit|Numpad)([0-9])$/.exec(ev.code);
+      if (digit) {
+        this.sfx.unlock();
+        this.bonusKey(digit[1]);
+      } else if (ev.code === 'KeyB') this.usePower(0);
+      else if (ev.code === 'KeyN') this.usePower(1);
+    });
     kb.on('keydown-ESC', () => this.clearSelection());
     kb.on('keydown-M', () => this.toggleSound());
   }
@@ -801,7 +922,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   }
 
   private animateEnemy(e: EnemyView, time: number, delta: number): void {
-    if (!e.walking) return;
+    if (!e.walking || this.isFrozen()) return;
     const fast = e.kind === 'trotteur';
     e.acc += delta;
     if (e.acc > (fast ? 150 : e.kind === 'carapacon' ? 380 : 260)) {
@@ -819,13 +940,16 @@ export class CubesDeSiegeScene extends Phaser.Scene {
 
   private flash(e: EnemyView): void {
     e.body.setTint(0xffffff).setTintMode(Phaser.TintModes.FILL);
-    this.time.delayedCall(70, () => e.body.clearTint().setTintMode(Phaser.TintModes.MULTIPLY));
+    this.time.delayedCall(70, () => {
+      e.body.clearTint().setTintMode(Phaser.TintModes.MULTIPLY);
+      if (this.isFrozen() && this.enemy === e) e.body.setTint(0xa8e4ff);
+    });
   }
 
   // --- Validation et tir --------------------------------------------------------------------------
   private validate(): void {
     const s = this.session;
-    if (this.busy || !s || this.overlay || !this.enemy) return;
+    if (this.busy || !s || this.overlay || !this.enemy || this.pushing) return;
     this.sfx.unlock();
     const target = s.round.target;
     const before = s.round.selected.slice();
@@ -851,10 +975,11 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const to = new Phaser.Math.Vector2(e.obj.x - 4, e.obj.y - 70 * e.scale);
     this.sfx.fuse();
     this.time.delayedCall(260, () => this.sfx.whoosh());
-    this.fireVolley(out.used, out.target, perfect, to, () => {
-      this.sfx.impact(perfect);
+    this.fireVolley(out.used, out.target, perfect, to, res.mega, () => {
+      this.sfx.impact(perfect || res.mega);
       const at = new Phaser.Math.Vector2(e.obj.x - 4, e.obj.y - 70 * e.scale);
-      this.impactFx(at, perfect);
+      this.impactFx(at, perfect || res.mega);
+      if (res.mega) this.megaImpact(at);
       this.flash(e);
       if (perfect) {
         this.sfx.perfect();
@@ -870,9 +995,11 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         this.tweens.add({ targets: e.sign, angle: { from: perfect ? -24 : -12, to: 0 }, duration: 700, ease: 'Elastic.easeOut' });
       }
       // À gauche du monstre (côté phare) : la pancarte et son nombre restent visibles.
-      this.floatDamage(to.x - 120, to.y + 10, res.damage, perfect);
+      this.floatDamage(to.x - 120, to.y + 10, res.damage, perfect || res.mega);
       if (!res.killed) this.time.delayedCall(120, () => this.sfx.ouch());
-      if (perfect) {
+      if (res.mega) {
+        this.toast(`Méga-tir : −${res.damage} !`, 'perfect');
+      } else if (perfect) {
         if (s.round.combo > 1) this.toast(`Série parfaite ×${s.round.combo}`, 'perfect');
       } else if (res.armoredHalved) this.toast('La carapace a amorti le coup !', 'good');
       else this.toast('Touché ! Avec moins de cubes, ça frappe plus fort', 'good');
@@ -942,6 +1069,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private celebrate(done: () => void): void {
     this.busy = true;
     this.enemyWalking = false;
+    this.abortFlight();
+    this.clearMegaFx();
     this.waveText.setText('Victoire !');
     this.sfx.victoryJingle();
     // Bannière.
@@ -993,6 +1122,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
 
   private killEnemy(e: EnemyView, done: () => void): void {
     e.walking = false;
+    if (this.ice) this.thaw(e, true);
     this.flash(e);
     this.sparks.explode(this.reducedMotion ? 6 : 36, e.obj.x, e.obj.y - 70);
     this.dust.explode(this.reducedMotion ? 2 : 10, e.obj.x, e.obj.y - 10);
@@ -1101,6 +1231,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private collapseTower(done: () => void): void {
     this.busy = true;
     this.enemyWalking = false;
+    this.abortFlight();
+    this.clearMegaFx();
     this.sfx.collapse();
     this.lanternTween?.stop();
     this.tweens.add({ targets: this.lanternGlow, alpha: 0, duration: 700 });
@@ -1223,9 +1355,11 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.owlImg.setPosition(this.owlHome.x, this.owlHome.y).setAngle(0);
   }
 
-  private fireVolley(used: number[], target: number, perfect: boolean, to: Phaser.Math.Vector2, onImpact: () => void): void {
+  private fireVolley(used: number[], target: number, perfect: boolean, to: Phaser.Math.Vector2, mega: boolean, onImpact: () => void): void {
     const fuse = new Phaser.Math.Vector2(L.towerX - 20, 250);
-    const glowKey = this.tex('b-glow-small', () => B.softGlow(40, '#5fd3bc'));
+    const glowKey = mega ? this.tex('b-glow-small-or', () => B.softGlow(40, '#ffc94a')) : this.tex('b-glow-small', () => B.softGlow(40, '#5fd3bc'));
+    // Méga-tir : rune dorée, plus grosse.
+    const m = mega ? 1.6 : 1;
     let arrived = 0;
     used.forEach((i, k) => {
       const c = this.cubes[i];
@@ -1255,19 +1389,20 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       });
     });
     const launch = () => {
-      const rune = this.add.image(fuse.x, fuse.y, this.tex(`b-rune-${target}`, () => B.rune(target))).setScale(0).setDepth(45);
+      const runeKey = mega ? this.tex(`bonus-rune-${target}`, () => Bn.goldRune(target)) : this.tex(`b-rune-${target}`, () => B.rune(target));
+      const rune = this.add.image(fuse.x, fuse.y, runeKey).setScale(0).setDepth(45);
       const halo = this.add.image(fuse.x, fuse.y, 'b-glow').setBlendMode(Phaser.BlendModes.ADD).setScale(0).setDepth(44);
       // Anneau discret autour de la rune : rien ne doit masquer le nombre.
-      const ring = this.add.circle(fuse.x, fuse.y, 30).setStrokeStyle(4, 0x5fd3bc).setDepth(44);
-      this.tweens.add({ targets: ring, scale: 2.2, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
-      this.tweens.add({ targets: rune, scale: K, duration: 220, ease: 'Back.easeOut' });
-      this.tweens.add({ targets: halo, scale: perfect ? 0.9 : 0.6, duration: 220, ease: 'Sine.easeOut' });
+      const ring = this.add.circle(fuse.x, fuse.y, 30).setStrokeStyle(4, mega ? 0xffc94a : 0x5fd3bc).setDepth(44);
+      this.tweens.add({ targets: ring, scale: 2.2 * m, alpha: 0, duration: 380, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+      this.tweens.add({ targets: rune, scale: K * m, duration: 220, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: halo, scale: (perfect || mega ? 0.9 : 0.6) * m, duration: 220, ease: 'Sine.easeOut' });
       const trail = this.add.particles(0, 0, glowKey, {
         follow: rune,
         lifespan: 380,
-        scale: { start: 0.8, end: 0 },
+        scale: { start: 0.8 * m, end: 0 },
         alpha: { start: 0.8, end: 0 },
-        frequency: 12,
+        frequency: mega ? 6 : 12,
         blendMode: Phaser.BlendModes.ADD,
       }).setDepth(43);
       this.time.delayedCall(220, () => {
@@ -1283,7 +1418,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
           onUpdate: () => {
             const pt = curve.getPoint(p.t);
             rune.setPosition(pt.x, pt.y);
-            rune.setScale(K * (1 + p.t * 0.15), K * (1 - p.t * 0.1));
+            rune.setScale(K * m * (1 + p.t * 0.15), K * m * (1 - p.t * 0.1));
           },
           onComplete: () => {
             rune.destroy();
@@ -1294,6 +1429,737 @@ export class CubesDeSiegeScene extends Phaser.Scene {
         });
       });
     };
+  }
+
+  // --- Bonus volants -----------------------------------------------------------------------------
+  // Deux fois par partie, un engin traverse le ciel avec un calcul : bonne réponse = un bonus
+  // rangé dans une niche au pied du phare. Logique dans powerups.ts ; ici, seulement le spectacle.
+
+  private isFrozen(): boolean {
+    return this.time.now < this.frozenUntil;
+  }
+
+  private buildBonusUi(): void {
+    this.tex('bonus-niche', Bn.niche);
+    this.tex('bonus-halo', () => B.softGlow(64, '#ffc94a'));
+    (['poussee', 'gel', 'supertir'] as PowerKind[]).forEach((k) => this.tex(`bonus-icon-${k}`, () => Bn.powerIcon(k)));
+    BONUS.slotX.forEach((x, i) => {
+      const box = this.add.container(x, BONUS.slotY).setDepth(61);
+      const glow = this.add.image(0, 0, 'bonus-halo').setBlendMode(Phaser.BlendModes.ADD).setAlpha(0).setScale(1.3);
+      const niche = this.add.image(0, 0, 'bonus-niche').setScale(K);
+      const icon = this.add.image(0, -1, 'bonus-icon-poussee').setScale(K).setVisible(false);
+      const badge = this.add.text(27, 27, i === 0 ? 'B' : 'N', style(14, B.C.cream, 800, 4)).setOrigin(0.5);
+      box.add([glow, niche, icon, badge]);
+      box.setSize(76, 76).setInteractive({ useHandCursor: true });
+      box.on('pointerdown', () => {
+        this.sfx.unlock();
+        this.usePower(i);
+      });
+      this.slots.push({ box, icon, glow, pulse: null });
+    });
+
+    // Pavé du calcul bonus, sorti seulement pendant le passage d'un engin. Touches sombres et
+    // dorées : impossible de les confondre avec les cubes crème de la grille.
+    this.keypad = this.add.container(0, 0).setDepth(62).setVisible(false);
+    const keyTex = this.tex('bonus-touche', () => Bn.bonusKey(64, 46));
+    const eraseTex = this.tex('bonus-touche-efface', () => Bn.bonusKey(64, 100, true));
+    this.keypad.add(this.add.text(BONUS.keyX0 + 2 * BONUS.keyPitch, BONUS.keyRows[0] - 40, 'Réponse du bonus', style(17, B.C.saffron, 800, 5)).setOrigin(0.5));
+    for (const d of '1234567890') {
+      const { x, y } = this.keyPos(d);
+      const c = this.add.container(x, y);
+      c.add([this.add.image(0, 2, keyTex).setScale(K), this.add.text(0, 0, d, style(28, B.C.saffron, 800)).setOrigin(0.5)]);
+      c.setSize(68, 50).setInteractive({ useHandCursor: true });
+      c.on('pointerdown', () => {
+        this.sfx.unlock();
+        this.pressFx(c);
+        this.bonusKey(d);
+      });
+      this.keypad.add(c);
+    }
+    const { x, y } = this.keyPos('efface');
+    const er = this.add.container(x, y);
+    er.add(this.add.image(0, 2, eraseTex).setScale(K));
+    er.setSize(68, 104).setInteractive({ useHandCursor: true });
+    er.on('pointerdown', () => {
+      this.pressFx(er);
+      this.bonusErase();
+    });
+    this.keypad.add(er);
+
+    this.shards = this.add.particles(0, 0, this.tex('bonus-eclat', Bn.shard), {
+      speed: { min: 160, max: 420 },
+      angle: { min: 180, max: 360 },
+      rotate: { min: 0, max: 360 },
+      gravityY: 700,
+      lifespan: { min: 600, max: 1000 },
+      scale: { start: 0.7, end: 0.4 },
+      emitting: false,
+    }).setDepth(51);
+  }
+
+  private shards!: Phaser.GameObjects.Particles.ParticleEmitter;
+
+  private keyPos(d: string): { x: number; y: number } {
+    if (d === 'efface') return { x: BONUS.keyX0 + 5 * BONUS.keyPitch + 6, y: (BONUS.keyRows[0] + BONUS.keyRows[1]) / 2 };
+    const k = d === '0' ? 9 : Number(d) - 1;
+    return { x: BONUS.keyX0 + (k % 5) * BONUS.keyPitch, y: BONUS.keyRows[Math.floor(k / 5)] };
+  }
+
+  private pressFx(c: Phaser.GameObjects.Container): void {
+    this.tweens.add({ targets: c, scale: 0.9, duration: 70, yoyo: true, ease: 'Sine.easeOut' });
+  }
+
+  private showKeypad(on: boolean): void {
+    if (on === this.keypadShown) return;
+    this.keypadShown = on;
+    this.tweens.killTweensOf(this.keypad);
+    if (on) {
+      this.keypad.setVisible(true).setAlpha(1).setY(this.reducedMotion ? 0 : 150);
+      if (!this.reducedMotion) this.tweens.add({ targets: this.keypad, y: 0, duration: 320, ease: 'Back.easeOut' });
+    } else {
+      this.tweens.add({ targets: this.keypad, y: 150, alpha: 0, duration: 220, ease: 'Sine.easeIn', onComplete: () => this.keypad.setVisible(false) });
+    }
+  }
+
+  /** Nouvelle partie : niches vides, plus d'engin ni d'effet en cours. */
+  private resetBonus(mode: Mode): void {
+    if (this.flightView) this.destroyFlight(this.flightView);
+    this.showKeypad(false);
+    this.clearIce();
+    this.pushing = false;
+    this.clearMegaFx();
+    this.powers = new PowerUps(this.tier.id, mode, this.seed);
+    this.enemyIndex = -1;
+    this.arriving.clear();
+    this.refreshSlots();
+  }
+
+  /** Lance un engin si un passage est prévu et que le moment s'y prête. */
+  private bonusTick(time: number): void {
+    const p = this.powers;
+    const s = this.session;
+    const e = this.enemy;
+    if (!p || !s || !e || s.phase !== 'play' || this.flightView || this.overlay || e.entering) return;
+    if (this.busy || this.pushing || s.enemyHp <= 0 || !p.due(this.enemyIndex)) return;
+    if (time - this.enemyArrivedAt < this.passDelay) return;
+    // Pas quand le monstre est déjà près du phare : ce serait trop de choses à la fois.
+    if (e.obj.x < L.enemyStopX + 260) return;
+    const f = p.launch();
+    if (f) this.launchFlight(f);
+  }
+
+  private launchFlight(f: Flight): void {
+    const saucer = f.vehicle === 'soucoupe';
+    const box = this.add.container(W + 160, BONUS.y).setDepth(30);
+    const loops: Phaser.Tweens.Tween[] = [];
+    const aura = this.add.image(0, 46, 'bonus-halo').setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setScale(3.2);
+    const craft = this.add.image(0, 0, this.tex(`bonus-${f.vehicle}-normal`, () => (saucer ? Bn.saucer('normal') : Bn.blimp('normal')))).setScale(K);
+    const crateY = saucer ? 98 : 104;
+    const crate = this.add.image(0, crateY, this.tex('bonus-paquet', Bn.crate)).setScale(K);
+    let link: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
+    const parts: Phaser.GameObjects.GameObject[] = [aura];
+    if (saucer) {
+      link = this.add.image(0, 38, this.tex('bonus-rayon', Bn.tractorBeam)).setOrigin(0.5, 0).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.7).setScale(0.8, 0.5);
+      if (!this.reducedMotion) loops.push(this.tweens.add({ targets: link, alpha: 0.35, duration: 260, yoyo: true, repeat: -1 }));
+      parts.push(link, craft);
+    } else {
+      link = this.add.rectangle(0, 58, 3, 20, 0x1d1a2b).setOrigin(0.5, 0);
+      const prop = this.add.image(92, -19, this.tex('bonus-helice', Bn.propeller)).setScale(K);
+      if (!this.reducedMotion) loops.push(this.tweens.add({ targets: prop, scaleY: K * 0.2, duration: 60, yoyo: true, repeat: -1 }));
+      parts.push(link, craft, prop);
+    }
+
+    // Étiquette dorée du calcul, accrochée au paquet.
+    const label = this.add.text(0, 1, `${f.expr.text} = ${f.expr.answer}`, style(30, B.C.cream, 800, 6)).setOrigin(0.5);
+    if (label.width > 180) label.setFontSize(26);
+    const w = Math.ceil((label.width + 80) / 10) * 10;
+    label.setText(`${f.expr.text} = ?`);
+    const tag = this.add.container(36 + w / 2, crateY + 4);
+    const string = this.add.rectangle(-w / 2 - 6, -2, 18, 3, 0x1d1a2b);
+    const card = this.add.image(0, 3, this.tex(`bonus-etiquette-${w}`, () => Bn.cartouche(w, 58))).setScale(K);
+    const fuse = this.add.rectangle(-(w - 64) / 2, 34, w - 64, 5, 0xffc94a).setOrigin(0, 0.5);
+    const badge = this.add.text(-w / 2 + 14, -34, 'BONUS !', style(16, B.C.saffron, 800, 5)).setOrigin(0, 0.5);
+    tag.add([string, card, label, fuse, badge]);
+    box.add([...parts, crate, tag]);
+
+    const trail = this.add.particles(0, 0, this.tex('b-spark-or', () => B.sparkle('#ffc94a')), {
+      follow: box,
+      followOffset: { x: 40, y: 40 },
+      lifespan: 700,
+      speedX: { min: 30, max: 90 },
+      speedY: { min: -25, max: 25 },
+      scale: { start: 0.6, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      frequency: this.reducedMotion ? 300 : 40,
+      blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(29);
+
+    const fv: FlightView = { box, craft, crate, link, tag, label, fuse, trail, move: null, flight: f, done: false, loops };
+    this.flightView = fv;
+    const cruise = Math.max(1500, f.durationMs - 450);
+    fv.move = this.tweens.add({ targets: box, x: BONUS.enterX, duration: 450, ease: 'Cubic.easeOut', onComplete: () => {
+      if (fv.done) return;
+      fv.move = this.tweens.add({ targets: box, x: BONUS.leaveX, duration: cruise, onComplete: () => {
+        if (!fv.done) this.flightEscape(fv, 'temps');
+      } });
+    } });
+    loops.push(this.tweens.add({ targets: fuse, width: 0, duration: f.durationMs }));
+    if (!this.reducedMotion) {
+      loops.push(this.tweens.add({ targets: box, y: BONUS.y + 8, duration: 640, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }));
+      loops.push(this.tweens.add({ targets: craft, angle: { from: -4, to: 4 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }));
+      loops.push(this.tweens.add({ targets: tag, angle: { from: -3, to: 3 }, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }));
+    }
+    this.sfx.bonusAppear();
+    if (saucer) this.sfx.ufo();
+    else this.sfx.putt();
+    this.showKeypad(true);
+    if (!this.bonusExplained) {
+      this.bonusExplained = true;
+      this.time.delayedCall(500, () => this.toast('Un bonus ! Tape la réponse avant qu’il s’envole'));
+    }
+  }
+
+  private refreshTag(fv: FlightView): void {
+    const f = fv.flight;
+    fv.label.setText(`${f.expr.text} = ${f.state === 'caught' ? f.expr.answer : f.typed || '?'}`);
+  }
+
+  /** Un chiffre pour le calcul bonus (clavier ou pavé). */
+  private bonusKey(d: string): void {
+    const p = this.powers;
+    const fv = this.flightView;
+    if (!p || !fv || fv.done || this.overlay) return;
+    const r = p.type(d);
+    if (r === 'ignored') return;
+    this.sfx.key(Number(d));
+    this.refreshTag(fv);
+    if (r === 'caught') this.catchFlight(fv);
+    else if (r === 'wrong') this.wrongAnswer(fv);
+    else if (r === 'escaped') {
+      this.wrongAnswer(fv);
+      this.flightEscape(fv, 'erreurs');
+    }
+  }
+
+  /** Efface un chiffre du calcul bonus ; false s'il n'y avait rien à effacer. */
+  private bonusErase(): boolean {
+    const fv = this.flightView;
+    if (!this.powers || !fv || fv.done || !this.powers.erase()) return false;
+    this.sfx.deselect();
+    this.refreshTag(fv);
+    return true;
+  }
+
+  private setCraft(fv: FlightView, mood: Bn.Mood): void {
+    const v = fv.flight.vehicle;
+    fv.craft.setTexture(this.tex(`bonus-${v}-${mood}`, () => (v === 'soucoupe' ? Bn.saucer(mood) : Bn.blimp(mood))));
+  }
+
+  private wrongAnswer(fv: FlightView): void {
+    this.sfx.buzz();
+    fv.label.setColor(B.C.coralLight);
+    this.time.delayedCall(380, () => fv.label.active && fv.label.setColor(B.C.cream));
+    const x = fv.tag.x;
+    this.tweens.add({ targets: fv.tag, x: { from: x - 12, to: x }, duration: 420, ease: 'Elastic.easeOut', easeParams: [2, 0.25] });
+    // Le pilote se moque un instant.
+    this.setCraft(fv, 'moqueur');
+    this.time.delayedCall(500, () => !fv.done && fv.craft.active && this.setCraft(fv, 'normal'));
+  }
+
+  /** Bonne réponse : le pilote sursaute, le paquet tombe, s'ouvre, et le bonus file dans sa niche. */
+  private catchFlight(fv: FlightView): void {
+    const p = this.powers!;
+    fv.done = true;
+    fv.move?.stop();
+    const slot = p.collect();
+    const kind = fv.flight.cargo;
+    this.showKeypad(false);
+    this.sfx.bonusCaught();
+    fv.label.setColor('#a8f0b4');
+    this.setCraft(fv, 'surpris');
+    this.tweens.add({ targets: fv.tag, y: fv.tag.y + 70, angle: 28, alpha: 0, delay: 380, duration: 520, ease: 'Quad.easeIn' });
+    this.tweens.add({ targets: fv.link, alpha: 0, duration: 70, yoyo: true, repeat: 2, onComplete: () => fv.link.active && (fv.link as Phaser.GameObjects.Image).setVisible(false) });
+    fv.crate.setVisible(false);
+    const crate = this.add.image(fv.box.x + fv.crate.x, fv.box.y + fv.crate.y, 'bonus-paquet').setScale(K).setDepth(31);
+    if (slot >= 0) {
+      this.arriving.add(slot);
+      this.dropCrate(crate, kind, slot);
+    } else crate.destroy();
+    p.endFlight();
+    // L'engin, vexé, file sans demander son reste.
+    const saucer = fv.flight.vehicle === 'soucoupe';
+    if (!this.reducedMotion) this.tweens.add({ targets: fv.craft, angle: { from: -16, to: 16 }, duration: 70, yoyo: true, repeat: 4 });
+    this.time.delayedCall(650, () => {
+      if (!fv.box.active) return;
+      for (const t of fv.loops) t.stop();
+      if (saucer) {
+        this.sfx.ufo();
+        this.tweens.add({ targets: fv.craft, angle: 720, duration: 900, ease: 'Cubic.easeIn' });
+        this.tweens.add({ targets: fv.box, x: -260, y: -170, scale: 0.6, duration: 900, ease: 'Cubic.easeIn', onComplete: () => this.destroyFlight(fv) });
+      } else {
+        // Le ballon se dégonfle et part en zigzag, comme un ballon de baudruche lâché.
+        this.sfx.deflate();
+        const x0 = fv.box.x;
+        const y0 = fv.box.y;
+        const q = { t: 0 };
+        this.tweens.add({ targets: q, t: 1, duration: 1300, ease: 'Quad.easeIn', onUpdate: () => {
+          if (!fv.box.active) return;
+          const t = q.t;
+          fv.box.setPosition(x0 - 1000 * t + Math.sin(t * 26) * 46, y0 - 300 * t + Math.cos(t * 19) * 34);
+          fv.box.setAngle(Math.sin(t * 30) * 35).setScale(1 - 0.35 * t);
+        }, onComplete: () => this.destroyFlight(fv) });
+      }
+    });
+  }
+
+  private dropCrate(crate: Phaser.GameObjects.Image, kind: PowerKind, slot: number): void {
+    const ground = L.groundY - 6;
+    const dur = 300 + (ground - crate.y) * 1.2;
+    this.tweens.add({ targets: crate, angle: 360, duration: dur });
+    this.tweens.add({ targets: crate, y: ground, duration: dur, ease: 'Quad.easeIn', onComplete: () => {
+      this.sfx.crateLand();
+      this.dust.explode(this.reducedMotion ? 2 : 8, crate.x, ground + 26);
+      this.tweens.add({ targets: crate, y: ground - 46, duration: 210, yoyo: true, ease: 'Quad.easeOut', onComplete: () => {
+        this.sfx.crateLand();
+        this.dust.explode(this.reducedMotion ? 1 : 4, crate.x, ground + 26);
+        this.tweens.add({ targets: crate, scaleX: K * 1.3, scaleY: K * 0.7, duration: 120, yoyo: true, onComplete: () => this.openCrate(crate, kind, slot) });
+      } });
+    } });
+  }
+
+  private openCrate(crate: Phaser.GameObjects.Image, kind: PowerKind, slot: number): void {
+    const { x, y } = crate;
+    this.sfx.crateOpen();
+    this.sparks.explode(this.reducedMotion ? 6 : 22, x, y);
+    const ring = this.add.circle(x, y, 24).setStrokeStyle(5, 0xffc94a).setDepth(48);
+    this.tweens.add({ targets: ring, scale: 3.2, alpha: 0, duration: 420, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+    this.tweens.add({ targets: crate, scale: 0, alpha: 0, duration: 200, onComplete: () => crate.destroy() });
+    const icon = this.add.image(x, y, `bonus-icon-${kind}`).setScale(0).setDepth(73);
+    const name = this.add.text(x, y - 92, `${POWERS[kind].name} !`, style(30, B.C.saffron, 800, 7)).setOrigin(0.5).setDepth(73).setScale(0);
+    const hint = this.add.text(x, y - 60, POWERS[kind].hint, style(18, B.C.cream, 700, 5)).setOrigin(0.5).setDepth(73).setAlpha(0);
+    this.tweens.add({ targets: icon, scale: K * 1.7, angle: 360, duration: 420, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: name, scale: 1, duration: 320, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: hint, alpha: 1, delay: 200, duration: 250 });
+    this.tweens.add({ targets: [name, hint], alpha: 0, delay: 1700, duration: 300, onComplete: () => {
+      name.destroy();
+      hint.destroy();
+    } });
+    // Puis le bonus file dans sa niche.
+    const to = new Phaser.Math.Vector2(BONUS.slotX[slot], BONUS.slotY);
+    const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(x, y), new Phaser.Math.Vector2((x + to.x) / 2, Math.min(y, to.y) - 180), to);
+    const q = { t: 0 };
+    this.tweens.add({ targets: q, t: 1, delay: 900, duration: 700, ease: 'Sine.easeInOut', onUpdate: () => {
+      const pt = curve.getPoint(q.t);
+      icon.setPosition(pt.x, pt.y).setScale(K * (1.7 - 0.7 * q.t));
+    }, onComplete: () => {
+      icon.destroy();
+      this.arriving.delete(slot);
+      this.refreshSlots(slot);
+      this.sfx.slotIn();
+      this.sparks.explode(this.reducedMotion ? 4 : 14, to.x, to.y);
+      if (this.session?.phase === 'play') this.toast(`${POWERS[kind].name} : touche-la quand tu veux (${slot === 0 ? 'B' : 'N'})`, 'good');
+    } });
+  }
+
+  /** Temps écoulé ou deux erreurs : l'engin se moque et repart avec son paquet. Aucune pénalité. */
+  private flightEscape(fv: FlightView, why: 'temps' | 'erreurs'): void {
+    fv.done = true;
+    fv.move?.stop();
+    this.powers?.expire();
+    this.showKeypad(false);
+    this.setCraft(fv, 'moqueur');
+    this.sfx.taunt();
+    const saucer = fv.flight.vehicle === 'soucoupe';
+    const bx = Math.max(150, fv.box.x - 150);
+    const by = fv.box.y - 20;
+    const bub = this.add.image(bx, by, this.tex('w-bubble', () => Wd.bubble(130, 54))).setScale(0).setDepth(74);
+    const t = this.add.text(bx, by - 6, saucer ? 'Nananère !' : 'Trop tard !', style(21, B.C.ink, 800)).setOrigin(0.5).setScale(0).setDepth(75);
+    this.tweens.add({ targets: bub, scale: K, duration: 240, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, scale: 1, duration: 240, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: [bub, t], alpha: 0, delay: 1000, duration: 250, onComplete: () => {
+      bub.destroy();
+      t.destroy();
+    } });
+    if (why === 'temps') this.toast('Le bonus s’est envolé… pas grave !');
+    this.time.delayedCall(800, () => {
+      if (!fv.box.active) return;
+      for (const l of fv.loops) l.stop();
+      this.tweens.add({ targets: fv.box, x: -320, y: -150, duration: 750, ease: 'Cubic.easeIn', onComplete: () => this.destroyFlight(fv) });
+    });
+  }
+
+  /** Fin de partie pendant un passage : l'engin s'éclipse sans bruit. */
+  private abortFlight(): void {
+    this.showKeypad(false);
+    const fv = this.flightView;
+    if (!fv || fv.done) return;
+    fv.done = true;
+    fv.move?.stop();
+    this.powers?.expire();
+    this.tweens.add({ targets: fv.box, y: -220, alpha: 0, duration: 400, ease: 'Cubic.easeIn', onComplete: () => this.destroyFlight(fv) });
+  }
+
+  private destroyFlight(fv: FlightView): void {
+    fv.done = true;
+    for (const t of fv.loops) t.stop();
+    fv.move?.stop();
+    this.tweens.killTweensOf([fv.box, fv.craft, fv.tag, fv.link]);
+    fv.trail.stop();
+    this.time.delayedCall(800, () => fv.trail.destroy());
+    fv.box.destroy(true);
+    if (this.flightView === fv) {
+      this.flightView = null;
+      this.powers?.endFlight();
+    }
+  }
+
+  private refreshSlots(pop = -1): void {
+    const p = this.powers;
+    this.slots.forEach((v, i) => {
+      const kind = p && !this.arriving.has(i) ? p.slots[i] : null;
+      v.pulse?.stop();
+      v.pulse = null;
+      this.tweens.killTweensOf([v.icon, v.glow]);
+      if (!kind) {
+        v.icon.setVisible(false);
+        v.glow.setAlpha(0);
+        return;
+      }
+      v.icon.setTexture(`bonus-icon-${kind}`).setVisible(true).setScale(K).setPosition(0, -1).setAngle(0);
+      v.glow.setAlpha(0.6).setScale(1.3);
+      if (!this.reducedMotion) {
+        v.pulse = this.tweens.add({ targets: v.glow, alpha: 0.2, scale: 1.45, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: v.icon, y: -5, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        if (i === pop) this.tweens.add({ targets: v.icon, scale: { from: K * 1.7, to: K }, duration: 380, ease: 'Back.easeOut' });
+      }
+    });
+  }
+
+  private slotShake(i: number): void {
+    const b = this.slots[i].box;
+    this.tweens.add({ targets: b, x: { from: BONUS.slotX[i] - 7, to: BONUS.slotX[i] }, duration: 400, ease: 'Elastic.easeOut', easeParams: [2, 0.3] });
+  }
+
+  /** Utilise le bonus d'une niche (clic, toucher, B ou N). Un bonus inutile maintenant est gardé. */
+  private usePower(i: number, tries = 0): void {
+    const p = this.powers;
+    const s = this.session;
+    if (!p || !s || s.phase !== 'play' || this.overlay || this.arriving.has(i)) return;
+    if (!p.slots[i]) {
+      if (tries === 0) this.slotShake(i);
+      return;
+    }
+    const e = this.enemy && s.enemyHp > 0 ? this.enemy : null;
+    const c = p.check(i, { enemyX: e ? e.obj.x : null, entering: e?.entering ?? false, frozen: this.isFrozen(), pushing: this.pushing, charged: s.charged });
+    if (!c.ok) {
+      if (tries === 0) {
+        this.toast(c.reason);
+        this.slotShake(i);
+        this.sfx.miss();
+      }
+      return;
+    }
+    // Un tir est en vol : le bonus part juste après l'impact.
+    if (this.busy && c.kind !== 'supertir') {
+      if (tries < 30) this.time.delayedCall(80, () => this.usePower(i, tries + 1));
+      return;
+    }
+    p.take(i);
+    this.refreshSlots();
+    const from = { x: BONUS.slotX[i], y: BONUS.slotY };
+    if (c.kind === 'poussee') this.superPush(e!);
+    else if (c.kind === 'gel') this.freezeEnemy(e!, from);
+    else this.chargeMega(from);
+  }
+
+  // --- Super Poussée : un gant de boxe à ressort jaillit du phare ---------------------------------
+  private superPush(e: EnemyView): void {
+    this.pushing = true;
+    if (this.ice) this.thaw(e, true);
+    e.walking = false;
+    const from = e.obj.x;
+    const to = pushTarget(from, e.kind);
+    const y = e.obj.y - 62 * e.scale;
+    const baseX = L.towerX + 30;
+    const hitX = from - 40 * e.scale;
+    this.sfx.spring();
+    this.tweens.add({ targets: this.lanternGlow, alpha: 1, scale: 1.5, duration: 120, yoyo: true });
+    const spring = this.add.graphics().setDepth(12);
+    const glove = this.add.image(baseX, y, this.tex('bonus-gant', Bn.glove)).setOrigin(1, 0.5).setScale(K * 0.3).setDepth(13);
+    const draw = () => {
+      spring.clear();
+      const x0 = baseX;
+      const x1 = glove.x - glove.displayWidth + 14;
+      if (x1 <= x0 + 6) return;
+      const n = 10;
+      const pts: Array<[number, number]> = [];
+      for (let k = 0; k <= n; k++) pts.push([x0 + ((x1 - x0) * k) / n, y + (k === 0 || k === n ? 0 : k % 2 ? -14 : 14)]);
+      for (const [lw, col] of [[10, 0x1d1a2b], [4, 0xd9dbe6]]) {
+        spring.lineStyle(lw, col, 1);
+        spring.beginPath();
+        spring.moveTo(pts[0][0], pts[0][1]);
+        for (const [px, py] of pts) spring.lineTo(px, py);
+        spring.strokePath();
+      }
+    };
+    const q = { t: 0 };
+    const place = () => {
+      glove.x = baseX + (hitX - baseX) * q.t;
+      glove.setScale(K * (0.3 + 0.7 * q.t));
+      draw();
+    };
+    this.tweens.add({ targets: q, t: 1, duration: 240, ease: 'Cubic.easeIn', onUpdate: place, onComplete: () => {
+      this.punchFx(hitX, y);
+      if (this.enemy === e && e.obj.active) this.launchEnemy(e, to);
+      else this.pushing = false;
+      this.tweens.add({ targets: q, t: 0, delay: 180, duration: 420, ease: 'Sine.easeInOut', onUpdate: place, onComplete: () => {
+        glove.destroy();
+        spring.destroy();
+      } });
+    } });
+  }
+
+  private punchFx(x: number, y: number): void {
+    this.sfx.punch();
+    this.sparks.explode(this.reducedMotion ? 8 : 34, x, y);
+    this.dust.explode(this.reducedMotion ? 3 : 12, x + 30, L.groundY + 14);
+    const bang = this.add.image(x + 6, y - 12, this.tex('bonus-paf', Bn.bang)).setScale(0).setAngle(-12).setDepth(72);
+    const word = this.add.text(x + 6, y - 14, 'PAF !', style(40, B.C.ink, 800)).setOrigin(0.5).setScale(0).setAngle(-12).setDepth(73);
+    this.tweens.add({ targets: bang, scale: K * 1.1, duration: 150, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: word, scale: 1, duration: 150, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: [bang, word], alpha: 0, scale: '*=1.2', delay: 520, duration: 260, onComplete: () => {
+      bang.destroy();
+      word.destroy();
+    } });
+    // Onde de choc au sol.
+    const wave = this.add.ellipse(x + 20, L.groundY + 20, 70, 20).setStrokeStyle(5, 0xffc94a).setDepth(9);
+    this.tweens.add({ targets: wave, scaleX: 8, scaleY: 3, alpha: 0, duration: 650, ease: 'Cubic.easeOut', onComplete: () => wave.destroy() });
+    if (!this.reducedMotion) {
+      this.cameras.main.shake(260, 0.012);
+      const flash = this.add.rectangle(W / 2, H / 2, W, H, 0xfff6dc, 0.25).setDepth(80).setBlendMode(Phaser.BlendModes.ADD);
+      this.tweens.add({ targets: flash, alpha: 0, duration: 200, onComplete: () => flash.destroy() });
+    }
+  }
+
+  /** Le monstre s'envole vers le fond en tournoyant (le Roi glisse en freinant des talons). */
+  private launchEnemy(e: EnemyView, to: number): void {
+    const heavy = e.kind === 'roi';
+    const roll = e.kind === 'carapacon';
+    const from = e.obj.x;
+    const h = heavy ? 0 : roll ? 34 : 150;
+    const spin = heavy ? 0 : roll ? 1080 : 720;
+    const dur = heavy ? 950 : 780;
+    const bodyH = Wd.CREATURE_H * e.scale;
+    const lifted = e.obj.list.filter((o) => o !== e.shadow) as unknown as Phaser.GameObjects.Image[];
+    e.body.setOrigin(0.5, 0.5).setY(2 - bodyH / 2);
+    e.sign.y = e.signY;
+    const base = lifted.map((o) => o.y);
+    const eyes = EYES[e.kind].map(() => this.add.image(0, 0, this.tex('bonus-oeil', Bn.bigEye)).setScale(K * e.scale * 1.15));
+    e.obj.add(eyes);
+    const placeEyes = () => {
+      const a = Phaser.Math.DegToRad(e.body.angle);
+      EYES[e.kind].forEach(([ex, ey], k) => {
+        const dx = ex * e.scale;
+        const dy = ey * e.scale;
+        eyes[k].setPosition(e.body.x + dx * Math.cos(a) - dy * Math.sin(a), e.body.y + dx * Math.sin(a) + dy * Math.cos(a)).setAngle(e.body.angle);
+      });
+    };
+    placeEyes();
+    if (heavy) this.sfx.bump();
+    else this.sfx.fly();
+    const q = { t: 0 };
+    this.tweens.add({ targets: q, t: 1, duration: dur, onUpdate: () => {
+      if (!e.obj.active) return;
+      const t = q.t;
+      const ease = 1 - Math.pow(1 - t, 2.4);
+      e.obj.x = from + (to - from) * ease;
+      const lift = -Math.sin(Math.PI * t) * h;
+      lifted.forEach((o, k) => (o.y = base[k] + lift));
+      e.body.angle = heavy ? Math.sin(t * 30) * 7 : spin * ease;
+      if (!this.reducedMotion) e.sign.angle = Phaser.Math.Between(-16, 16);
+      e.shadow.setScale(K * e.scale * (1 - (h ? (0.5 * -lift) / h : 0)));
+      placeEyes();
+      if (heavy && Math.random() < 0.35) this.dust.explode(1, e.obj.x - 30, e.obj.y - 4);
+    }, onComplete: () => this.landEnemy(e, eyes, lifted, base) });
+  }
+
+  private landEnemy(e: EnemyView, eyes: Phaser.GameObjects.Image[], lifted: Phaser.GameObjects.Image[], base: number[]): void {
+    const cleanup = () => eyes.forEach((o) => o.destroy());
+    if (!e.obj.active) {
+      this.pushing = false;
+      return;
+    }
+    lifted.forEach((o, k) => (o.y = base[k]));
+    e.body.setOrigin(0.5, 1).setY(2).setAngle(0);
+    e.sign.setAngle(0).setY(e.signY);
+    e.shadow.setScale(K * e.scale);
+    // Les yeux restent exorbités encore un moment.
+    EYES[e.kind].forEach(([ex, ey], k) => eyes[k].setPosition(ex * e.scale, 2 - Wd.CREATURE_H * e.scale / 2 + ey * e.scale).setAngle(0));
+    this.sfx.thud();
+    this.dust.explode(this.reducedMotion ? 4 : 18, e.obj.x, L.groundY + 14);
+    if (!this.reducedMotion) {
+      this.cameras.main.shake(140, 0.005);
+      this.tweens.add({ targets: e.body, scaleX: K * e.scale * 1.22, scaleY: K * e.scale * 0.74, duration: 110, yoyo: true, ease: 'Quad.easeOut' });
+    }
+    // Étoiles qui tournent autour de la tête, et une petite réplique vexée.
+    const stars = [0, 1, 2].map(() => this.add.image(0, 0, this.tex('b-spark-or', () => B.sparkle('#ffc94a'))).setScale(0.9));
+    e.obj.add(stars);
+    const headY = 2 - Wd.CREATURE_H * e.scale * 0.92;
+    const q = { t: 0 };
+    this.tweens.add({ targets: q, t: 1, duration: 1500, onUpdate: () => {
+      stars.forEach((st, k) => {
+        const a = q.t * Math.PI * 6 + (k * Math.PI * 2) / 3;
+        st.setPosition(Math.cos(a) * 38 * e.scale, headY + Math.sin(a) * 10);
+      });
+    } });
+    const line = { mordillon: 'Ouille !', trotteur: 'Hé ho !', carapacon: 'Ça tourne…', roi: 'Grrr !' }[e.kind];
+    const bx = e.obj.x;
+    const by = e.obj.y + e.signY - 124;
+    const bub = this.add.image(bx, by, this.tex('w-bubble', () => Wd.bubble(130, 54))).setScale(0).setDepth(74);
+    const t = this.add.text(bx, by - 6, line, style(21, B.C.ink, 800)).setOrigin(0.5).setScale(0).setDepth(75);
+    this.tweens.add({ targets: [bub], scale: K, delay: 150, duration: 240, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: [t], scale: 1, delay: 150, duration: 240, ease: 'Back.easeOut' });
+    this.time.delayedCall(800, () => {
+      if (e.kind === 'roi') this.sfx.growl();
+      else this.sfx.ouch();
+    });
+    this.time.delayedCall(1550, () => {
+      cleanup();
+      stars.forEach((st) => st.destroy());
+      bub.destroy();
+      t.destroy();
+      this.pushing = false;
+      if (this.enemy === e && e.obj.active && (this.session?.enemyHp ?? 0) > 0) e.walking = true;
+    });
+  }
+
+  // --- Gel : le monstre est pris dans un bloc de glace --------------------------------------------
+  private freezeEnemy(e: EnemyView, from: { x: number; y: number }): void {
+    const s = this.session!;
+    this.sfx.freeze();
+    const flake = this.add.image(from.x, from.y, 'bonus-icon-gel').setScale(K * 1.3).setDepth(73);
+    const target = new Phaser.Math.Vector2(e.obj.x, e.obj.y - 70 * e.scale);
+    const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(from.x, from.y), new Phaser.Math.Vector2((from.x + target.x) / 2, target.y - 240), target);
+    const q = { t: 0 };
+    this.tweens.add({ targets: q, t: 1, duration: 450, ease: 'Sine.easeIn', onUpdate: () => {
+      const pt = curve.getPoint(q.t);
+      flake.setPosition(pt.x, pt.y).setAngle(q.t * 540);
+    }, onComplete: () => {
+      flake.destroy();
+      if (this.enemy !== e || !e.obj.active || (this.session?.enemyHp ?? 0) <= 0) return;
+      this.encase(e, freezeMs(s.mode));
+    } });
+  }
+
+  private encase(e: EnemyView, ms: number): void {
+    this.clearIce();
+    this.frozenUntil = this.time.now + ms;
+    const cx = e.obj.x;
+    const cy = e.obj.y - 70 * e.scale;
+    this.shards.explode(this.reducedMotion ? 4 : 16, cx, cy);
+    const ring = this.add.circle(cx, cy, 30).setStrokeStyle(6, 0xbfefff).setDepth(48);
+    this.tweens.add({ targets: ring, scale: 4, alpha: 0, duration: 500, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+    e.body.setTint(0xa8e4ff);
+    const w = Math.round(124 * e.scale);
+    const h = Math.round(150 * e.scale);
+    const img = this.add.image(0, 8, this.tex(`bonus-glace-${w}-${h}`, () => Bn.iceBlock(w, h, false))).setOrigin(0.5, 1).setScale(K, this.reducedMotion ? K : 0);
+    e.obj.addAt(img, 2);
+    if (!this.reducedMotion) this.tweens.add({ targets: img, scaleY: K, duration: 280, ease: 'Back.easeOut' });
+    const frost = this.add.particles(0, 0, this.tex('b-spark-glace', () => B.sparkle('#e8fbff')), {
+      x: { min: cx - 55 * e.scale, max: cx + 55 * e.scale },
+      y: { min: e.obj.y - 150 * e.scale, max: e.obj.y - 10 },
+      lifespan: 900,
+      speedY: { min: -14, max: 4 },
+      scale: { start: 0.5, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      frequency: this.reducedMotion ? 600 : 130,
+      blendMode: Phaser.BlendModes.ADD,
+    }).setDepth(14);
+    const timers = [
+      this.time.delayedCall(Math.max(0, ms - 1300), () => {
+        img.setTexture(this.tex(`bonus-glace-${w}-${h}-f`, () => Bn.iceBlock(w, h, true)));
+        if (!this.reducedMotion) this.tweens.add({ targets: img, angle: { from: -2, to: 2 }, duration: 60, yoyo: true, repeat: 9 });
+      }),
+      this.time.delayedCall(ms, () => this.thaw(e, true)),
+    ];
+    this.ice = { img, frost, timers };
+    this.toast(`Gelé pendant ${ms / 1000} secondes !`, 'good');
+  }
+
+  private clearIce(): void {
+    const ice = this.ice;
+    this.ice = null;
+    this.frozenUntil = 0;
+    if (!ice) return;
+    for (const t of ice.timers) t.remove();
+    ice.frost.stop();
+    this.time.delayedCall(1000, () => ice.frost.destroy());
+    this.tweens.killTweensOf(ice.img);
+    ice.img.destroy();
+  }
+
+  /** Fin du gel (ou glace brisée par un coup) : éclats et retour des couleurs. */
+  private thaw(e: EnemyView, broken: boolean): void {
+    if (!this.ice) return;
+    this.clearIce();
+    if (e.body.active) e.body.clearTint();
+    if (broken && e.obj.active) {
+      this.sfx.shatter();
+      this.shards.explode(this.reducedMotion ? 5 : 22, e.obj.x, e.obj.y - 70 * e.scale);
+    }
+  }
+
+  // --- Méga-tir : la lanterne du phare se charge d'or ------------------------------------------------
+  private chargeMega(from: { x: number; y: number }): void {
+    const s = this.session!;
+    s.charged = true;
+    this.sfx.megaCharge();
+    const icon = this.add.image(from.x, from.y, 'bonus-icon-supertir').setScale(K * 1.3).setDepth(73);
+    const to = new Phaser.Math.Vector2(L.towerX, this.lanternGlow.y);
+    const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(from.x, from.y), new Phaser.Math.Vector2(from.x + 160, (from.y + to.y) / 2), to);
+    const q = { t: 0 };
+    this.tweens.add({ targets: q, t: 1, duration: 550, ease: 'Sine.easeInOut', onUpdate: () => {
+      const pt = curve.getPoint(q.t);
+      icon.setPosition(pt.x, pt.y).setAngle(q.t * 360);
+    }, onComplete: () => {
+      icon.destroy();
+      this.sparks.explode(this.reducedMotion ? 5 : 20, to.x, to.y);
+      this.applyMegaFx();
+      this.toast('Méga-tir prêt : ton prochain tir frappe ×2 !', 'good');
+    } });
+  }
+
+  private applyMegaFx(): void {
+    if (!this.session?.charged) return;
+    this.lanternGlow.setTexture(this.tex('b-glow-or', () => B.softGlow(128, '#ffc94a')));
+    this.megaAura?.destroy();
+    this.megaAura = this.add.image(this.launchButton.x, this.launchButton.y + 3, this.tex('bonus-halo-bouton', () => B.softGlow(100, '#ffc94a'))).setBlendMode(Phaser.BlendModes.ADD).setDepth(59).setScale(1.7, 0.75).setAlpha(0.8);
+    if (!this.reducedMotion) this.tweens.add({ targets: this.megaAura, alpha: 0.35, duration: 600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  private clearMegaFx(): void {
+    this.lanternGlow?.setTexture('b-glow');
+    if (this.megaAura) {
+      this.tweens.killTweensOf(this.megaAura);
+      this.megaAura.destroy();
+      this.megaAura = null;
+    }
+  }
+
+  /** Impact du Méga-tir : tampon doré et gerbe d'étincelles en plus. */
+  private megaImpact(at: Phaser.Math.Vector2): void {
+    this.clearMegaFx();
+    const x = Phaser.Math.Clamp(at.x - 70, 700, W - 200);
+    const stamp = this.add.text(x, at.y - 160, 'MÉGA !', { ...style(62, B.C.saffron, 800, 9), stroke: '#e8424f' }).setOrigin(0.5).setDepth(72).setAngle(6);
+    if (this.reducedMotion) {
+      this.time.delayedCall(900, () => stamp.destroy());
+    } else {
+      stamp.setScale(2.4).setAlpha(0);
+      this.tweens.add({ targets: stamp, scale: 1, alpha: 1, duration: 220, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: stamp, y: stamp.y - 30, alpha: 0, delay: 800, duration: 350, onComplete: () => stamp.destroy() });
+      this.fireworkBurst(at.x - 40, at.y - 230, ['#ffc94a', '#ffffff', '#ff8fb1']);
+      this.sfx.firework(0.1);
+    }
   }
 
   private impactFx(at: Phaser.Math.Vector2, perfect: boolean): void {

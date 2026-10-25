@@ -32,6 +32,8 @@ export class SiegeSession {
   hearts: number | null;
   phase: Phase = 'play';
   bonus = 0;
+  /** Méga-tir prêt (bonus) : le prochain coup réussi frappe deux fois plus fort. */
+  charged = false;
   private shownAt = 0;
 
   constructor(tier: Tier, seed: number, mode: Mode) {
@@ -85,17 +87,18 @@ export class SiegeSession {
     this.round.markTargetShown(nowMs);
   }
 
-  validate(nowMs: number): { outcome: ValidateOutcome; damage: number; killed: boolean; armoredHalved: boolean } {
+  validate(nowMs: number): { outcome: ValidateOutcome; damage: number; killed: boolean; armoredHalved: boolean; mega: boolean } {
     const outcome = this.round.validate(nowMs);
     let damage = 0;
     let killed = false;
     let armoredHalved = false;
-    if (outcome.kind === 'empty') return { outcome, damage, killed, armoredHalved };
+    let mega = false;
+    if (outcome.kind === 'empty') return { outcome, damage, killed, armoredHalved, mega };
     this.stats.attempts++;
     if (outcome.kind === 'miss') {
       this.stats.misses++;
       this.adaptive.record('miss');
-      return { outcome, damage, killed, armoredHalved };
+      return { outcome, damage, killed, armoredHalved, mega };
     }
     const perfect = outcome.result.perfect;
     this.stats.hits++;
@@ -108,6 +111,11 @@ export class SiegeSession {
     if (this.enemy) {
       damage = damageTo(this.enemy.kind, outcome.result.damage, perfect);
       armoredHalved = damage < outcome.result.damage;
+      if (this.charged) {
+        damage *= 2;
+        mega = true;
+        this.charged = false;
+      }
       this.enemyHp = Math.max(0, this.enemyHp - damage);
       if (this.enemyHp === 0) {
         killed = true;
@@ -116,7 +124,7 @@ export class SiegeSession {
       }
     }
     this.shownAt = nowMs;
-    return { outcome, damage, killed, armoredHalved };
+    return { outcome, damage, killed, armoredHalved, mega };
   }
 
   /**

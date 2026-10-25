@@ -17,6 +17,7 @@ import { RocketSession, SUMMIT, ZONES, MAX_VX, type Platform, type RocketEvent, 
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
 export const H = 720;
@@ -1182,6 +1183,7 @@ export class RocketScene extends Phaser.Scene {
   }
 
   private startGame(mode: Mode): void {
+    pleinEcranAuDemarrage();
     this.overlay?.destroy(true);
     this.overlay = null;
     this.overlayButtons = [];

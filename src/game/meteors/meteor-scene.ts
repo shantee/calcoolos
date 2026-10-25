@@ -16,6 +16,7 @@ import { MeteorSession, METEOR_MODES, type Meteor, type MeteorEvent } from './se
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
 export const H = 720;
@@ -1474,6 +1475,7 @@ export class MeteorScene extends Phaser.Scene {
   }
 
   private startGame(mode: Mode): void {
+    pleinEcranAuDemarrage();
     this.overlay?.destroy(true);
     this.overlay = null;
     this.overlayButtons = [];

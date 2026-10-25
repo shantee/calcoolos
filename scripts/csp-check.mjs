@@ -26,7 +26,7 @@ for (const m of conf.matchAll(/add_header\s+([\w-]+)\s+"([^"]+)"\s+always;/g)) h
 if (!headers['Content-Security-Policy']) throw new Error('CSP introuvable dans deploy/nginx-calcoolos.conf');
 
 const root = new URL('../dist/', import.meta.url).pathname;
-const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json' };
 const server = createServer((req, res) => {
   const url = new URL(req.url ?? '/', 'http://x');
   if (url.pathname.startsWith('/api/')) {

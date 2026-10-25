@@ -4,11 +4,43 @@ import brand from './brand.json' with { type: 'json' };
 
 /**
  * Le nom de la plateforme n'est écrit qu'une fois, dans brand.json.
- * Les pages HTML utilisent %BRAND_NAME%, %BRAND_TAGLINE% et %BRAND_DESCRIPTION%.
+ * Les pages HTML utilisent %BRAND_NAME%, %BRAND_TAGLINE% et %BRAND_DESCRIPTION% ; le manifeste en est tiré aussi.
  */
 function brandPlugin(): Plugin {
+  // Manifeste de l'application (« Ajouter à l'écran d'accueil ») : ouvert sans barre du navigateur.
+  // Pas de service worker : le site reste toujours à jour, rien n'est mis en cache en douce.
+  const manifest = JSON.stringify(
+    {
+      name: brand.name,
+      short_name: brand.name,
+      description: brand.description,
+      lang: 'fr',
+      start_url: './index.html',
+      scope: './',
+      display: 'fullscreen',
+      display_override: ['fullscreen', 'standalone'],
+      background_color: '#0d0a1c',
+      theme_color: '#0d0a1c',
+      icons: [
+        { src: 'icones/icone-192.png', sizes: '192x192', type: 'image/png' },
+        { src: 'icones/icone-512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'icones/icone-masquable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+      ],
+    },
+    null,
+    2,
+  );
   return {
     name: 'brand',
+    configureServer(server) {
+      server.middlewares.use('/manifest.webmanifest', (_req, res) => {
+        res.setHeader('Content-Type', 'application/manifest+json');
+        res.end(manifest);
+      });
+    },
+    generateBundle() {
+      this.emitFile({ type: 'asset', fileName: 'manifest.webmanifest', source: manifest });
+    },
     transformIndexHtml(html) {
       return html
         .replaceAll('%BRAND_NAME%', brand.name)

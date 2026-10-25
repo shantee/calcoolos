@@ -5,12 +5,27 @@ body {
   height: 100%;
   background: #0d0a1c;
   overflow: hidden;
+  /* Pas de zoom ni de rebond au toucher : le jeu gère lui-même ses gestes. */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
 }
+/* Le jeu reste dans la zone sûre (encoche, coins arrondis, barre d'accueil des tablettes) ;
+   Phaser l'y ajuste en gardant ses proportions (mode FIT, jamais étiré). */
 #jeu {
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  right: env(safe-area-inset-right, 0px);
+  bottom: env(safe-area-inset-bottom, 0px);
+  left: env(safe-area-inset-left, 0px);
 }
+:fullscreen,
+::backdrop {
+  background: #0d0a1c;
+}
+
+/* Boutons « Accueil » et « Plein écran », posés en haut du jeu par plein-ecran.ts. Sans
+   JavaScript, le lien d'accueil reste en bas à droite. */
 .retour {
   position: fixed;
   right: 12px;
@@ -23,8 +38,70 @@ body {
   border-radius: 8px;
   background: rgb(13 10 28 / 0.6);
 }
-.retour:hover,
-.retour:focus-visible {
+.commandes-jeu {
+  position: fixed;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+}
+.commandes-jeu .cmd {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid rgb(246 194 91 / 0.45);
+  border-radius: 50%;
+  background: rgb(13 10 28 / 0.55);
   color: #fff4dc;
-  outline: 2px solid #f6c25b;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0.8;
+  transition:
+    opacity 0.2s,
+    transform 0.2s,
+    border-color 0.2s,
+    background 0.2s;
+}
+.commandes-jeu .cmd svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.commandes-jeu .cmd:hover,
+.commandes-jeu .cmd:focus-visible {
+  opacity: 1;
+  transform: scale(1.08);
+  border-color: #f6c25b;
+  background: rgb(13 10 28 / 0.8);
+  outline: none;
+}
+.commandes-jeu .cmd:focus-visible {
+  box-shadow: 0 0 0 3px rgb(246 194 91 / 0.5);
+}
+.commandes-jeu .cmd:active {
+  transform: scale(0.94);
+}
+/* Petit écran (téléphone en paysage) : boutons un peu plus petits. */
+.commandes-jeu.petit {
+  gap: 6px;
+}
+.commandes-jeu.petit .cmd {
+  width: 36px;
+  height: 36px;
+}
+.commandes-jeu.petit .cmd svg {
+  width: 18px;
+  height: 18px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .commandes-jeu .cmd {
+    transition: none;
+  }
 }
