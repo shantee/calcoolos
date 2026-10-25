@@ -27,6 +27,7 @@ if [[ -f "$archive.sha256" ]]; then
 fi
 
 say "Décompression dans $target"
+# Les versions appartiennent à l'admin, comme le lien du site (règle disable_symlinks de Nginx).
 mkdir -p "$target"
 tar -xzf "$archive" -C "$target"
 
@@ -44,7 +45,8 @@ bash "$target/deploy/webdell/sauvegarde.sh" "$app"
 say "Migrations"
 CALCOOLOS_ENV_FILE="$env_file" $php "$target/server/bin/migrate.php"
 
-previous="$(readlink -f "$app/current" 2>/dev/null || true)"
+previous=""
+[[ -L "$app/current" && -d "$app/current" ]] && previous="$(readlink -f "$app/current")"
 switch_to() {
   ln -sfn "$1" "$app/current.new"
   mv -Tf "$app/current.new" "$app/current"

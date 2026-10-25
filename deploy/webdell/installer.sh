@@ -113,9 +113,11 @@ else
   fi
   rm -rf -- "$docroot"
   ln -s "$app/current/dist" "$docroot"
-  chown -h "$user:$user" "$docroot"
   say "$docroot -> $app/current/dist"
 fi
+# Nginx (CloudPanel) n'accepte un lien que si son propriétaire est aussi celui de la cible
+# (disable_symlinks if_not_owner) : le lien, « current » et les versions appartiennent à l'admin.
+chown -h "$admin:$admin" "$docroot"
 
 # --- 5. Vhost : API et en-têtes de sécurité (ce site seulement) ----------------------------------
 if grep -qF "$marker" "$vhost"; then
