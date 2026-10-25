@@ -200,7 +200,8 @@ say "Connexion du compte dédié à la base"
 tmpcnf="$(mktemp)"
 chmod 600 "$tmpcnf"
 printf '[client]\nuser=%s\npassword=%s\nhost=127.0.0.1\n' "$db" "$(sed -n 's/^DB_PASSWORD=//p' "$env_file")" > "$tmpcnf"
-mariadb --defaults-extra-file="$tmpcnf" -N -B -e "SELECT CONCAT('  ok : ', CURRENT_USER())" "$db"
+# --defaults-file : sinon le ~/.my.cnf de root prendrait le dessus.
+mariadb --defaults-file="$tmpcnf" -N -B -e "SELECT CONCAT('  ok : ', CURRENT_USER())" "$db"
 rm -f "$tmpcnf"
 
 cat <<EOF
