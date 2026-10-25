@@ -50,8 +50,11 @@ final class NativeSession implements Session
         ini_set('session.gc_maxlifetime', (string) self::LIFETIME);
         ini_set('session.gc_probability', '1');
         ini_set('session.gc_divisor', '100');
-        ini_set('session.sid_length', '48');
-        ini_set('session.sid_bits_per_character', '6');
+        if (PHP_VERSION_ID < 80400) {
+            // Dépréciés depuis PHP 8.4, dont les identifiants par défaut sont déjà assez longs.
+            ini_set('session.sid_length', '48');
+            ini_set('session.sid_bits_per_character', '6');
+        }
         session_set_cookie_params([
             'lifetime' => self::LIFETIME,
             'path' => '/',
