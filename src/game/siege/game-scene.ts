@@ -23,18 +23,18 @@ export const H = 720;
 const K = 1 / B.RES;
 
 const L = {
-  gridX: 48,
+  gridX: 26,
   gridY: 236,
   pitchX: 94,
   pitchY: 98,
   cube: 84,
   sumY: 184,
   buttonsY: 672,
-  towerX: 520,
+  towerX: 492,
   groundY: 566,
   enemyStartX: 1380,
-  enemyEnterX: 1130,
-  enemyStopX: 640,
+  enemyEnterX: 1150,
+  enemyStopX: 612,
   moonX: 1010,
   moonY: 150,
 };
@@ -43,10 +43,10 @@ const L = {
 const BONUS = {
   y: 96,
   enterX: 1000,
-  leaveX: 560,
-  slotX: [500, 580],
+  leaveX: 532,
+  slotX: [472, 552],
   slotY: 656,
-  keyX0: 676,
+  keyX0: 648,
   keyPitch: 72,
   keyRows: [634, 688],
 };

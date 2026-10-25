@@ -58,6 +58,10 @@ plein écran dans les quatre jeux, pensé pour la tablette.
 - **Petite PWA** : manifeste produit depuis `brand.json` (plugin Vite), icônes du phare dans `public/icones/`,
   balises « écran d'accueil » sur toutes les pages. **Pas de service worker** (le site reste toujours à jour).
 
+**Ajustement demandé ensuite** : atelier collé au bord gauche (marge 34 → 12 px, cubes inchangés à 84 px), phare
+et point d'arrêt décalés de 28 px vers la gauche, entrée des monstres 20 px plus à droite : approche de 538 px au lieu
+de 490 (+10 %).
+
 **Vérifié** : 98 tests Vitest ; `scripts/bonus-auto.mjs` (17 vérifications + partie naturelle gagnée sur tablette) ;
 `scripts/plein-ecran-auto.mjs` (4 jeux × 6 formats, clavier, souris, doigt, sortie, retour à l'accueil : 68 OK) ;
 parties automatiques des quatre jeux ; CSP.
