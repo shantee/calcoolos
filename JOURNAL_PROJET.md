@@ -11,8 +11,9 @@
 | Troisième jeu « Le Dragon gourmand » | fait : jouable de bout en bout, victoire et défaite testées |
 | Quatrième jeu « Décollage ! » (pixel art, idée de Philippe) | fait : jouable de bout en bout, testé dans Chromium |
 | D. Plateforme (invité, comptes, profils, sauvegardes) | fait : API PHP + MariaDB, parcours complet testé, comptes isolés |
-| Chantier 01 : refonte de l'accueil | fait sur la branche `refonte-accueil`, **à valider par Philippe** |
-| E. Finition, déploiement Dell | kit et guide prêts, répétés dans un conteneur ; **rien installé sur le Dell** |
+| Chantier 01 : refonte de l'accueil | fait, avec boutons lecture sur les illustrations |
+| Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (Dell, CloudPanel) ; publier : `bash deploy/publier.sh` |
+| E. Finition | à faire : vrais téléphones et tablettes, accessibilité, page de confidentialité |
 
 ## Rappels pour Philippe
 
@@ -22,8 +23,59 @@
 - Accès GitHub en écriture rétabli par Philippe le 24/10/2026 ; branche `dev` poussée.
 - Aperçu jouable sans installation : page privée claude.ai https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
-- **Avant la mise en ligne** : choisir le nom de domaine, donner l'accord pour le branchement au tunnel Cloudflare,
-  faire relire la page de confidentialité (identité du responsable, hébergement). Voir `doc/DEPLOIEMENT.md`.
+- **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
+  responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
+
+## 2026-10-25 : Claude, session 7, suite (mise en ligne sur le serveur Dell)
+
+**Demande de Philippe** : installer Calcoolos sur le Dell à l'adresse https://calculos.zfx.fr. Il faut utiliser
+l'existant (CloudPanel, Nginx, PHP-FPM, MariaDB, tunnel Cloudflare, outil `webpi-site`), sans conteneur ni nouveau
+service et **sans aucune protection d'accès**. Le site complet doit tourner (4 jeux, API, base dédiée, comptes,
+progrès, classements), avec une mise à jour en une commande qui garde les données et permet le retour arrière. Il
+faut prévoir un futur changement de domaine et ne perturber aucun autre site.
+
+**Fait**
+- Nouveaux scripts dans `deploy/webdell/` (le kit générique de `deploy/` reste pour un serveur sans CloudPanel) :
+  - `installer.sh` (sudo, une fois) : `webpi-site add calculos.zfx.fr` (site CloudPanel PHP 8.5, route du tunnel, DNS
+    proxifié), base `calcoolos` par `clpctl`, secrets générés sur place, document root → lien vers `current/dist`,
+    bloc `/api/` et en-têtes de sécurité ajoutés au seul vhost de ce site (sauvegarde, `nginx -t`, restauration
+    automatique), cron de sauvegarde quotidienne ;
+  - `mettre-en-service.sh` : tests de l'API avec PHP 8.5 du serveur, sauvegarde, migrations, bascule atomique,
+    vérification, retour automatique ;
+  - `retour-arriere.sh`, `sauvegarde.sh`.
+- `deploy/publier.sh` : publication en une commande depuis le poste, sans sudo.
+- `server/src/Session.php` : réglages `session.sid_*` appliqués seulement avant PHP 8.4 (dépréciés en 8.5 et
+  signalés dans le journal d'erreurs).
+- `scripts/verifier-en-ligne.mjs` : vérification après publication. Il lance les 4 jeux sur ordinateur, tablette et
+  téléphone (tactile), joue et gagne une partie avec un compte de test, retrouve la progression après reconnexion sur
+  un autre appareil, ouvre le tableau de bord et les classements, puis supprime le compte.
+- Doc : `doc/DEPLOIEMENT.md` réécrit pour le Dell (publication, retour arrière, restauration, opérations courantes,
+  changement de domaine), `AGENTS.md`, `README.md`.
+
+**Problèmes rencontrés et corrigés**
+- Le test de connexion de l'installateur passait en `root` : le `~/.my.cnf` de root l'emportait sur
+  `--defaults-extra-file`. Corrigé avec `--defaults-file`, aussi dans la sauvegarde.
+- Première publication en 404. Nginx de CloudPanel (`disable_symlinks if_not_owner`) refuse un lien dont le
+  propriétaire diffère de celui de sa cible. Le lien du document root appartient maintenant à `shantee`.
+- Le retour automatique de cette première publication avait fait pointer `current` sur lui-même (`readlink -f` d'un
+  chemin absent). La détection de la version précédente est corrigée et le retour arrière a été testé dans les deux
+  sens.
+
+**Vérifications (sur le site public, en HTTPS)**
+- `scripts/plateforme-e2e.mjs` : 20/20. Couvre l'invité sans cookie, l'inscription, les profils, une partie enregistrée
+  et vérifiée dans MariaDB, le tableau de bord, les classements, l'isolation entre familles, l'export et la déconnexion.
+- `scripts/verifier-en-ligne.mjs` : 24/24, aucune erreur de console. Le cookie est `Secure` + `HttpOnly` +
+  `SameSite=Lax`. Captures (WebP) dans `CAPTURES/dell-production/`.
+- En-têtes : CSP et `no-cache` sur les pages, cache long sur `assets/`, `no-store` sur l'API. `server/`, `shared/`,
+  `.env` et fichiers cachés donnent 404. Aucun autre site touché : seul le vhost de calculos.zfx.fr a été modifié.
+- Comptes de test supprimés : la base de production est vide.
+
+**Limites honnêtes**
+- Pas essayé sur un vrai téléphone ni une vraie tablette, seulement en émulation dans Chromium. Sons jamais écoutés.
+- Les réponses de l'API portent deux fois `Cache-Control` et `nosniff` (PHP et Nginx). C'est sans effet, mais à
+  nettoyer un jour.
+- Une régénération du vhost par CloudPanel efface le bloc `/api/`. Il faut alors relancer `installer.sh`.
+- Page de confidentialité toujours à faire relire.
 
 ## 2026-10-25 : Claude, session 7 (chantier 01 : refonte de l'accueil)
 

@@ -5,7 +5,7 @@ Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer su
 
 > **État : quatre jeux complets et jouables** : « Cubes de siège », « Pluie de météores », « Le Dragon gourmand »
 > (2D illustrée) et « Décollage ! » (pixel art), plus la plateforme (invité, espace famille, profils, progrès, classements) avec son API PHP.
-> **Pas encore en ligne** : le kit d'installation est prêt (`doc/DEPLOIEMENT.md`) et attend le feu vert.
+> **En ligne : https://calculos.zfx.fr** (serveur Dell). Publier une mise à jour : `bash deploy/publier.sh` (voir `doc/DEPLOIEMENT.md`).
 > Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md) · **reprendre le projet : [`AGENTS.md`](AGENTS.md)**.
 
 ## Lancer le projet
@@ -114,7 +114,7 @@ src/platform/         plateforme : API, joueur actif, envoi des résultats, stat
 src/entries/          point d'entrée de chaque page
 src/art/              dessins par code : variante B, monde de l'archipel, espace, dragon
 server/               API PHP (src/, migrations/, bin/ outils, tests/, public/index.php)
-deploy/               installation sur le serveur : Nginx, PHP-FPM, MariaDB, mise en service, retour arrière
+deploy/               mise en ligne : publier.sh (publication), webdell/ (serveur Dell), kit générique
 tests/                tests Vitest
 scripts/              captures Playwright et partie automatique
 CAPTURES/             captures réelles des écrans

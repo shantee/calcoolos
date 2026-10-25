@@ -4,7 +4,8 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 25/10/2026 (session 7, chantier 01 « refonte de l'accueil », branche `refonte-accueil`).
+Dernière mise à jour : 25/10/2026 (session 7 : chantier 01 « refonte de l'accueil », puis **mise en ligne sur le Dell**,
+https://calculos.zfx.fr).
 
 ---
 
@@ -44,11 +45,13 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 
 ## 3. Règles impératives (à respecter sans exception)
 
-1. **Ne jamais déployer** sur le serveur de Philippe (un Dell sous Ubuntu qui héberge d'autres sites), ne jamais s'y
-   connecter, ne toucher ni à **Cloudflare**, ni au **DNS**, ni au **tunnel**, ni à d'autres dépôts ou services, **sans
-   son accord explicite**. Le kit d'installation est prêt ; c'est lui qui le lance.
+1. **Le serveur Dell héberge d'autres sites** : ne rien y perturber. Publier une nouvelle version avec
+   `bash deploy/publier.sh` (sans sudo, retour automatique en cas d'échec) quand Philippe le demande. Toute autre
+   intervention sur le serveur qui pourrait toucher un autre site ou un service partagé, et tout changement de
+   **Cloudflare**, du **DNS** ou du **tunnel**, se fait **avec son accord explicite**. Jamais de protection d'accès
+   (Cloudflare Access, mot de passe général, filtrage IP) à l'entrée du site : il doit rester ouvert à tous.
 2. **Aucun secret dans le dépôt** : pas de mot de passe, pas de clé. Les modèles `.env.example` sont vides ; les
-   secrets de production sont générés sur le serveur par `deploy/premiere-installation.sh`.
+   secrets de production sont générés sur le serveur (`deploy/webdell/installer.sh`) et y restent.
 3. Le dépôt GitHub est `shantee/calcoolos`. Branche de travail : `dev` (fusionnée dans `main`). Commits en français,
    compréhensibles, petits paliers ; ne pas réécrire l'historique publié.
 4. Tout ce qui est visible par l'utilisateur est **en français** (interface, docs, commentaires du code).
@@ -66,13 +69,15 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Jeu 3 **Le Dragon gourmand** | fait |
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
-| Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu ; branche `refonte-accueil`, à valider par Philippe |
-| Kit de déploiement + guide | fait, **répété dans un conteneur Ubuntu**, **jamais lancé sur le Dell** |
-| Mise en ligne | en attente : nom de domaine, accord de Philippe, relecture de la page de confidentialité |
+| Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu, boutons lecture au survol ; en ligne |
+| Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
+| Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 
 Tests : 82 tests TypeScript (Vitest), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
 plateforme dans Chromium (20 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
-vérification de la CSP sur toutes les pages.
+vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
+`scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
+appareil).
 
 Aperçu jouable (jeux seulement, mode invité, pas de PHP) : page privée claude.ai
 https://claude.ai/artifact/JnagX1RcsW7yWbMBi3VQWh (reconstruite à la main depuis `dist/`, voir § 10).
@@ -103,6 +108,7 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/dragon-auto.mjs` | Dragon gourmand, gagner / perdre (le dragon vole vraiment vers les lanternes) |
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
+| `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 | `scripts/captures.mjs` | captures des prototypes |
 
@@ -187,9 +193,10 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Sécurité** : session PHP créée seulement à la connexion (cookie HttpOnly, SameSite=Lax, Secure en prod) ; CSRF par
   en-tête `X-Calcoolos` + JSON obligatoire + jeton de session + vérification de l'origine ; limites d'essais ; IP
   gardées en empreinte 24 h ; SQL préparé ; CSP stricte.
-- **Production prévue** : Nginx (écoute 127.0.0.1:8088, derrière le tunnel Cloudflare existant), pool PHP-FPM dédié,
-  MariaDB, versions dans `/srv/calcoolos/releases/`, lien `current`, sauvegarde avant chaque migration, retour
-  arrière. Procédure complète et répétée : `doc/DEPLOIEMENT.md`.
+- **Production** (https://calculos.zfx.fr) : site CloudPanel `calculos-zfx-fr` sur le Dell (PHP-FPM 8.5, MariaDB
+  11.8, tunnel Cloudflare `webpi`), versions dans `/home/calculos-zfx-fr/calcoolos/releases/`, lien `current`,
+  sauvegarde avant chaque migration et chaque nuit. Publier : `bash deploy/publier.sh` ; revenir en arrière :
+  `deploy/webdell/retour-arriere.sh`. Tout est dans `doc/DEPLOIEMENT.md`.
 
 ## 9. Pièges connus (déjà rencontrés, ne pas retomber dedans)
 
@@ -214,7 +221,16 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   jeu ne doivent pas dépendre de la fin d'une animation décorative.
 - **Sessions PHP sur Ubuntu** : dossier de sessions propre à l'appli (le nettoyage Debian utilise la durée de vie du
   php.ini global).
-- **Derrière Cloudflare** : `real_ip_header CF-Connecting-IP` est indispensable pour les limites d'essais.
+- **Derrière Cloudflare** : `real_ip_header CF-Connecting-IP` est indispensable pour les limites d'essais (réglage
+  global de CloudPanel sur le Dell).
+- **Nginx de CloudPanel et les liens** (`disable_symlinks if_not_owner`) : un lien doit appartenir au même
+  propriétaire que sa cible, sinon 404. Le lien du document root, `current` et les versions appartiennent à `shantee`.
+- **Sur le Dell, `php` est la 8.4** : utiliser `php8.5` (celle du site) pour les outils en ligne de commande.
+- **Vhost régénéré par CloudPanel** : le bloc `# Calcoolos (installer.sh)` (API et en-têtes) disparaît ; relancer
+  `deploy/webdell/installer.sh` (sudo), qui le remet sans toucher au reste.
+- **Tests en ligne** : le résultat d'une partie n'est envoyé qu'à l'affichage de l'écran de fin ; un script qui
+  quitte la page avant ne laisse aucune trace. Limite de 5 inscriptions par heure : ne pas relancer en boucle
+  `verifier-en-ligne.mjs`, qui crée (puis supprime) un compte.
 
 ## 10. Méthode de travail qui a bien marché
 
@@ -232,8 +248,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 
 ## 11. Ce qui reste à faire (par priorité)
 
-1. **Mise en ligne**, après accord de Philippe : nom de domaine, `deploy/premiere-installation.sh`,
-   `deploy/install-release.sh`, puis règle dans le tunnel Cloudflare vers `http://127.0.0.1:8088` (manuel).
+1. Retours de Philippe sur le site en ligne (essai sur un vrai téléphone et une vraie tablette).
 2. Faire **relire la page de confidentialité** (identité du responsable, lieu d'hébergement) ; ne pas prétendre à la
    conformité RGPD sans audit humain.
 3. Retours de Philippe sur le Dragon gourmand et Décollage ! (sons et musiques jamais écoutés par un humain).

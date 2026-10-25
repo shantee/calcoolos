@@ -5,5 +5,6 @@ Tout le contexte du projet (idée, philosophie, règles impératives, état, com
 
 @AGENTS.md
 
-Rappel des règles absolues : ne jamais déployer sur le serveur Dell ni toucher à Cloudflare, au DNS ou au tunnel sans
-l'accord explicite de Philippe ; aucun secret dans le dépôt ; tout en français.
+Rappel des règles absolues : publier sur le Dell seulement par `deploy/publier.sh` et à la demande de Philippe ; ne
+perturber aucun autre site du serveur ; ne toucher à Cloudflare, au DNS ou au tunnel qu'avec son accord explicite ;
+jamais de protection d'accès à l'entrée du site ; aucun secret dans le dépôt ; tout en français.
