@@ -67,8 +67,17 @@ bas ; ne toucher ni aux jeux ni à la plateforme ; ne rien déployer.
 **Limites honnêtes**
 - PHP absent du poste : `npm run test:api` et `scripts/plateforme-e2e.mjs` **non lancés** ; « Qui joue ? » (compte
   connecté) n'a donc pas été vu à l'écran, seulement conservé tel quel dans le code.
-- Origine et droits des quatre illustrations à préciser par Philippe avant la mise en ligne (`ART_ASSETS.md`).
 - Pas d'AVIF (l'outil local ne l'encode pas ; le WebP suffit). Pas testé sur un vrai téléphone, ni Firefox/Safari.
+
+**Suite de la session (demandes de Philippe)**
+- Les quatre illustrations sont des créations de Philippe (noté dans `ART_ASSETS.md`).
+- **Bouton lecture sur les illustrations** : au survol, voile léger et bouton rond en verre dépoli qui apparaît avec un
+  petit rebond, onde lumineuse qui s'en échappe, bouton safran quand on le vise ; un clic n'importe où sur l'image
+  lance le jeu (même lien et même niveau que « Jouer »). Calque `a.lancer` posé sur l'image : l'image garde sa
+  description pour les lecteurs d'écran, le calque est ignoré au clavier (le bouton « Jouer » suffit). Écran tactile :
+  bouton toujours visible, plus petit. Vérifié dans Chrome (survol, clic au centre et dans un coin, toucher simulé) ;
+  typecheck, 82 tests, build et CSP OK. `scripts/plateforme-e2e.mjs` vise désormais `a.jouer[data-jeu]` (deux liens
+  par jeu).
 
 ## 2026-10-25 : Claude, session 6 (quatrième jeu « Décollage ! »)
 

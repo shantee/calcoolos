@@ -388,6 +388,110 @@ h1 {
   transform: none;
 }
 
+/* Calque cliquable sur l'illustration : voile léger et bouton lecture en verre dépoli au survol. */
+.lancer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at center, rgb(10 12 24 / 0.38), rgb(10 12 24 / 0.12) 70%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.lecture {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(76px, 8vw, 108px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.16);
+  border: 2px solid rgb(255 255 255 / 0.6);
+  box-shadow:
+    0 12px 32px rgb(0 0 0 / 0.35),
+    inset 0 1px 0 rgb(255 255 255 / 0.4);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+  transform: scale(0.6);
+  transition:
+    transform 0.5s cubic-bezier(0.2, 1.5, 0.4, 1),
+    background-color 0.25s ease,
+    border-color 0.25s ease;
+}
+
+.lecture svg {
+  width: 44%;
+  margin-left: 8%;
+  fill: #fff;
+  filter: drop-shadow(0 2px 4px rgb(0 0 0 / 0.35));
+  transition: fill 0.25s ease;
+}
+
+/* Onde qui s'échappe du bouton tant qu'il est affiché. */
+.lecture::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 0.5);
+  opacity: 0;
+}
+
+.vitrine-image:hover .lancer {
+  opacity: 1;
+}
+
+.vitrine-image:hover .lecture {
+  transform: scale(1);
+}
+
+.anime .vitrine-image:hover .lecture::before {
+  animation: onde 1.8s ease-out 0.3s infinite;
+}
+
+.lecture:hover {
+  background: rgb(255 201 74 / 0.92);
+  border-color: var(--safran);
+}
+
+.lecture:hover svg {
+  fill: var(--encre);
+  filter: none;
+}
+
+.lancer:active .lecture {
+  transform: scale(0.92);
+}
+
+@keyframes onde {
+  from {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Écran tactile (pas de survol) : le bouton reste visible, plus discret. */
+@media (hover: none) {
+  .lancer {
+    opacity: 1;
+    background: none;
+  }
+
+  .lecture {
+    width: 64px;
+    transform: none;
+  }
+}
+
+.calme .lecture {
+  transition: none;
+}
+
 .vitrine-texte {
   display: grid;
   gap: 14px;

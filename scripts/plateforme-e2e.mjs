@@ -156,7 +156,7 @@ await shot('6-accueil-lina', true);
 
 // --- 4. Partie enregistrée ------------------------------------------------------------------------
 console.log('• Partie de Lina (≈ 45 s, pour être vraisemblable)');
-await page.locator('a[data-jeu][href*="dragon"]').click();
+await page.locator('a.jouer[data-jeu][href*="dragon"]').click();
 await page.waitForLoadState('networkidle');
 await winDragon(42);
 await shot('7-fin-lina');

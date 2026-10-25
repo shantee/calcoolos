@@ -158,7 +158,7 @@ function pointer(): void {
       fig.style.setProperty('--py', y.toFixed(3));
     });
   }
-  for (const btn of links) {
+  for (const btn of document.querySelectorAll<HTMLElement>('a.jouer')) {
     follow(btn, (x, y) => {
       btn.style.setProperty('--mx', `${(x * 5).toFixed(1)}px`);
       btn.style.setProperty('--my', `${(y * 4).toFixed(1)}px`);
