@@ -6,7 +6,7 @@ Ici, les calculs sont les actions du jeu : on additionne des cubes pour tirer su
 > **État : quatre jeux complets et jouables** : « Cubes de siège », « Pluie de météores », « Le Dragon gourmand »
 > (2D illustrée) et « Décollage ! » (pixel art), plus la plateforme (invité, espace famille, profils, progrès, classements) avec son API PHP.
 > **Pas encore en ligne** : le kit d'installation est prêt (`doc/DEPLOIEMENT.md`) et attend le feu vert.
-> Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md).
+> Cahier des charges : [`doc/`](doc/) · journal : [`JOURNAL_PROJET.md`](JOURNAL_PROJET.md) · **reprendre le projet : [`AGENTS.md`](AGENTS.md)**.
 
 ## Lancer le projet
 
