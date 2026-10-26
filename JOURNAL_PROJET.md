@@ -14,6 +14,7 @@
 | Chantier 01 : refonte de l'accueil | fait, avec boutons lecture sur les illustrations |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (Dell, CloudPanel) ; publier : `bash deploy/publier.sh` |
 | Langues : anglais et allemand | fait le 26/10/2026 : drapeaux, détection du navigateur, traductions (sauf confidentialité) |
+| Chantier 02 : logo animé, espace joueur, comptes, niveau | fait le 26/10/2026 (session 10), publié |
 | E. Finition | à faire : vrais téléphones et tablettes, accessibilité, page de confidentialité |
 
 ## Rappels pour Philippe
@@ -26,6 +27,106 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
+
+## 2026-10-26 : Claude, session 10 (chantier 02 : logo animé, comptes, espace joueur, niveau)
+
+**Demande de Philippe** : transformer l'accueil en vrai accueil de plateforme de jeux :
+- un **logo animé** original et mémorable (beau même immobile, sobre, compatible avec « réduire les animations ») ;
+- la **création de compte** mise en valeur, sans jamais rendre le compte obligatoire ;
+- un **espace joueur** bien visible (invité, adulte connecté, enfant) ;
+- un **choix du niveau** impossible à ignorer, mémorisé intelligemment ;
+- une finition professionnelle.
+
+En cours de session, il a demandé de soigner particulièrement la direction artistique du logo. Il a autorisé la
+publication en fin de chantier.
+
+**Fait**
+- **Logo « qui calcule de tête »** (`src/platform/logo.ts`, `src/styles/logo.css`, aucun fichier image).
+  - Le mot Calcoolos en lettres « autocollant » : remplissage safran dégradé, contour brun chaud, ombre courte.
+    Les deux « o » du milieu sont des **yeux** qui suivent le pointeur et clignent de temps en temps.
+  - Chaque lettre a deux couches (contour dessous, remplissage dessus, dessinées par `::before` / `::after`) : tous
+    les contours passent sous tous les remplissages, et les lettres se soudent en un seul autocollant.
+  - **Arrivée sur le site** : les lettres tombent en place, les yeux se réveillent et regardent autour d'eux. Le logo
+    lève ensuite les yeux vers une **bulle de pensée** qui contient un vrai calcul du niveau choisi
+    (`pickExpression`, le générateur des jeux). Il réfléchit (le regard parcourt le calcul), trouve la réponse, et
+    ses yeux sourient (« ^ ^ ») avec trois étincelles.
+  - Ensuite, le logo reste calme : un clin d'œil de temps en temps, une nouvelle pensée au clic, ou d'elle-même
+    toutes les 25 à 40 s (seulement si le logo est visible).
+  - Version barre : le même mot en petit ; les yeux suivent le pointeur, avec un clin d'œil au survol.
+  - Animations réduites (réglage système ou `?calme`) : aucun mouvement, aucune bulle ; le logo reste complet.
+  - Pistes écartées après essai : quatre cubes d'opérations autour du mot (décor générique, demande de Philippe
+    d'aller plus loin) ; contour à l'encre (invisible sur le fond de nuit) ; relief en « pile de pièces » des yeux
+    (incohérent avec les lettres).
+- **Espace joueur dans la barre** (`src/platform/topbar.ts`), juste à droite du logo.
+  - Bouton avec l'avatar, le nom et le statut : « Invité · sans compte » (anneau en pointillés), ou le pseudo avec
+    « Niveau Éveil » (anneau safran).
+  - Il ouvre un panneau : qui joue, son niveau (avec un lien « changer »), parties gardées sur l'appareil (vraies
+    données locales). Selon la situation, on y trouve aussi « Créer mon compte » / « Se connecter », ou bien
+    « Qui joue ? » avec les profils, « Voir les progrès », l'espace famille et la déconnexion.
+  - Le panneau se ferme avec Échap ou par un clic à côté, et le focus revient au bouton.
+  - À droite de la barre : « Se connecter » et un bouton « Créer mon compte » pour un visiteur ; « Espace famille »
+    pour un compte connecté.
+  - Changer de joueur depuis la barre prévient la page (événement `calcoolos:joueur`). L'accueil se met à jour sans
+    rechargement ; les autres pages se rechargent.
+  - Mise en page : sur une ligne au-delà de 1200 px, sur deux lignes en dessous ; sur téléphone, le compte reste
+    accessible depuis le panneau du joueur et le carnet.
+  - Toutes les pages de la plateforme passent à 1200 px de large, comme l'accueil.
+- **Choix du niveau** (`src/platform/niveau.ts`, testé dans `tests/niveau.test.ts`).
+  - Quatre cartes avec un personnage par niveau (escargot, chat astronaute, robot, dragon), l'âge et la difficulté
+    en crans, plus une ligne qui dit ce que contient le niveau (« Calculs jusqu'à 100, toutes les tables,
+    divisions »).
+  - Règle de départ : le niveau du profil actif ; sinon le dernier choisi sur l'appareil ; sinon **aucun**.
+    Un nouveau venu voit l'étiquette « avant de jouer », et son premier « Jouer » ouvre la fenêtre « Quel est ton
+    niveau ? » (4 cartes avec un exemple de calcul) : le choix est retenu et le jeu se lance aussitôt. Pas de
+    confirmation aux parties suivantes.
+  - **Rappel du niveau à côté de chaque « Jouer »** (personnage + « Niveau Stratège · changer », qui ramène au choix).
+  - Avec un profil actif, changer le niveau sur l'accueil l'enregistre aussi **sur le profil**
+    (`/profils/{id}/modifier`) : le niveau suit l'enfant d'un appareil à l'autre.
+  - **Plus de niveaux** : étudié, mais pas ajouté (voir « Pour plus tard »).
+- **Carnet d'aventurier** (bande sous l'ouverture).
+  - Pour un visiteur : les six avantages d'un compte en tuiles avec pictogrammes, « Créer mon compte gratuit »
+    (vers `compte.html#inscription`) et « J'ai déjà un compte · Se connecter », avec le rappel que c'est facultatif.
+    S'il a déjà joué en invité, le texte cite ses vraies parties locales.
+  - Pour un joueur connecté : « Le carnet de Lina », avec ses **vrais chiffres** lus sur le serveur (parties,
+    étoiles, succès, meilleur score) et un lien vers ses progrès.
+  - Serveur injoignable : la bande est masquée.
+- **Espace parents** : les liens `#inscription` et `#connexion` mettent la bonne carte en premier, mise en évidence,
+  avec le curseur dans son premier champ.
+- **Ouverture de l'accueil réorganisée** : logo, accroche, « table de lancement » (qui joue + niveau), puis les
+  vignettes. Sur téléphone, le niveau passe avant les vignettes.
+- **Traductions** anglaises et allemandes de tous les nouveaux textes ; le nom « Calcoolos » n'est jamais traduit.
+- **Tests**
+  - `scripts/accueil-e2e.mjs` (nouveau, 68 vérifications avec la vraie API) : nouveau venu, panneau, fenêtre du
+    premier niveau, 4 jeux lancés au bon niveau, rappel « changer », inscription depuis l'accueil, profils,
+    changement de joueur sans rechargement, niveau enregistré sur le profil, tablette (portrait et paysage),
+    téléphone, déconnexion, animations réduites, anglais et allemand, aucune erreur JavaScript.
+  - Captures dans `CAPTURES/chantier-02/`.
+  - Les scripts existants ciblent maintenant le bouton « Se déconnecter » de la page (`#contenu`), puisque le
+    panneau joueur en contient un aussi.
+
+**Vérifié** (Chromium, GPU logiciel)
+- 112 tests Vitest, vérification des types, construction.
+- 83 vérifications de l'API PHP (PHP 8.3 en conteneur, SQLite).
+- Parcours plateforme 20/20, parcours accueil 68/68.
+- CSP sans violation sur toutes les pages.
+- Animation du logo vérifiée image par image (planches de captures toutes les 0,5 à 1 s).
+
+**Limites**
+- Le logo n'a été vu qu'en GPU logiciel (Chromium sans carte graphique) : fluidité à confirmer sur une vraie tablette.
+- Le pointeur suivi par les yeux n'existe pas au doigt : sur tablette, les yeux regardent l'endroit touché.
+- Un compte créé ne récupère pas les parties jouées avant en invité (comme avant ; à envisager).
+- Traductions faites par Claude, non relues.
+- PHP n'est pas installé sur ce poste : l'API de développement tourne dans un conteneur `php:8.3-cli` (voir AGENTS.md).
+
+**Pour plus tard : des niveaux plus fins**
+- Les quatre paliers sont larges (Explorateur va de « 12 + 9 » à « 5 × 10 »). Une piste propre serait de garder les
+  quatre « mondes » et d'ajouter deux crans dans chacun (huit paliers), sur le moteur adaptatif déjà présent.
+- Il faudrait alors toucher à :
+  - `TierId` et `TIERS` (`src/core/difficulty.ts`), `MENUS` (`src/core/expressions.ts`) ;
+  - les réglages propres à chaque jeu (cibles du Dragon, chronos de Décollage !, grilles de Cubes de siège) ;
+  - `Games::TIERS` côté PHP, les classements (une table par palier), les noms et succès du tableau de bord,
+    les traductions, et une migration des profils existants.
+- C'est un chantier à part entière, pas un ajout de boutons ; non fait ici volontairement.
 
 ## 2026-10-26 : Claude, session 9 (sélecteur de langue, anglais et allemand)
 

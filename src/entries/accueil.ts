@@ -3,56 +3,162 @@ import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource/pixelify-sans/700.css';
 import '../styles/accueil.css';
 import '../styles/plateforme.css';
-import { topbar } from '../platform/topbar';
+import { EVT_JOUEUR, rafraichirJoueur, topbar } from '../platform/topbar';
+import { logo } from '../platform/logo';
 import { avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
-import { flushQueue } from '../platform/results';
-import type { Profile } from '../platform/api';
+import { flushQueue, localHistory, type StoredResult } from '../platform/results';
+import { NIVEAU_INFOS, estNiveau, niveauDepart, niveauRetenu, retenirNiveau } from '../platform/niveau';
+import { summarize } from '../platform/stats';
+import { api, type AccountState, type Profile } from '../platform/api';
+import { h } from '../platform/dom';
+import type { TierId } from '../core/difficulty';
 
-// Le niveau choisi est transmis au jeu (?niveau=…) et retenu localement.
-const KEY = 'calcoolos.niveau';
 const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="niveau"]')];
 const links = document.querySelectorAll<HTMLAnchorElement>('a[data-jeu]');
 // ?calme (comme « réduire les animations ») vaut pour l'accueil et suit dans les jeux.
-const calme =
-  new URLSearchParams(window.location.search).has('calme') ||
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const calmeUrl = new URLSearchParams(window.location.search).has('calme');
+const calme = calmeUrl || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-function level(): string {
-  return radios.find((r) => r.checked)?.value ?? 'explorateur';
+let etat: AccountState | null | undefined;
+/** Faux tant qu'un nouveau venu n'a pas choisi : le premier « Jouer » lui demande alors son niveau. */
+let confirme = false;
+
+// --- Logo ---------------------------------------------------------------------------------------
+document.querySelector('#titre')?.replaceChildren(logo('grand', { niveau: level }));
+
+// --- Niveau -------------------------------------------------------------------------------------
+function level(): TierId | null {
+  const v = radios.find((r) => r.checked)?.value;
+  return estNiveau(v) ? v : null;
 }
 
+/** Les liens « Jouer » emportent le niveau ; les rappels près des boutons l'affichent. */
 function apply(): void {
+  const lv = level();
   for (const a of links) {
     const url = new URL(a.getAttribute('href') ?? '', window.location.href);
-    url.searchParams.set('niveau', level());
-    if (new URLSearchParams(window.location.search).has('calme')) url.searchParams.set('calme', '');
+    if (lv) url.searchParams.set('niveau', lv);
+    else url.searchParams.delete('niveau');
+    if (calmeUrl) url.searchParams.set('calme', '');
     a.href = url.toString();
+  }
+  const info = lv ? NIVEAU_INFOS[lv] : null;
+  const detail = document.querySelector('#niveau-detail');
+  if (detail) {
+    detail.replaceChildren(
+      ...(info
+        ? [h('b', {}, info.nom), ' — ', h('span', {}, info.public), '. ', h('span', {}, info.detail)]
+        : ['Choisis le niveau qui te correspond : tu pourras en changer à tout moment.']),
+    );
+  }
+  document.querySelector('#niveau')?.classList.toggle('a-choisir', !lv);
+  for (const r of document.querySelectorAll<HTMLElement>('.rappel-niveau')) {
+    r.replaceChildren(
+      avatarImg(info?.avatar ?? 'chouette', 34, ''),
+      h('span', {}, info ? h('span', {}, 'Niveau ', h('b', {}, info.nom)) : h('b', {}, 'Niveau à choisir'), h('small', {}, info ? 'changer' : 'avant de jouer')),
+    );
   }
 }
 
-function setLevel(value: string, remember: boolean): void {
+/**
+ * source : « joueur » (un clic : retenu sur l'appareil, et sur le profil actif s'il y en a un),
+ * « profil » (niveau du profil choisi), « retenu » (retrouvé au chargement).
+ */
+function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): void {
   const radio = radios.find((r) => r.value === value);
   if (!radio) return;
   radio.checked = true;
-  if (remember) {
-    try {
-      localStorage.setItem(KEY, value);
-    } catch {
-      /* ignoré */
-    }
+  confirme = true;
+  if (source !== 'retenu') retenirNiveau(value);
+  apply();
+  const p = activePlayer();
+  if (source === 'joueur' && p && p.niveau !== value && etat?.connecte) {
+    // Le niveau suit l'enfant d'un appareil à l'autre : on l'enregistre sur son profil.
+    setActivePlayer({ ...p, niveau: value });
+    rafraichirJoueur();
+    void api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { niveau: value }).catch(() => null);
+  } else if (source === 'joueur') {
+    rafraichirJoueur();
   }
+}
+
+for (const r of radios) r.addEventListener('change', () => estNiveau(r.value) && setLevel(r.value, 'joueur'));
+
+// Un petit personnage par niveau, et le rappel du niveau près de chaque bouton « Jouer ».
+for (const label of document.querySelectorAll<HTMLElement>('.niveaux label')) {
+  const id = label.dataset.niveau;
+  if (estNiveau(id)) label.querySelector('.niveau-perso')?.append(avatarImg(NIVEAU_INFOS[id].avatar, 64, ''));
+}
+for (const actions of document.querySelectorAll<HTMLElement>('.vitrine .actions')) {
+  const rappel = h('a', { class: 'rappel-niveau', href: '#niveau', title: 'Changer de niveau' });
+  rappel.addEventListener('click', (e) => {
+    e.preventDefault();
+    allerAuNiveau();
+  });
+  const jouer = actions.querySelector('.jouer');
+  if (jouer) jouer.after(rappel);
+  else actions.append(rappel);
+}
+
+function allerAuNiveau(): void {
+  const fs = document.querySelector<HTMLElement>('#niveau');
+  if (!fs) return;
+  fs.scrollIntoView({ behavior: calme ? 'auto' : 'smooth', block: 'center' });
+  (radios.find((r) => r.checked) ?? radios[0])?.focus({ preventScroll: true });
+  if (!calme) {
+    fs.classList.remove('signale');
+    void fs.offsetWidth;
+    fs.classList.add('signale');
+  }
+}
+
+{
+  const depart = niveauDepart(activePlayer()?.niveau, niveauRetenu());
+  if (depart.niveau) setLevel(depart.niveau, 'retenu');
+  confirme = depart.confirme;
   apply();
 }
 
-try {
-  const saved = localStorage.getItem(KEY);
-  if (saved) setLevel(saved, false);
-} catch {
-  /* stockage indisponible */
+// --- Première partie sans niveau : on le demande une fois -----------------------------------------
+const dialogue = document.querySelector<HTMLDialogElement>('#choix-niveau');
+let cible = '';
+if (dialogue) {
+  const liste = dialogue.querySelector<HTMLElement>('#choix-niveau-liste');
+  for (const [id, info] of Object.entries(NIVEAU_INFOS) as Array<[TierId, (typeof NIVEAU_INFOS)[TierId]]>) {
+    const b = h('button', { type: 'button', class: 'choix-niveau-option', 'data-niveau': id },
+      avatarImg(info.avatar, 64, ''),
+      h('span', { class: 'niveau-nom' }, info.nom),
+      h('small', {}, info.public),
+      h('span', { class: 'choix-niveau-exemple', 'aria-hidden': 'true' }, info.exemple));
+    b.addEventListener('click', () => {
+      setLevel(id, 'joueur');
+      dialogue.close();
+      const a = [...links].find((l) => l.dataset.cible === cible);
+      if (a) window.location.href = a.href;
+    });
+    liste?.append(b);
+  }
 }
-for (const r of radios) r.addEventListener('change', () => setLevel(r.value, true));
-apply();
+links.forEach((a, i) => {
+  a.dataset.cible = String(i);
+  a.addEventListener('click', (e) => {
+    if (confirme && level()) return;
+    e.preventDefault();
+    cible = a.dataset.cible ?? '';
+    if (dialogue?.showModal) dialogue.showModal();
+    else allerAuNiveau();
+  });
+});
+
+// --- Qui joue ? (compte connecté) ---------------------------------------------------------------
+function choisirJoueur(p: Profile | null): void {
+  setActivePlayer(p);
+  if (p && estNiveau(p.niveau)) setLevel(p.niveau, 'profil');
+  rafraichirJoueur();
+  if (etat?.connecte) renderPlayers(etat.profils ?? []);
+  void renderCarnet();
+}
 
 /** « Qui joue ? » : un bouton par profil de la famille, plus l'invité. */
 function renderPlayers(profiles: Profile[]): void {
@@ -63,30 +169,86 @@ function renderPlayers(profiles: Profile[]): void {
   list.replaceChildren();
   const current = activePlayer();
   const add = (label: string, avatar: string, pressed: boolean, onPick: () => void) => {
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.setAttribute('aria-pressed', String(pressed));
-    b.append(avatarImg(avatar, 56, ''), document.createTextNode(label));
-    b.addEventListener('click', () => {
-      onPick();
-      renderPlayers(profiles);
-      void topbar('accueil');
-    });
+    const b = h('button', { type: 'button', 'aria-pressed': String(pressed) }, avatarImg(avatar, 56, ''), label);
+    b.addEventListener('click', onPick);
     list.append(b);
   };
-  for (const p of profiles) {
-    add(p.pseudo, p.avatar, current?.id === p.id, () => {
-      setActivePlayer(p);
-      setLevel(p.niveau, true);
-    });
-  }
-  add('Invité', 'chouette', !current, () => setActivePlayer(null));
+  for (const p of profiles) add(p.pseudo, p.avatar, current?.id === p.id, () => choisirJoueur(p));
+  add('Invité', 'chouette', !current, () => choisirJoueur(null));
   if (profiles.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'discret';
-    p.innerHTML = 'Aucun profil pour l’instant : <a href="compte.html">crée-en un dans l’espace parents</a>.';
-    list.append(p);
+    list.append(h('p', { class: 'discret' }, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-en un dans l’espace famille'), '.'));
   }
+}
+
+// La barre prévient quand on change de joueur depuis son panneau : on met la page à jour sans la recharger.
+window.addEventListener(EVT_JOUEUR, (e) => {
+  e.preventDefault();
+  const joueur = (e as CustomEvent<{ id: number } | null>).detail;
+  const p = etat?.profils?.find((x) => x.id === joueur?.id) ?? null;
+  choisirJoueur(p);
+});
+
+// --- Le carnet : avantages d'un compte (visiteur) ou vrais progrès du joueur ---------------------
+async function renderCarnet(): Promise<void> {
+  const carnet = document.querySelector<HTMLElement>('#carnet');
+  const titre = document.querySelector<HTMLElement>('#carnet-titre');
+  const chapeau = document.querySelector<HTMLElement>('#carnet-chapeau');
+  const actions = document.querySelector<HTMLElement>('#carnet-actions');
+  const avantages = document.querySelector<HTMLElement>('#avantages');
+  if (!carnet || !titre || !chapeau || !actions || !avantages) return;
+  const invite = document.querySelector<HTMLElement>('#statut-invite');
+
+  if (etat === null) {
+    // Serveur injoignable : pas de compte possible pour l'instant, on joue en invité.
+    carnet.hidden = true;
+    if (invite) invite.querySelector('a')?.remove();
+    return;
+  }
+  if (!etat?.connecte) {
+    const parties = localHistory();
+    if (parties.length > 0) {
+      const etoiles = parties.reduce((a, r) => a + r.etoiles, 0);
+      chapeau.replaceChildren(
+        `Tu as déjà joué ${parties.length} ${parties.length > 1 ? 'parties' : 'partie'} sur cet appareil (${etoiles} ★). `,
+        'Avec un compte gratuit, ouvert par un parent, tes prochaines parties te suivront partout. Ce n’est pas obligatoire : on peut toujours jouer en invité.',
+      );
+    }
+    return;
+  }
+
+  // Compte connecté.
+  if (invite) invite.hidden = true;
+  carnet.classList.add('carnet-connecte');
+  const p = activePlayer();
+  if (!p) {
+    titre.textContent = 'Qui joue aujourd’hui ?';
+    chapeau.textContent = (etat.profils?.length ?? 0) > 0
+      ? 'Choisis un joueur dans « Qui joue ? » : ses parties seront gardées dans l’espace famille.'
+      : 'Ajoute un profil pour chaque enfant (un pseudo et un avatar suffisent) : ses parties seront gardées.';
+    actions.replaceChildren(h('a', { class: 'bouton-creer', href: 'compte.html' }, (etat.profils?.length ?? 0) > 0 ? 'Espace famille' : 'Ajouter un profil'));
+    avantages.hidden = false;
+    return;
+  }
+  titre.textContent = `Le carnet de ${p.pseudo}`;
+  chapeau.textContent = 'Ses parties sont gardées dans l’espace famille, sur tous vos appareils.';
+  actions.replaceChildren(
+    h('a', { class: 'bouton-creer', href: `tableau.html?profil=${p.id}` }, 'Voir tous ses progrès'),
+    h('a', { class: 'lien-connexion', href: 'compte.html' }, 'Espace famille'),
+  );
+  const r = await api.get<{ resultats: StoredResult[] }>(`/profils/${p.id}/resultats`).catch(() => null);
+  if (r?.status !== 200 || activePlayer()?.id !== p.id) return;
+  const s = summarize(r.data.resultats);
+  const record = s.records.reduce<(typeof s.records)[number] | null>((m, x) => (!m || x.score > m.score ? x : m), null);
+  const succes = s.badges.filter((b) => b.earned).length;
+  const tuile = (valeur: string, texte: string, couleur: string) =>
+    h('li', { class: 'chiffre-carnet', style: `--c: ${couleur}` }, h('strong', {}, valeur), h('span', {}, texte));
+  avantages.replaceChildren(
+    tuile(String(s.games), s.games > 1 ? 'parties jouées' : 'partie jouée', 'var(--ciel)'),
+    tuile(`${s.stars} ★`, 'étoiles gagnées', 'var(--safran)'),
+    tuile(`${succes} / ${s.badges.length}`, 'succès débloqués', 'var(--corail)'),
+    tuile(record ? String(record.score) : '–', record ? 'meilleur score' : 'pas encore de record', 'var(--sarcelle)'),
+  );
+  avantages.classList.add('avantages-chiffres');
 }
 
 /**
@@ -140,7 +302,7 @@ function stage(): void {
     },
     { rootMargin: '0px 0px -12% 0px' },
   );
-  for (const v of vitrines) apparition.observe(v);
+  for (const v of [...vitrines, ...document.querySelectorAll<HTMLElement>('.carnet')]) apparition.observe(v);
 }
 
 /** Petits effets au pointeur (souris seulement) : l'illustration suit le regard, « Jouer » attire le curseur. */
@@ -171,12 +333,13 @@ stage();
 pointer();
 
 void (async () => {
-  const state = await topbar('accueil');
-  if (state?.connecte) {
-    renderPlayers(state.profils ?? []);
+  etat = await topbar('accueil');
+  if (etat?.connecte) {
+    renderPlayers(etat.profils ?? []);
     const p = activePlayer();
-    if (p) setLevel(p.niveau, false);
+    if (p && estNiveau(p.niveau)) setLevel(p.niveau, 'profil');
     if (window.location.hash === '#qui-joue') document.querySelector('#qui-joue-zone')?.scrollIntoView();
-    await flushQueue();
   }
+  await renderCarnet();
+  if (etat?.connecte) await flushQueue();
 })();

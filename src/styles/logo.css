@@ -1,0 +1,305 @@
+/*
+ * Logo de Calcoolos (src/platform/logo.ts) : un mot-personnage. Lettres « autocollant » (contour d'encre
+ * épais, remplissage safran dégradé, ombre portée), les deux « o » du milieu sont des yeux, et une bulle de
+ * pensée où le logo fait un calcul de tête. Toutes les mesures sont en em : le même dessin sert à l'accueil
+ * et dans la barre.
+ */
+.logo {
+  --oeil-blanc: #fffaf0;
+  --safran-haut: #ffe39a;
+  --safran-bas: #f4a51f;
+  /* Relief : un bord brun chaud plutôt que l'encre (invisible sur le fond de nuit), et une ombre courte. */
+  --bord: #5c2c0e;
+  --epaisseur:
+    0 0.09em 0 var(--bord),
+    0 0.2em 0.16em rgb(0 0 0 / 0.5);
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  font-family: 'Bricolage Grotesque Variable', system-ui, sans-serif;
+  font-weight: 800;
+  font-variation-settings: 'opsz' 96;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.logo-mot {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  letter-spacing: -0.03em;
+}
+
+/*
+ * Chaque lettre en deux couches, dessinées par ses pseudo-éléments : ::before, le contour brun épais et
+ * l'épaisseur ; ::after, le remplissage safran dégradé. La lettre elle-même ne fait que réserver la place
+ * (texte transparent, sans transformation) : ainsi TOUS les contours passent sous TOUS les remplissages, et
+ * les lettres se soudent en un seul autocollant.
+ */
+.logo-mot {
+  z-index: 0;
+}
+
+.logo-lettre {
+  position: relative;
+  display: inline-block;
+  color: transparent;
+}
+
+.logo-lettre::before,
+.logo-lettre::after {
+  content: attr(data-l);
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--pente, 0deg));
+}
+
+.logo-lettre::before {
+  z-index: 1;
+  color: var(--bord);
+  -webkit-text-stroke: 0.12em var(--bord);
+  text-shadow: var(--epaisseur);
+}
+
+.logo-lettre::after {
+  z-index: 3;
+  color: transparent;
+  background: linear-gradient(180deg, var(--safran-haut) 8%, var(--safran) 48%, var(--safran-bas) 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* Les yeux : chacun a la taille d'un « o », cerclé de safran comme les lettres. */
+.logo-yeux {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  gap: 0.07em;
+  margin: 0 0.07em 0 0.06em;
+  top: 0.005em;
+}
+
+.oeil {
+  position: relative;
+  display: block;
+  width: 0.56em;
+  height: 0.56em;
+  border-radius: 50%;
+  background: var(--oeil-blanc);
+  border: 0.088em solid var(--safran);
+  box-shadow:
+    0 0 0 0.06em var(--bord),
+    0 0.03em 0 0.06em var(--bord),
+    0 0.2em 0.16em 0.06em rgb(0 0 0 / 0.5),
+    inset 0 -0.05em 0 rgb(29 26 43 / 0.08);
+  overflow: hidden;
+}
+
+.pupille {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0.2em;
+  height: 0.2em;
+  border-radius: 50%;
+  background: var(--encre);
+  transform: translate(calc(-50% + var(--rx, 0) * 0.1em), calc(-50% + var(--ry, 0) * 0.1em));
+  transition: transform 0.16s cubic-bezier(0.3, 0.8, 0.4, 1);
+}
+
+/* Reflet dans la pupille : le regard est vivant même immobile. */
+.pupille::after {
+  content: '';
+  position: absolute;
+  left: 20%;
+  top: 16%;
+  width: 32%;
+  height: 32%;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* Paupière : à peine baissée au repos (un regard « cool »), fermée pour cligner. */
+.oeil::before {
+  content: '';
+  position: absolute;
+  inset: -2px -2px auto;
+  height: calc(100% + 4px);
+  z-index: 2;
+  background: linear-gradient(180deg, var(--safran-haut), var(--safran));
+  border-bottom: 0.025em solid var(--bord);
+  transform: scaleY(0.14);
+  transform-origin: top;
+  transition: transform 0.16s ease;
+}
+
+.oeil.ferme::before {
+  transform: scaleY(1.02);
+  transition: none;
+}
+
+.oeil.cligne::before {
+  animation: logo-cligne 0.24s ease-in-out;
+}
+
+@keyframes logo-cligne {
+  45%,
+  55% {
+    transform: scaleY(1.02);
+  }
+}
+
+/* Yeux qui sourient (« ^ ^ ») quand le calcul est trouvé : paupières closes, arc d'encre par-dessus. */
+.oeil::after {
+  content: '';
+  position: absolute;
+  z-index: 3;
+  left: 14%;
+  right: 14%;
+  top: 40%;
+  height: 34%;
+  border: 0.07em solid var(--bord);
+  border-bottom: 0;
+  border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+  opacity: 0;
+  transform: translateY(25%) scaleY(0.5);
+  transition:
+    opacity 0.1s ease,
+    transform 0.28s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.oeil.content::before {
+  transform: scaleY(1.02);
+  border-bottom-color: transparent;
+}
+
+.oeil.content::after {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- La bulle de pensée ---------- */
+
+.pensee {
+  position: absolute;
+  left: 63%;
+  bottom: 96%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.pensee.visible {
+  visibility: visible;
+}
+
+.pensee-point,
+.pensee-nuage {
+  position: absolute;
+  background: var(--oeil-blanc);
+  box-shadow: 0 0.05em 0 rgb(0 0 0 / 0.3);
+  transform: scale(0);
+}
+
+.pensee-point {
+  border-radius: 50%;
+}
+
+.pensee-point-1 {
+  left: -0.02em;
+  bottom: -0.04em;
+  width: 0.09em;
+  height: 0.09em;
+}
+
+.pensee-point-2 {
+  left: 0.09em;
+  bottom: 0.08em;
+  width: 0.15em;
+  height: 0.15em;
+}
+
+/* Attention : le nuage a sa propre taille de police (0,3 em du logo) ; 1 em ici ≈ 0,3 em du logo. */
+.pensee-nuage {
+  left: 1em;
+  bottom: 0.95em;
+  padding: 0.2em 0.55em 0.26em;
+  font-size: 0.3em;
+  letter-spacing: 0;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--encre);
+  border-radius: 0.9em;
+  box-shadow:
+    0 0.14em 0 #c9bfa6,
+    0 0.4em 0.6em rgb(0 0 0 / 0.35);
+  font-variant-numeric: tabular-nums;
+  transform-origin: 0 100%;
+  transition: background-color 0.2s ease;
+}
+
+.pensee.trouve .pensee-nuage {
+  background: #fff1bf;
+}
+
+/* Trois étincelles en étoile à quatre branches, au moment où le calcul est trouvé. */
+.etincelle {
+  position: absolute;
+  width: 0.2em;
+  height: 0.2em;
+  background: var(--safran);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+  opacity: 0;
+}
+
+.etincelle-1 {
+  left: 0.1em;
+  bottom: 0.62em;
+}
+
+.etincelle-2 {
+  left: 1.25em;
+  bottom: 0.72em;
+  width: 0.15em;
+  height: 0.15em;
+  background: var(--sarcelle);
+}
+
+.etincelle-3 {
+  left: 2.05em;
+  bottom: 0.3em;
+  width: 0.17em;
+  height: 0.17em;
+  background: var(--ciel);
+}
+
+.logo-grand .logo-mot {
+  cursor: pointer;
+}
+
+/* ---------- Version barre : même mot, trait un peu plus épais pour rester net en petit ---------- */
+
+.logo-barre {
+  font-size: 1.75rem;
+}
+
+/* En petit, une épaisseur simple suffit (les fines tranches de couleur ne se verraient pas). */
+.logo-barre .logo-lettre::before {
+  -webkit-text-stroke-width: 0.14em;
+  text-shadow: 0 0.1em 0 var(--bord);
+}
+
+.logo-barre .oeil {
+  border-width: 0.09em;
+  box-shadow:
+    0 0 0 0.07em var(--bord),
+    0 0.04em 0 0.07em var(--bord);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pupille,
+  .oeil::before,
+  .oeil::after {
+    transition: none;
+  }
+}

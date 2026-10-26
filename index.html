@@ -20,33 +20,42 @@
     <header id="barre"></header>
 
     <main>
-      <!-- Ouverture : titre, niveau, et les quatre jeux en vignettes (on voit tout de suite qu'il y en a quatre). -->
+      <!-- Ouverture : logo, préparation de la partie (qui joue, niveau), et les quatre jeux en vignettes. -->
       <section class="ouverture" aria-labelledby="titre">
         <div class="ouverture-texte">
-          <p class="surtitre">Jeux de calcul mental, pour les enfants et les grands</p>
-          <h1 id="titre">%BRAND_NAME%</h1>
+          <h1 id="titre" class="titre-logo" translate="no">%BRAND_NAME%</h1>
           <p class="accroche">%BRAND_TAGLINE%</p>
           <p class="intro">
-            Ici, le calcul est l’action du jeu : on additionne des cubes pour repousser un monstre, on tape un résultat
-            pour pulvériser un météore. Quatre jeux, aucun questionnaire.
+            Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu.
+            Quatre jeux, aucun questionnaire.
           </p>
 
-          <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
-            <h2 id="qui-joue-titre">Qui joue ?</h2>
-            <div class="qui-joue" id="qui-joue"></div>
-          </section>
-
-          <fieldset class="niveau">
-            <legend>Ton niveau</legend>
-            <div class="niveaux">
-              <label><input type="radio" name="niveau" value="eveil" /><span>Éveil</span><small>7-8 ans</small></label>
-              <label><input type="radio" name="niveau" value="explorateur" checked /><span>Explorateur</span><small>9-10 ans</small></label>
-              <label><input type="radio" name="niveau" value="stratege" /><span>Stratège</span><small>11-12 ans</small></label>
-              <label><input type="radio" name="niveau" value="maitre" /><span>Maître</span><small>ados et adultes</small></label>
+          <!-- La table de lancement : qui joue, à quel niveau. -->
+          <div class="lancement">
+            <div class="lancement-joueur" id="lancement-joueur">
+              <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
+                <h2 id="qui-joue-titre">Qui joue ?</h2>
+                <div class="qui-joue" id="qui-joue"></div>
+              </section>
+              <p class="statut-invite" id="statut-invite">
+                <span class="pastille-invite" aria-hidden="true"></span>
+                <span><b>Tu joues en invité</b>, sans inscription. <a href="#carnet">Pourquoi créer un compte ?</a></span>
+              </p>
             </div>
-          </fieldset>
 
-          <a class="explorer" href="#jeu-cubes">Explore les 4 jeux <span class="fleche" aria-hidden="true">↓</span></a>
+            <fieldset class="niveau" id="niveau">
+              <legend>Choisis ton niveau <span class="niveau-alerte">avant de jouer</span></legend>
+              <div class="niveaux">
+                <label data-niveau="eveil"><input type="radio" name="niveau" value="eveil" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Éveil</span><small>7-8 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
+                <label data-niveau="explorateur"><input type="radio" name="niveau" value="explorateur" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Explorateur</span><small>9-10 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
+                <label data-niveau="stratege"><input type="radio" name="niveau" value="stratege" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Stratège</span><small>11-12 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
+                <label data-niveau="maitre"><input type="radio" name="niveau" value="maitre" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Maître</span><small>ados et adultes</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
+              </div>
+              <p class="niveau-detail" id="niveau-detail" aria-live="polite">Choisis le niveau qui te correspond : tu pourras en changer à tout moment.</p>
+            </fieldset>
+
+            <a class="explorer" href="#jeu-cubes">Choisis ton jeu <span class="fleche" aria-hidden="true">↓</span></a>
+          </div>
         </div>
 
         <nav class="mosaique" aria-label="Les quatre jeux">
@@ -67,6 +76,48 @@
             <span>Décollage !</span>
           </a>
         </nav>
+      </section>
+
+      <!-- Le carnet : ce qu'apporte un compte (visiteur), ou les vrais progrès du joueur (connecté). -->
+      <section class="carnet" id="carnet" aria-labelledby="carnet-titre">
+        <div class="carnet-texte">
+          <p class="surtitre">Le carnet d’aventurier</p>
+          <h2 id="carnet-titre">Garde la trace de tes exploits</h2>
+          <p class="carnet-chapeau" id="carnet-chapeau">
+            Un compte gratuit, ouvert par un parent, garde les progrès de chaque enfant. Ce n’est pas obligatoire :
+            on peut toujours jouer en invité.
+          </p>
+          <div class="carnet-actions" id="carnet-actions">
+            <a class="bouton-creer" href="compte.html#inscription">Créer mon compte gratuit</a>
+            <a class="lien-connexion" href="compte.html#connexion">J’ai déjà un compte · <b>Se connecter</b></a>
+          </div>
+        </div>
+        <ul class="avantages" id="avantages">
+          <li style="--c: var(--safran)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0zM17 6h3v1.5A3.5 3.5 0 0 1 16.6 11M7 6H4v1.5A3.5 3.5 0 0 0 7.4 11" /></svg>
+            <span><b>Scores et records</b> sauvegardés</span>
+          </li>
+          <li style="--c: var(--ciel)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="13" height="9" rx="1.5" /><path d="M1 17.5h15" /><rect x="17" y="8" width="6" height="12" rx="1.5" /></svg>
+            <span><b>Sur tous tes appareils</b> : ordinateur, tablette, téléphone</span>
+          </li>
+          <li style="--c: var(--sarcelle)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 16v-4M11 16V7M16 16v-6M21 4l-5 4-5-3-5 5" /></svg>
+            <span><b>Statistiques et graphiques</b> de progrès</span>
+          </li>
+          <li style="--c: var(--corail)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" /></svg>
+            <span><b>Succès</b> à débloquer</span>
+          </li>
+          <li style="--c: var(--violet)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21v-6h6v6M9 21V9h6v12M15 21v-8h6v8M12 3.5l1 2 2 .3-1.5 1.4.4 2-1.9-1-1.9 1 .4-2L9 5.8l2-.3z" /></svg>
+            <span><b>Classements</b>, si un parent l’autorise</span>
+          </li>
+          <li style="--c: #ffa36b">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9.5" r="2.5" /><path d="M2.5 20a5.5 5.5 0 0 1 11 0M14 20a3.5 3.5 0 0 1 7 0" /></svg>
+            <span><b>Jusqu’à 6 profils</b> d’enfants par famille</span>
+          </li>
+        </ul>
       </section>
 
       <!-- Repère de progression (grands écrans) : le jeu en cours de lecture est mis en avant. -->
@@ -237,6 +288,17 @@
         </p>
       </footer>
     </main>
+
+    <!-- Première partie sans niveau choisi : on le demande une fois, puis le jeu se lance. -->
+    <dialog class="choix-niveau" id="choix-niveau" aria-labelledby="choix-niveau-titre">
+      <form method="dialog">
+        <p class="surtitre">Avant de jouer</p>
+        <h2 id="choix-niveau-titre">Quel est ton niveau ?</h2>
+        <p>Pour que les calculs ne soient ni trop faciles, ni trop durs. Tu pourras en changer à tout moment.</p>
+        <div class="choix-niveau-liste" id="choix-niveau-liste"></div>
+        <button class="choix-niveau-fermer" value="annuler" type="submit">Plus tard</button>
+      </form>
+    </dialog>
 
     <script type="module" src="/src/entries/accueil.ts"></script>
   </body>

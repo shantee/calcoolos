@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 26/10/2026 (session 9 : **sélecteur de langue** et traductions anglaise et allemande).
+Dernière mise à jour : 26/10/2026 (session 10 : **chantier 02**, logo animé, espace joueur, comptes, choix du niveau).
 
 ---
 
@@ -71,13 +71,14 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
 | Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu, boutons lecture au survol ; en ligne |
+| Accueil (chantier 02, 26/10/2026) | logo animé « qui calcule de tête », espace joueur dans la barre, carnet (avantages du compte ou vrais progrès), choix du niveau en cartes + fenêtre au premier « Jouer » + rappel près de chaque « Jouer » ; en ligne |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
 | Plein écran + PWA légère | boutons Accueil / Plein écran dans les 4 jeux (`src/game/plein-ecran.ts`), manifeste et icônes, sans service worker |
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 105 tests TypeScript (Vitest, dont 7 pour les langues), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
-plateforme dans Chromium (20 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
+Tests : 112 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
+plateforme dans Chromium (20 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
 appareil).
@@ -113,9 +114,15 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/dragon-auto.mjs` | Dragon gourmand, gagner / perdre (le dragon vole vraiment vers les lanternes) |
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
+| `scripts/accueil-e2e.mjs` | accueil (chantier 02) : logo, espace joueur, niveau, 4 jeux au bon niveau, inscription, profils, formats, langues, animations réduites |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 | `scripts/captures.mjs` | captures des prototypes |
+
+PHP absent du poste Fedora : lancer l'API dans un conteneur, `podman run --rm --name calcoolos-api-dev --network host
+-v "$PWD":/app:z -w /app docker.io/library/php:8.3-cli php -S 127.0.0.1:8080 server/public/index.php` (et de même
+`php server/tests/run.php`). Toujours `:z` (partagé) et non `:Z` : un second conteneur en `:Z` réétiquette le dossier
+et le premier perd l'accès (« Permission denied »).
 
 Chromium headless : lancer avec `--use-angle=swiftshader --enable-unsafe-swiftshader`. Les captures vont dans
 `CAPTURES/` (à regarder vraiment : plusieurs bugs n'ont été vus que sur les captures).
@@ -128,7 +135,8 @@ réduites), `?accelere=N`, `?textures=N`. Chaque jeu expose des crochets de test
 
 ```
 brand.json                 nom, slogan (seul endroit à modifier pour renommer)
-index.html                 accueil : ouverture (titre, « Qui joue ? », niveau, vignettes) puis une vitrine par jeu
+index.html                 accueil : ouverture (logo, table de lancement « Qui joue ? » + niveau, vignettes), carnet
+                           (compte), une vitrine par jeu, fenêtre <dialog> du premier niveau
 src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
@@ -145,7 +153,10 @@ src/art/variant-b.ts       palette et outils de dessin du style B ; world-b.ts (
 src/art/pixelforge.ts      outil maison de pixel art (rampes, tramage Bayer, contour, chiffres 7×10)
 src/art/pixel-rocket.ts    tout le pixel art de Décollage ! + police pixel des nombres
 src/platform/              api.ts, player.ts (joueur actif), results.ts (envoi/file d'attente), stats.ts (tableau
-                           de bord, testé), avatars.ts, topbar.ts, dom.ts (construction DOM sans innerHTML)
+                           de bord, testé), avatars.ts, topbar.ts (barre + espace joueur), logo.ts (logo animé),
+                           niveau.ts (règle du niveau, fiches des niveaux, testé), dom.ts (construction DOM sans innerHTML)
+src/styles/                accueil.css (accueil, aussi chargé par les autres pages), plateforme.css (barre, cartes,
+                           formulaires), logo.css (chargé par topbar.ts, donc APRÈS les deux autres), game.css
 src/entries/               point d'entrée de chaque page (chacun importe d'abord ../i18n/page, et ../i18n/phaser pour un jeu)
 src/i18n/                  langue.ts (détection, choix), drapeaux.ts (sélecteur), traduire.ts (t()), page.ts (DOM),
                            phaser.ts (textes des jeux), en.ts et de.ts (dictionnaires « texte français → traduction »)
@@ -244,6 +255,13 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   elle ne sert qu'aux surtitres sans chiffres, les nombres utilisent `.pixel-nombre`.
 - **Niveau de l'accueil** : quatre boutons radio `input[name="niveau"]` (plus de `<select id="niveau">`) ; Playwright
   doit cliquer la case elle-même (`page.click('input[value="stratege"]')`), l'étiquette est couverte par la case.
+  Un nouveau venu n'a **aucun** niveau coché : son premier clic sur « Jouer » ouvre la fenêtre `#choix-niveau` au lieu
+  de lancer le jeu. Un script qui part d'un navigateur neuf doit d'abord cocher un niveau (ou choisir dans la fenêtre).
+- **Espace joueur** : `.joueur` est un bouton qui ouvre `#panneau-joueur` (plus un lien). Le panneau contient lui
+  aussi « Se déconnecter » : dans l'espace parents, viser `#contenu button`.
+- **Logo** : `logo.css` est chargé après `plateforme.css` ; une règle de la barre qui change le logo doit être plus
+  précise (`.barre .logo-barre`). Les images clés WAAPI ne lisent pas les variables CSS : l'inclinaison des lettres
+  est portée par leurs pseudo-éléments, les animations ne touchent qu'au déplacement de la lettre.
 - **Clavier Phaser** : quand une image est lente, la file d'événements peut être relue deux fois ; dédoublonner
   (voir le gestionnaire des chiffres de Cubes de siège) toute touche qui compte.
 - **Plein écran** : seulement juste après un geste ; au doigt, Chrome ne reconnaît le geste qu'au lever du doigt.
@@ -290,5 +308,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
    petits ; Décollage ! demande deux mains), performance sur appareils modestes, essai sur un vrai GPU.
 5. Envoi d'e-mails (vérification d'adresse, mot de passe oublié) : aujourd'hui, outil d'administration
    `server/bin/reset-password.php`.
-6. Idées notées : Cubes de siège en multiplications ; autres jeux dans `doc/IDEES_JEUX.md` (Philippe a dit que
+6. Niveaux plus fins (huit paliers dans les quatre mondes) : étudié en session 10, liste de ce qu'il faut toucher
+   dans `JOURNAL_PROJET.md` ; reprise de l'historique invité à la création d'un compte.
+7. Idées notées : Cubes de siège en multiplications ; autres jeux dans `doc/IDEES_JEUX.md` (Philippe a dit que
    Décollage ! était le dernier jeu « pour le moment »).

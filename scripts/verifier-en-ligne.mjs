@@ -145,7 +145,7 @@ await page.waitForFunction(() => window.__dragon.overlay() && window.__dragon.se
 await page.waitForTimeout(2500);
 check(true, 'partie gagnée au Dragon gourmand');
 await page.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });
-await page.locator('button', { hasText: 'Se déconnecter' }).click();
+await page.locator('#contenu button', { hasText: 'Se déconnecter' }).click();
 await page.waitForSelector('#t-login');
 check((await pc.cookies()).every((c) => c.name !== 'calcoolos_session' || c.value === ''), 'déconnexion');
 await pc.close();

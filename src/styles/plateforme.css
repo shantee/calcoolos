@@ -2,73 +2,355 @@
 
 .barre {
   position: relative;
-  z-index: 2;
+  z-index: 5;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px 20px;
-  max-width: 1040px;
+  gap: 10px 18px;
+  max-width: 1232px;
   margin: 0 auto;
   padding: 14px 16px 0;
 }
 
+/* À gauche : le logo, et juste à côté le joueur actif (on voit tout de suite qui joue). */
+.barre-gauche {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-right: auto;
+  min-width: 0;
+}
+
 .marque {
-  font-weight: 800;
-  font-size: 1.5rem;
-  color: var(--safran);
+  display: inline-flex;
+  padding: 6px 2px 8px;
+  border-radius: 12px;
   text-decoration: none;
-  text-shadow: 0 3px 0 var(--encre);
+}
+
+.marque:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
 }
 
 .liens {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-left: auto;
+  gap: 4px;
 }
 
-.liens a {
+.liens a,
+.lien-compte {
   padding: 8px 12px;
   border-radius: 12px;
   color: var(--creme);
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .liens a:hover,
 .liens a:focus-visible,
-.liens a[aria-current='page'] {
+.liens a[aria-current='page'],
+.lien-compte:hover,
+.lien-compte:focus-visible,
+.lien-compte[aria-current='page'] {
   background: rgb(246 236 216 / 0.12);
   outline: none;
+}
+
+.barre-compte {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.barre-compte:empty {
+  display: none;
+}
+
+/* « Créer mon compte » dans la barre : petit bouton safran, visible sans écraser le reste. */
+.bouton-compte {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 6px 16px;
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  background: var(--safran);
+  box-shadow: 0 4px 0 var(--encre);
+  color: var(--encre);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.bouton-compte:hover,
+.bouton-compte:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--encre);
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+/* ---------- Espace joueur ---------- */
+
+.espace-joueur {
+  position: relative;
+  min-width: 0;
 }
 
 .joueur {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  min-height: 52px;
+  max-width: 100%;
   padding: 4px 12px 4px 4px;
+  font: inherit;
+  text-align: left;
+  color: var(--creme);
+  background: rgb(14 34 54 / 0.92);
   border: 3px solid var(--encre);
   border-radius: 999px;
-  background: rgb(14 34 54 / 0.9);
   box-shadow: 0 4px 0 var(--encre);
-  color: var(--creme);
-  font-weight: 800;
-  text-decoration: none;
-  min-height: 48px;
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.15s ease;
 }
 
-.joueur .avatar {
-  width: 38px;
-  height: 38px;
+.joueur:hover {
+  background: rgb(24 50 76 / 0.95);
+}
+
+.joueur:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+.joueur[aria-expanded='true'] {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--encre);
+}
+
+.joueur-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: rgb(246 236 216 / 0.12);
 }
 
-.joueur small {
-  display: block;
+.joueur .avatar {
+  width: 36px;
+  height: 36px;
+}
+
+/* Joueur avec profil : anneau safran. Invité : anneau en pointillés. */
+.joueur-profil .joueur-avatar {
+  box-shadow: 0 0 0 3px var(--safran);
+}
+
+.joueur-invite .joueur-avatar {
+  outline: 2px dashed rgb(159 201 194 / 0.7);
+  outline-offset: 1px;
+}
+
+.joueur-texte {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.joueur-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+}
+
+.joueur-statut {
   font-weight: 600;
   font-size: 0.75rem;
   color: var(--brume);
+  white-space: nowrap;
+}
+
+.joueur-profil .joueur-statut {
+  color: var(--safran);
+}
+
+.joueur-chevron {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin: 0 2px 4px 2px;
+  border-right: 2.5px solid currentcolor;
+  border-bottom: 2.5px solid currentcolor;
+  transform: rotate(45deg);
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+}
+
+.joueur[aria-expanded='true'] .joueur-chevron {
+  transform: translateY(3px) rotate(225deg);
+}
+
+.panneau-joueur {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  z-index: 20;
+  display: grid;
+  gap: 12px;
+  width: min(350px, calc(100vw - 32px));
+  padding: 16px;
+  color: var(--creme);
+  background: #13263c;
+  border: 3px solid var(--encre);
+  border-radius: 20px;
+  box-shadow:
+    0 8px 0 var(--encre),
+    0 30px 60px rgb(0 0 0 / 0.45);
+  transform-origin: 30px 0;
+  animation: panneau 0.18s ease-out;
+}
+
+.panneau-joueur[hidden] {
+  display: none;
+}
+
+@keyframes panneau {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+}
+
+.panneau-joueur p {
+  margin: 0;
+}
+
+.panneau-tete {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.panneau-tete .avatar {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgb(246 236 216 / 0.1);
+}
+
+.panneau-nom {
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.panneau-sous,
+.panneau-invite,
+.panneau-local {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--texte, #dfeeea);
+}
+
+.panneau-local {
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: rgb(246 236 216 / 0.07);
+  font-weight: 700;
+}
+
+.panneau-niveau {
+  font-size: 0.95rem;
+}
+
+.panneau-niveau b {
+  color: var(--safran);
+}
+
+.panneau-niveau a,
+.panneau-compte a,
+.panneau-lien {
+  color: var(--brume);
+  font: inherit;
+  font-weight: 700;
+}
+
+.panneau-titre {
+  font-weight: 800;
+}
+
+.panneau-profils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.panneau-profils button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 3px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--creme);
+  background: rgb(246 236 216 / 0.08);
+  border: 2px solid rgb(246 236 216 / 0.15);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.panneau-profils button[aria-pressed='true'] {
+  background: var(--safran);
+  border-color: var(--encre);
+  color: var(--encre);
+}
+
+.panneau-profils button:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+.panneau-profils .avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.panneau-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.panneau-compte {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgb(246 236 216 / 0.12);
+  font-size: 0.88rem;
+  color: var(--brume);
+}
+
+.panneau-compte span {
+  overflow-wrap: anywhere;
+}
+
+.panneau-lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 /* Choix de la langue : trois petits drapeaux, celui de la langue en cours est mis en avant. */
@@ -121,7 +403,7 @@
 .page {
   position: relative;
   z-index: 1;
-  max-width: 1040px;
+  max-width: 1232px;
   margin: 0 auto;
   padding: 28px 16px 120px;
 }
@@ -145,6 +427,11 @@
   padding: 22px;
   box-shadow: 0 8px 0 var(--encre);
   min-width: 0;
+}
+
+/* Carte visée par le lien d'arrivée (« Créer mon compte », « Se connecter »). */
+.carte.carte-voulue {
+  border-color: var(--safran);
 }
 
 .carte h2 {
@@ -517,7 +804,7 @@ table.tableau {
 .pied {
   position: relative;
   z-index: 1;
-  max-width: 1040px;
+  max-width: 1232px;
   margin: 0 auto;
   padding: 0 16px 40px;
   color: var(--brume);
@@ -537,16 +824,127 @@ table.tableau {
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .joueur,
-  .langues {
-    margin-left: auto;
+/* Sous 1200 px, la barre passe sur deux lignes : logo, joueur et compte en haut ; liens et langues dessous. */
+@media (max-width: 1199px) {
+  .barre {
+    gap: 8px 10px;
+  }
+
+  /* Saut de ligne entre les deux rangées. */
+  .barre::after {
+    content: '';
+    order: 2;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .barre-compte {
+    order: 1;
   }
 
   .liens {
-    margin-left: 0;
     order: 3;
-    width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .langues {
+    order: 4;
+  }
+}
+
+/* Tablette étroite et téléphone. */
+@media (max-width: 899px) {
+  /* Le panneau s'ouvre sur toute la largeur de la barre. */
+  .espace-joueur {
+    position: static;
+  }
+
+  .panneau-joueur {
+    left: 16px;
+    right: 16px;
+    top: auto;
+    margin-top: 10px;
+    width: auto;
+    max-width: 420px;
+  }
+}
+
+@media (max-width: 640px) {
+  .barre-gauche {
+    gap: 8px;
+  }
+
+  .barre .logo-barre {
+    font-size: 1.42rem;
+  }
+
+  .joueur {
+    min-height: 44px;
+    padding: 3px 10px 3px 3px;
+  }
+
+  .joueur-avatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .joueur .avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .barre {
+    padding-inline: 12px;
+  }
+
+  .joueur-statut,
+  .joueur-chevron {
+    display: none;
+  }
+
+  /* Ligne 1 : logo, joueur et langues. Ligne 2 : les liens. Inscription et connexion restent à un geste,
+     dans le panneau du joueur et dans le carnet de l'accueil. */
+  .barre-gauche {
+    flex: 1 1 0;
+  }
+
+  .barre-compte {
+    display: none;
+  }
+
+  .langues {
+    order: 2;
+  }
+
+  .langues {
+    gap: 0;
+    padding: 2px;
+  }
+
+  .langues button {
+    width: 29px;
+  }
+
+  .langues svg {
+    width: 23px;
+    height: 15px;
+  }
+
+  .liens {
+    order: 3;
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .liens a {
+    padding: 7px 10px;
+  }
+
+  .joueur {
+    gap: 6px;
+    padding-right: 10px;
   }
 
   .carte {
@@ -556,7 +954,28 @@ table.tableau {
 
 @media (prefers-reduced-motion: reduce) {
   .bouton,
-  .jouer {
+  .jouer,
+  .joueur,
+  .bouton-compte {
     transition: none;
+  }
+
+  .panneau-joueur {
+    animation: none;
+  }
+}
+
+/* Très petits téléphones : le logo de la barre rétrécit pour laisser lire le nom du joueur. */
+@media (max-width: 380px) {
+  .barre .logo-barre {
+    font-size: 1.2rem;
+  }
+
+  .barre-gauche {
+    gap: 6px;
+  }
+
+  .joueur {
+    padding-right: 8px;
   }
 }

@@ -71,14 +71,26 @@ function renderGuest(): void {
     showErrors(signup, msgSignup, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
 
+  // Arrivée par « Créer mon compte » (#inscription) ou « Se connecter » (#connexion) : la bonne carte en
+  // premier, le curseur dans son premier champ.
+  const cartes = {
+    connexion: h('section', { class: 'carte', id: 'connexion', 'aria-labelledby': 't-login' }, h('h2', { id: 't-login' }, 'Se connecter'), login),
+    inscription: h('section', { class: 'carte', id: 'inscription', 'aria-labelledby': 't-signup' },
+      h('h2', { id: 't-signup' }, 'Créer mon compte'),
+      h('p', { class: 'discret' }, 'Gratuit. Le compte est ouvert par un adulte ; chaque enfant y aura son profil.'),
+      signup),
+  };
+  const voulu = window.location.hash === '#inscription' ? 'inscription' : window.location.hash === '#connexion' ? 'connexion' : null;
   root.replaceChildren(
     h('h1', {}, 'Espace parents'),
     h('p', { class: 'chapeau' }, 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. On ne demande qu’une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'),
-    h('div', { class: 'grille' },
-      h('section', { class: 'carte', 'aria-labelledby': 't-login' }, h('h2', { id: 't-login' }, 'Se connecter'), login),
-      h('section', { class: 'carte', 'aria-labelledby': 't-signup' }, h('h2', { id: 't-signup' }, 'Créer un espace famille'), signup),
-    ),
+    h('div', { class: 'grille' }, ...(voulu === 'inscription' ? [cartes.inscription, cartes.connexion] : [cartes.connexion, cartes.inscription])),
   );
+  if (voulu) {
+    cartes[voulu].classList.add('carte-voulue');
+    cartes[voulu].querySelector('input')?.focus({ preventScroll: true });
+    cartes[voulu].scrollIntoView({ block: 'center' });
+  }
 }
 
 // --- Connecté -----------------------------------------------------------------------------------
@@ -244,7 +256,14 @@ function renderAccount(state: AccountState): void {
   );
 }
 
+let dernierEtat: AccountState | null = null;
+// Depuis la barre, « Créer mon compte » ou « Se connecter » sur cette même page : on remet la bonne carte devant.
+window.addEventListener('hashchange', () => {
+  if (dernierEtat && !dernierEtat.connecte) renderGuest();
+});
+
 function render(state: AccountState | null, refreshBar = true): void {
+  dernierEtat = state;
   if (!state) {
     root.replaceChildren(
       h('h1', {}, 'Espace parents'),

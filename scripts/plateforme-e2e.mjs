@@ -211,7 +211,7 @@ console.log('• Export et déconnexion');
 const mine = await page.evaluate(async () => (await fetch('api/export')).json());
 check(mine.compte.email === email && mine.profils.length === 2 && mine.profils[0].resultats.length === 1, 'export complet de la famille');
 await page.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });
-await page.locator('button', { hasText: 'Se déconnecter' }).click();
+await page.locator('#contenu button', { hasText: 'Se déconnecter' }).click();
 await page.waitForSelector('#t-login');
 check((await page.textContent('.joueur'))?.includes('Invité'), 'après déconnexion : retour en invité');
 
