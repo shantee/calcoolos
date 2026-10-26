@@ -13,6 +13,7 @@
 | D. Plateforme (invité, comptes, profils, sauvegardes) | fait : API PHP + MariaDB, parcours complet testé, comptes isolés |
 | Chantier 01 : refonte de l'accueil | fait, avec boutons lecture sur les illustrations |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (Dell, CloudPanel) ; publier : `bash deploy/publier.sh` |
+| Langues : anglais et allemand | fait le 26/10/2026 : drapeaux, détection du navigateur, traductions (sauf confidentialité) |
 | E. Finition | à faire : vrais téléphones et tablettes, accessibilité, page de confidentialité |
 
 ## Rappels pour Philippe
@@ -25,6 +26,43 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
+
+## 2026-10-26 : Claude, session 9 (sélecteur de langue, anglais et allemand)
+
+**Demande de Philippe** : tout à droite de l'accueil, un sélecteur de langue discret et visuel (drapeaux du
+Royaume-Uni, de l'Allemagne et de la France), trois versions du site, et la détection automatique de la langue du
+visiteur. C'est pour le montrer à une amie qui ne parle pas français : on traduit une fois, le français reste la
+version principale, et il n'est pas grave que les autres langues prennent du retard.
+
+**Fait**
+- `src/i18n/` : choix de la langue (choix enregistré, sinon langue du navigateur, sinon anglais), sélecteur à trois
+  drapeaux dessinés en SVG (barre du haut de toutes les pages de la plateforme, tout à droite), traduction par
+  dictionnaire « texte français → traduction » avec modèles pour les textes contenant des nombres.
+- Traduction automatique de la page (HTML et tout ce que le code ajoute) et des textes Phaser des quatre jeux, sans
+  modifier le code des pages ni des scènes ; appels directs à `t()` seulement pour les graphiques ECharts et les
+  `confirm()`. Dates du tableau de bord au format de la langue.
+- Dictionnaires anglais et allemand (~420 textes chacun) : accueil, espace parents, progrès, classements, succès,
+  messages de l'API PHP, quatre jeux (aides, bulles des personnages, fins de partie), boutons plein écran.
+  Noms choisis : *Siege Cubes / Würfel-Belagerung*, *Meteor Shower / Meteoritenregen*, *The Hungry Dragon / Der
+  hungrige Drache*, *Lift-off! / Abheben!* ; modes *Relaxed / Entspannt* et *Challenge / Profi*.
+- Décollage ! : l'antiligature « fi/fl » de la police pixel est retirée avant la traduction puis remise.
+- Scripts Playwright : tous en `locale: 'fr-FR'` (sinon Chromium, réglé en anglais, aurait affiché le site en anglais
+  et les vérifications de textes français auraient échoué).
+- 7 tests Vitest (détection, modèles, morceaux, oubli) : 105 tests au total.
+
+**Vérifié dans Chromium** : navigateur allemand → site en allemand ; navigateur français → français ; clic sur un
+drapeau → langue changée et retenue ; pages de la plateforme en anglais et en allemand (ordinateur et téléphone) ;
+écrans de début, parties et fins des quatre jeux en allemand (parties automatiques gagnées et perdues) : aucun texte
+resté en français à part l'icône pause « II » et le « z » du dragon qui dort. Corrections après captures : « Score »
+gardé tel quel en allemand dans Décollage ! (« Punkte » débordait), ciels du dragon raccourcis (*Abend*, *Sturm*),
+deux phrases d'aide raccourcies. CSP : aucune violation.
+
+**Limites**
+- Traductions faites par Claude, non relues par une personne de langue anglaise ou allemande.
+- Non traduits : page de confidentialité, noms inventés des classements (« Dragon Futé 42 »), anciens prototypes.
+- Petits accords imparfaits (« 0 game played » au singulier, comme en français).
+- Espace parents en anglais/allemand vérifié seulement en mode « serveur indisponible » (pas de PHP sur ce poste) ;
+  les messages de l'API sont dans les dictionnaires.
 
 ## 2026-10-25 : Claude, session 8 (bonus volants et plein écran)
 

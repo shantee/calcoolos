@@ -71,6 +71,53 @@
   color: var(--brume);
 }
 
+/* Choix de la langue : trois petits drapeaux, celui de la langue en cours est mis en avant. */
+.langues {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgb(14 34 54 / 0.6);
+}
+
+.langues button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  opacity: 0.55;
+  filter: saturate(0.6);
+  transition: opacity 0.15s, filter 0.15s, background 0.15s;
+}
+
+.langues svg {
+  display: block;
+  width: 27px;
+  height: 18px;
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.35);
+}
+
+.langues button:hover,
+.langues button:focus-visible {
+  opacity: 1;
+  filter: none;
+  outline: none;
+  background: rgb(246 236 216 / 0.12);
+}
+
+.langues button[aria-pressed='true'] {
+  opacity: 1;
+  filter: none;
+  background: rgb(246 236 216 / 0.16);
+  box-shadow: inset 0 0 0 2px var(--safran);
+}
+
 .page {
   position: relative;
   z-index: 1;
@@ -491,6 +538,11 @@ table.tableau {
 }
 
 @media (max-width: 640px) {
+  .joueur,
+  .langues {
+    margin-left: auto;
+  }
+
   .liens {
     margin-left: 0;
     order: 3;

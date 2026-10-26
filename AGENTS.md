@@ -4,8 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 25/10/2026 (session 7 : chantier 01 « refonte de l'accueil », puis **mise en ligne sur le Dell**,
-https://calculos.zfx.fr).
+Dernière mise à jour : 26/10/2026 (session 9 : **sélecteur de langue** et traductions anglaise et allemande).
 
 ---
 
@@ -54,7 +53,9 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
    secrets de production sont générés sur le serveur (`deploy/webdell/installer.sh`) et y restent.
 3. Le dépôt GitHub est `shantee/calcoolos`. Branche de travail : `dev` (fusionnée dans `main`). Commits en français,
    compréhensibles, petits paliers ; ne pas réécrire l'historique publié.
-4. Tout ce qui est visible par l'utilisateur est **en français** (interface, docs, commentaires du code).
+4. Tout ce qui est visible par l'utilisateur est **écrit en français** (interface, docs, commentaires du code). Le
+   français est la version de référence ; l'anglais et l'allemand sont des traductions posées par-dessus
+   (`src/i18n/`, voir § 8 bis), qu'on n'est **pas obligé** de tenir à jour (souhait de Philippe, 26/10/2026).
 5. Ne pas créer d'écrans factices : une fonctionnalité annoncée doit marcher dans le navigateur, ou être signalée
    comme non faite.
 
@@ -73,8 +74,9 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
 | Plein écran + PWA légère | boutons Accueil / Plein écran dans les 4 jeux (`src/game/plein-ecran.ts`), manifeste et icônes, sans service worker |
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
+| Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 98 tests TypeScript (Vitest), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
+Tests : 105 tests TypeScript (Vitest, dont 7 pour les langues), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
 plateforme dans Chromium (20 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
@@ -144,7 +146,9 @@ src/art/pixelforge.ts      outil maison de pixel art (rampes, tramage Bayer, con
 src/art/pixel-rocket.ts    tout le pixel art de Décollage ! + police pixel des nombres
 src/platform/              api.ts, player.ts (joueur actif), results.ts (envoi/file d'attente), stats.ts (tableau
                            de bord, testé), avatars.ts, topbar.ts, dom.ts (construction DOM sans innerHTML)
-src/entries/               point d'entrée de chaque page
+src/entries/               point d'entrée de chaque page (chacun importe d'abord ../i18n/page, et ../i18n/phaser pour un jeu)
+src/i18n/                  langue.ts (détection, choix), drapeaux.ts (sélecteur), traduire.ts (t()), page.ts (DOM),
+                           phaser.ts (textes des jeux), en.ts et de.ts (dictionnaires « texte français → traduction »)
 tests/                     Vitest
 server/                    API PHP sans Composer : src/{Api,Games,Db,Http,Session,Config}.php, migrations/,
                            bin/{migrate,reset-password}.php, tests/run.php, public/index.php
@@ -201,6 +205,27 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   sauvegarde avant chaque migration et chaque nuit. Publier : `bash deploy/publier.sh` ; revenir en arrière :
   `deploy/webdell/retour-arriere.sh`. Tout est dans `doc/DEPLOIEMENT.md`.
 
+## 8 bis. Langues (anglais, allemand)
+
+- **Principe** : le code reste écrit en français, sans clés de traduction. `t('Rejouer')` renvoie la traduction si le
+  dictionnaire de la langue courante la connaît, sinon le texte français. Changer ou ajouter un texte français ne casse
+  donc rien : il apparaît en français dans les autres langues tant qu'on ne l'a pas ajouté à `en.ts` / `de.ts`.
+- **Sans toucher au code des pages et des jeux** : `src/i18n/page.ts` traduit le HTML au chargement puis tout ce que le
+  code ajoute (MutationObserver : textes, `alt`, `title`, `aria-label`, `placeholder`) ; `src/i18n/phaser.ts` fait
+  passer chaque `Text.setText` de Phaser par `t()`. Seuls les textes qui ne vont ni dans le DOM ni dans Phaser
+  appellent `t()` directement : graphiques ECharts (`tableau.ts`), `window.confirm` (`compte.ts`). En français, rien
+  de tout cela ne s'active.
+- **Modèles** : une clé avec `{}` (morceau sans lettres : nombre, étoiles) ou `{*}` (n'importe quel texte, traduit à
+  son tour) couvre les textes construits : `'Vague {} / {}'`, `'Niveau {*} · {*}'`. Ne pas mettre `{*}` dans une clé
+  courte (« {*} sur {*} » avalerait toute phrase contenant « sur »). Les textes à plusieurs lignes, ou coupés par
+  « · » ou trois espaces, sont traduits morceau par morceau.
+- **Choix de la langue** : `localStorage['calcoolos.langue']`, sinon `navigator.languages` (fr, de, en), sinon
+  anglais. Un clic sur un drapeau enregistre et recharge la page. Le nom inventé des classements (« Dragon Futé 42 »)
+  et la page de confidentialité restent en français.
+- **Oublis** : `window.__tradManquantes` (console) liste les textes restés en français sur la page.
+- **Largeur** : l'allemand est plus long ; les textes des jeux ont été vérifiés sur captures (début, partie, fin des
+  4 jeux). Pour un nouveau texte, préférer une traduction courte plutôt que de toucher la mise en page.
+
 ## 9. Pièges connus (déjà rencontrés, ne pas retomber dedans)
 
 - **SwiftShader / Phaser 4** : au-delà de 2 textures par lot, Phaser mélangeait les textures → `maxTextures: 1`
@@ -234,6 +259,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Sur le Dell, `php` est la 8.4** : utiliser `php8.5` (celle du site) pour les outils en ligne de commande.
 - **Vhost régénéré par CloudPanel** : le bloc `# Calcoolos (installer.sh)` (API et en-têtes) disparaît ; relancer
   `deploy/webdell/installer.sh` (sudo), qui le remet sans toucher au reste.
+- **Langue des scripts Playwright** : sans `locale`, Chromium se déclare en anglais et le site passe en anglais.
+  Tous les scripts de `scripts/` ouvrent leur page avec `locale: 'fr-FR'` (les vérifications lisent des textes
+  français) : garder ce réglage dans tout nouveau script.
 - **Tests en ligne** : le résultat d'une partie n'est envoyé qu'à l'affichage de l'écran de fin ; un script qui
   quitte la page avant ne laisse aucune trace. Limite de 5 inscriptions par heure : ne pas relancer en boucle
   `verifier-en-ligne.mjs`, qui crée (puis supprime) un compte.

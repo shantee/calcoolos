@@ -15,7 +15,7 @@ async function loadPlaywright() {
 const { chromium } = await loadPlaywright();
 const base = process.argv[2] ?? 'http://localhost:5173';
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 1280, height: 720 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(`${base}/jeu/cubes-de-siege.html?graine=5&accelere=5`, { waitUntil: 'networkidle' });

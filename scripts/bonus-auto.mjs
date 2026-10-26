@@ -29,7 +29,7 @@ const check = (ok, what) => {
 };
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, hasTouch: true });
+const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1440, height: 900 }, hasTouch: true });
 const page = await ctx.newPage();
 page.on('console', (m) => {
   if (m.type() === 'error' || m.type() === 'warning') problems.push(`console ${m.type()} : ${m.text()}`);
@@ -224,7 +224,7 @@ if (process.env.SEUL1) {
 }
 // --- 2. Partie naturelle (tablette au doigt) --------------------------------------------------
 const b2 = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const ctx2 = await b2.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
+const ctx2 = await b2.newContext({ locale: 'fr-FR', viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true, deviceScaleFactor: 1 });
 const p2 = await ctx2.newPage();
 p2.on('console', (m) => {
   if (m.type() === 'error' || m.type() === 'warning') problems.push(`console ${m.type()} : ${m.text()}`);

@@ -48,7 +48,7 @@ await new Promise((r) => server.listen(4180, '127.0.0.1', r));
 
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage();
+const page = await browser.newPage({ locale: 'fr-FR' });
 const problems = [];
 page.on('console', (m) => {
   if (/Content Security Policy|Refused to/i.test(m.text())) problems.push(`${page.url()} : ${m.text()}`);

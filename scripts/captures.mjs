@@ -38,7 +38,7 @@ async function shoot(page, file) {
 // Page d'accueil.
 for (const size of sizes) {
   if (only) break;
-  const page = await browser.newPage({ viewport: { width: size.width, height: size.height } });
+  const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: size.width, height: size.height } });
   page.on('pageerror', (e) => problems.push(`[accueil/${size.name}] erreur : ${e.message}`));
   page.on('requestfailed', (r) => problems.push(`[accueil/${size.name}] échec de chargement : ${r.url()}`));
   await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
@@ -50,7 +50,7 @@ for (const size of sizes) {
 for (const v of ['a', 'b']) {
   if (only && only !== v) continue;
   for (const size of sizes) {
-    const page = await browser.newPage({ viewport: { width: size.width, height: size.height } });
+    const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: size.width, height: size.height } });
     page.on('console', (m) => {
       if (m.type() === 'error' || m.type() === 'warning') problems.push(`[${v}/${size.name}] console ${m.type()} : ${m.text()}`);
     });

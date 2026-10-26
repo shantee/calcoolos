@@ -1,3 +1,5 @@
+import '../i18n/page';
+import { t } from '../i18n/traduire';
 import '@fontsource-variable/bricolage-grotesque';
 import '../styles/accueil.css';
 import '../styles/plateforme.css';
@@ -121,7 +123,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
 
   const del = h('button', { class: 'bouton petit danger', type: 'button' }, 'Supprimer ce profil');
   del.addEventListener('click', async () => {
-    if (!window.confirm(`Supprimer le profil « ${p.pseudo} » et tous ses résultats ? C’est définitif.`)) return;
+    if (!window.confirm(t(`Supprimer le profil « ${p.pseudo} » et tous ses résultats ? C’est définitif.`))) return;
     const r = await api.post<{ profils: Profile[] }>(`/profils/${p.id}/supprimer`).catch(() => null);
     if (r?.status === 200) {
       if (activePlayer()?.id === p.id) setActivePlayer(null);
@@ -195,7 +197,7 @@ function accountCard(email: string): HTMLElement {
   );
   del.addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!window.confirm('Supprimer définitivement le compte et toutes ses données ?')) return;
+    if (!window.confirm(t('Supprimer définitivement le compte et toutes ses données ?'))) return;
     const d = new FormData(del);
     const r = await api.post('/supprimer-compte', { motDePasse: d.get('motDePasse') }).catch(() => null);
     if (r?.status === 200) {

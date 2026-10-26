@@ -62,7 +62,7 @@ const etat = (page) =>
   });
 
 for (const f of FORMATS) {
-  const ctx = await browser.newContext({ viewport: { width: f.width, height: f.height }, hasTouch: f.touch, isMobile: f.touch });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: f.width, height: f.height }, hasTouch: f.touch, isMobile: f.touch });
   for (const j of JEUX) {
     const page = await ctx.newPage();
     page.on('console', (m) => m.type() === 'error' && problems.push(`${j.id}/${f.nom} console : ${m.text()}`));
@@ -83,7 +83,7 @@ for (const f of FORMATS) {
 
 // Lancement : clavier (Entrée), puis bouton, Échap simulé, relance sans plein écran forcé.
 {
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1280, height: 800 } });
   for (const j of JEUX) {
     const page = await ctx.newPage();
     page.on('pageerror', (e) => problems.push(`${j.id} erreur : ${e.message}`));
@@ -124,7 +124,7 @@ for (const f of FORMATS) {
 
 // Au doigt sur tablette : toucher « Jouer » (Chrome ne reconnaît le geste qu'au lever du doigt).
 {
-  const ctx = await browser.newContext({ viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true });
+  const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1180, height: 820 }, hasTouch: true, isMobile: true });
   const page = await ctx.newPage();
   await page.goto(`${base}/jeu/cubes-de-siege.html?graine=7`, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => window.__siege !== undefined);

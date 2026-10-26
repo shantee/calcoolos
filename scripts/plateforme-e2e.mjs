@@ -43,7 +43,7 @@ const watch = (page) => {
   page.on('requestfailed', (r) => problems.push(`échec de chargement : ${r.url()}`));
   page.on('pageerror', (e) => problems.push(`erreur : ${e.message}`));
 };
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+const ctx = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1280, height: 860 } });
 const page = await ctx.newPage();
 watch(page);
 const shot = async (name, full = false) => {
@@ -187,7 +187,7 @@ await shot('9-classements', true);
 
 // --- 5. Une autre famille ne voit rien ------------------------------------------------------------
 console.log('• Isolation');
-const ctx2 = await browser.newContext();
+const ctx2 = await browser.newContext({ locale: 'fr-FR' });
 const other = await ctx2.newPage();
 watch(other);
 await other.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });

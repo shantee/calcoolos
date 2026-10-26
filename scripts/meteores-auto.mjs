@@ -20,7 +20,7 @@ const niveau = process.argv[5] ?? 'stratege';
 mkdirSync(out, { recursive: true });
 const problems = [];
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+const page = await browser.newPage({ locale: 'fr-FR', viewport: { width: 1440, height: 900 } });
 page.on('console', (m) => {
   if (m.type() === 'error' || m.type() === 'warning') problems.push(`console ${m.type()} : ${m.text()}`);
 });

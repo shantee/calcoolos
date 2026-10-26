@@ -57,7 +57,7 @@ const games = [
 // --- 1. Accueil et jeux sur trois appareils -------------------------------------------------------
 for (const d of devices) {
   console.log(`• ${d.name}`);
-  const ctx = await browser.newContext(d);
+  const ctx = await browser.newContext({ ...d, locale: 'fr-FR' });
   const page = await ctx.newPage();
   watch(page, d.name);
   await page.goto(`${base}/`, { waitUntil: 'networkidle' });
@@ -85,7 +85,7 @@ for (const d of devices) {
 console.log('• Compte et reconnexion');
 const email = `verif-${Date.now()}@exemple.fr`;
 const password = 'verification-en-ligne';
-const pc = await browser.newContext({ viewport: { width: 1280, height: 860 } });
+const pc = await browser.newContext({ locale: 'fr-FR', viewport: { width: 1280, height: 860 } });
 const page = await pc.newPage();
 watch(page, 'compte');
 await page.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });
@@ -151,7 +151,7 @@ check((await pc.cookies()).every((c) => c.name !== 'calcoolos_session' || c.valu
 await pc.close();
 
 // Autre appareil (téléphone) : connexion, progression retrouvée.
-const phone = await browser.newContext(devices[2]);
+const phone = await browser.newContext({ ...devices[2], locale: 'fr-FR' });
 const p2 = await phone.newPage();
 watch(p2, 'reconnexion');
 await p2.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });

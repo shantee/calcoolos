@@ -112,6 +112,7 @@ src/core/             logique pure et testée : hasard reproductible, énigmes, 
 src/game/             jeux Phaser : siege/, meteors/, dragon/ (logique pure + scène), sons, effets partagés
 src/platform/         plateforme : API, joueur actif, envoi des résultats, statistiques, avatars, barre du haut
 src/entries/          point d'entrée de chaque page
+src/i18n/             langues : détection, drapeaux, traduction anglaise (en.ts) et allemande (de.ts)
 src/art/              dessins par code : variante B, monde de l'archipel, espace, dragon
 server/               API PHP (src/, migrations/, bin/ outils, tests/, public/index.php)
 deploy/               mise en ligne : publier.sh (publication), webdell/ (serveur Dell), kit générique
@@ -123,6 +124,17 @@ doc/                  cahier des charges d'origine + documents de conception
 
 Voir [`doc/ARCHITECTURE.md`](doc/ARCHITECTURE.md), [`doc/DEPLOIEMENT.md`](doc/DEPLOIEMENT.md),
 [`doc/DIRECTION_ARTISTIQUE.md`](doc/DIRECTION_ARTISTIQUE.md) et [`ART_ASSETS.md`](ART_ASSETS.md).
+
+## Langues
+
+Le site est écrit en **français** (version de référence). Trois drapeaux, tout à droite de la barre du haut,
+permettent de passer en **anglais** ou en **allemand** ; sans choix, la langue du navigateur est prise (français,
+allemand ou anglais, et l'anglais pour toute autre langue). Le choix est retenu dans le navigateur.
+
+Les traductions sont des dictionnaires « texte français → traduction » (`src/i18n/en.ts`, `src/i18n/de.ts`). On
+continue d'écrire le code en français comme avant : un texte nouveau ou modifié qui n'est pas dans le dictionnaire
+s'affiche simplement en français dans les autres langues. Pour voir ce qui manque sur une page :
+`window.__tradManquantes` dans la console du navigateur. La page de confidentialité n'est pas traduite.
 
 ## Renommer la plateforme
 

@@ -1,3 +1,5 @@
+import '../i18n/page';
+import '../i18n/phaser';
 import '@fontsource-variable/bricolage-grotesque';
 import '../styles/game.css';
 import Phaser from 'phaser';

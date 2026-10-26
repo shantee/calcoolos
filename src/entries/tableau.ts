@@ -1,3 +1,4 @@
+import '../i18n/page';
 import '@fontsource-variable/bricolage-grotesque';
 import '../styles/accueil.css';
 import '../styles/plateforme.css';
@@ -12,6 +13,8 @@ import { localHistory, type StoredResult } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, OP_NAMES, TIER_NAMES, formatDuration, summarize, type Summary } from '../platform/stats';
 import { avatarImg } from '../platform/avatars';
 import { h } from '../platform/dom';
+import { t } from '../i18n/traduire';
+import { locale } from '../i18n/langue';
 
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, AriaComponent, CanvasRenderer]);
 
@@ -22,8 +25,8 @@ const charts: echarts.ECharts[] = [];
 window.addEventListener('resize', () => charts.forEach((c) => c.resize()));
 const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
-const dateFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short' });
-const dateTimeFmt = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const dateFmt = new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short' });
+const dateTimeFmt = new Intl.DateTimeFormat(locale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 function chart(el: HTMLElement, option: echarts.EChartsCoreOption): void {
   const c = echarts.init(el, undefined, { renderer: 'canvas' });
@@ -54,12 +57,12 @@ function daysChart(s: Summary): HTMLElement {
     grid: { left: 40, right: 44, top: 40, bottom: 30 },
     xAxis: { type: 'category', data: s.days.map((d) => dateFmt.format(new Date(`${d.day}T12:00:00Z`))), axisLabel: { color: MUTED } },
     yAxis: [
-      { type: 'value', name: 'parties', minInterval: 1, axisLabel: { color: MUTED }, nameTextStyle: { color: MUTED }, splitLine: { lineStyle: { color: 'rgba(246,236,216,0.1)' } } },
-      { type: 'value', name: '% justes', min: 0, max: 100, axisLabel: { color: MUTED }, nameTextStyle: { color: MUTED }, splitLine: { show: false } },
+      { type: 'value', name: t('parties'), minInterval: 1, axisLabel: { color: MUTED }, nameTextStyle: { color: MUTED }, splitLine: { lineStyle: { color: 'rgba(246,236,216,0.1)' } } },
+      { type: 'value', name: t('% justes'), min: 0, max: 100, axisLabel: { color: MUTED }, nameTextStyle: { color: MUTED }, splitLine: { show: false } },
     ],
     series: [
-      { name: 'Parties', type: 'bar', data: s.days.map((d) => d.games), itemStyle: { color: '#5fd3bc', borderRadius: [6, 6, 0, 0] } },
-      { name: 'Calculs justes (%)', type: 'line', yAxisIndex: 1, smooth: true, data: s.days.map((d) => Math.round(d.precision * 100)), itemStyle: { color: '#ffc94a' }, lineStyle: { width: 4 }, symbolSize: 9 },
+      { name: t('Parties'), type: 'bar', data: s.days.map((d) => d.games), itemStyle: { color: '#5fd3bc', borderRadius: [6, 6, 0, 0] } },
+      { name: t('Calculs justes (%)'), type: 'line', yAxisIndex: 1, smooth: true, data: s.days.map((d) => Math.round(d.precision * 100)), itemStyle: { color: '#ffc94a' }, lineStyle: { width: 4 }, symbolSize: 9 },
     ],
   }));
   return section;
@@ -78,7 +81,7 @@ function opsChart(s: Summary): HTMLElement {
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, valueFormatter: (v: unknown) => `${v} %` },
     grid: { left: 130, right: 56, top: 10, bottom: 30 },
     xAxis: { type: 'value', min: 0, max: 100, axisLabel: { color: MUTED, formatter: '{value} %' }, splitLine: { lineStyle: { color: 'rgba(246,236,216,0.1)' } } },
-    yAxis: { type: 'category', data: s.ops.map((o) => `${OP_NAMES[o.op]} (${o.ok + o.ko})`), axisLabel: { color: INK, fontWeight: 700 } },
+    yAxis: { type: 'category', data: s.ops.map((o) => `${t(OP_NAMES[o.op])} (${o.ok + o.ko})`), axisLabel: { color: INK, fontWeight: 700 } },
     series: [{
       type: 'bar',
       data: s.ops.map((o) => ({ value: Math.round(o.rate * 100), itemStyle: { color: o.rate >= 0.85 ? '#7fb069' : o.rate >= 0.6 ? '#ffc94a' : '#f0745e', borderRadius: [0, 8, 8, 0] } })),

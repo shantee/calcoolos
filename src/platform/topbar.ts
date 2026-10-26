@@ -1,10 +1,11 @@
 /**
- * Barre du haut, commune aux pages de la plateforme : liens et joueur actif.
+ * Barre du haut, commune aux pages de la plateforme : liens, joueur actif et choix de la langue.
  */
 import { BRAND } from '../brand';
 import { accountState, type AccountState } from './api';
 import { avatarImg } from './avatars';
 import { activePlayer, setActivePlayer, syncActivePlayer } from './player';
+import { selecteurLangue } from '../i18n/drapeaux';
 
 export type PageId = 'accueil' | 'progres' | 'classements' | 'compte' | 'autre';
 
@@ -38,7 +39,7 @@ export async function topbar(current: PageId): Promise<AccountState | null> {
     }
     chip.className = 'joueur';
     chip.href = 'compte.html';
-    bar.append(brand, nav, chip);
+    bar.append(brand, nav, chip, selecteurLangue());
   }
   const state = await accountState();
   // Déconnecté : on redevient invité ; hors ligne : on garde le joueur (envoi différé).

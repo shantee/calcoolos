@@ -1,3 +1,4 @@
+import '../i18n/page';
 import '@fontsource-variable/bricolage-grotesque';
 import '@fontsource/pixelify-sans/700.css';
 import '../styles/accueil.css';
