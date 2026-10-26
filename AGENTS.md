@@ -308,6 +308,25 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 
 ## 11. Ce qui reste à faire (par priorité)
 
+0. **À reprendre en premier (arrêt du 26/10/2026 au soir) : activer « Continuer avec Google ».** Le code est
+   publié (`4a17d26`, migration `002_google.php` appliquée) ; le bouton reste caché tant que rien n'est configuré.
+   1. Philippe, dans la console Google : projet « Calcoolos », Google Auth Platform (Externe, page de
+      confidentialité, domaine `zfx.fr`), **Publier l'application**, client « Application Web » avec l'origine
+      `https://calculos.zfx.fr` (pas d'URI de redirection). Pas à pas : `doc/GOOGLE.md` § 1. Il donne seulement
+      l'**ID client** (jamais le code secret, jamais son mot de passe Google).
+   2. Philippe lance (sudo, il tape son mot de passe) :
+      `ssh -t shantee@192.168.1.26 'sudo bash /home/calculos-zfx-fr/calcoolos/current/deploy/webdell/activer-google.sh <ID>'`
+      (sauvegarde, `nginx -t`, retour arrière automatique ; annulation : `--desactiver`).
+   3. L'agent vérifie en ligne : `/api/etat` annonce `googleClientId` ; en-têtes CSP de `/compte.html` contiennent
+      `accounts.google.com/gsi/client` ; `node scripts/verifier-en-ligne.mjs` toujours 24/24 ; le bouton s'affiche
+      sur ordinateur et téléphone, sans erreur de console.
+   4. Essai réel **avec Philippe** (c'est lui qui clique dans la fenêtre Google) : création d'un compte neuf,
+      déconnexion puis reconnexion, annulation de la fenêtre (aucune erreur), puis association à un compte
+      existant (connexion par mot de passe → « Se connecter plus vite ») et vérification que profils et scores
+      sont conservés. Supprimer ensuite les comptes d'essai.
+   5. Si tout va bien : statut « terminé — à confirmer » dans `JOURNAL_PROJET.md` (session 12) et dans la ligne
+      de `../INDEX.md` (n'indexer que cette ligne). En cas de souci : message exact de la console du navigateur et
+      `doc/GOOGLE.md` § vérification.
 1. Retours de Philippe sur le site en ligne (essai sur un vrai téléphone et une vraie tablette).
 2. Faire **relire la page de confidentialité** (identité du responsable, lieu d'hébergement) ; ne pas prétendre à la
    conformité RGPD sans audit humain.
