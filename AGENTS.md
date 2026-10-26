@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 26/10/2026 (session 10 : **chantier 02**, logo animé, espace joueur, comptes, choix du niveau).
+Dernière mise à jour : 26/10/2026 (session 12 : **« Continuer avec Google »**, code publié, activation à faire chez Google).
 
 ---
 
@@ -72,13 +72,14 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
 | Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu, boutons lecture au survol ; en ligne |
 | Accueil (chantier 02, 26/10/2026) | logo animé « qui calcule de tête », espace joueur dans la barre, carnet (avantages du compte ou vrais progrès), choix du niveau en cartes + fenêtre au premier « Jouer » + rappel près de chaque « Jouer » ; en ligne |
+| « Continuer avec Google » (26/10/2026) | code publié (Google Identity Services, jeton vérifié en PHP, `comptes.google_sub`, association à un compte existant) ; **bouton masqué tant que l'ID client n'est pas configuré** : étapes dans `doc/GOOGLE.md` |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
 | Plein écran + PWA légère | boutons Accueil / Plein écran dans les 4 jeux (`src/game/plein-ecran.ts`), manifeste et icônes, sans service worker |
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 112 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 83 vérifications d'API PHP (SQLite et MariaDB 10.11), parcours complet de la
-plateforme dans Chromium (20 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), parties gagnées et perdues jouées automatiquement pour chaque jeu,
+Tests : 112 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 129 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
+plateforme dans Chromium (20 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
 appareil).
@@ -115,13 +116,16 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
 | `scripts/accueil-e2e.mjs` | accueil (chantier 02) : logo, espace joueur, niveau, 4 jeux au bon niveau, inscription, profils, formats, langues, animations réduites |
+| `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 
 PHP absent du poste Fedora : lancer l'API dans un conteneur, `podman run --rm --name calcoolos-api-dev --network host
 -v "$PWD":/app:z -w /app docker.io/library/php:8.3-cli php -S 127.0.0.1:8080 server/public/index.php` (et de même
 `php server/tests/run.php`). Toujours `:z` (partagé) et non `:Z` : un second conteneur en `:Z` réétiquette le dossier
-et le premier perd l'accès (« Permission denied »).
+et le premier perd l'accès (« Permission denied »). Pour `google-e2e.mjs`, ajouter
+`-e GOOGLE_CLIENT_ID=123-test.apps.googleusercontent.com -e GOOGLE_CERTS_FILE=/app/server/var/google-test-certs.json`
+(le script écrit ce fichier de clés de test ; ignoré en production).
 
 Chromium headless : lancer avec `--use-angle=swiftshader --enable-unsafe-swiftshader`. Les captures vont dans
 `CAPTURES/` (à regarder vraiment : plusieurs bugs n'ont été vus que sur les captures).
@@ -153,6 +157,7 @@ src/art/pixelforge.ts      outil maison de pixel art (rampes, tramage Bayer, con
 src/art/pixel-rocket.ts    tout le pixel art de Décollage ! + police pixel des nombres
 src/platform/              api.ts, player.ts (joueur actif), results.ts (envoi/file d'attente), stats.ts (tableau
                            de bord, testé), avatars.ts, topbar.ts (barre + espace joueur), logo.ts (logo animé),
+                           google.ts (bouton « Continuer avec Google »),
                            niveau.ts (règle du niveau, fiches des niveaux, testé), dom.ts (construction DOM sans innerHTML)
 src/styles/                accueil.css (accueil, aussi chargé par les autres pages), plateforme.css (barre, cartes,
                            formulaires), logo.css (chargé par topbar.ts, donc APRÈS les deux autres), game.css
@@ -160,7 +165,7 @@ src/entries/               point d'entrée de chaque page (chacun importe d'abor
 src/i18n/                  langue.ts (détection, choix), drapeaux.ts (sélecteur), traduire.ts (t()), page.ts (DOM),
                            phaser.ts (textes des jeux), en.ts et de.ts (dictionnaires « texte français → traduction »)
 tests/                     Vitest
-server/                    API PHP sans Composer : src/{Api,Games,Db,Http,Session,Config}.php, migrations/,
+server/                    API PHP sans Composer : src/{Api,Games,Db,Http,Session,Config,Google}.php, migrations/,
                            bin/{migrate,reset-password}.php, tests/run.php, public/index.php
 deploy/                    Nginx, pool PHP-FPM, scripts d'installation, mise en service, retour arrière, sauvegarde
 doc/                       cahier des charges, ARCHITECTURE, DIRECTION_ARTISTIQUE, IDEES_JEUX, DEPLOIEMENT
@@ -201,7 +206,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 ## 8. Plateforme et serveur (résumé ; détails dans `doc/ARCHITECTURE.md` et `doc/DEPLOIEMENT.md`)
 
 - **Invité** : tout dans `localStorage` (`calcoolos.*`), aucun cookie, aucune requête obligatoire.
-- **Compte adulte** (e-mail + mot de passe argon2id) → jusqu'à 6 **profils** (pseudo, avatar, niveau). Le joueur actif
+- **Compte adulte** (e-mail + mot de passe argon2id, ou « Continuer avec Google » : même compte, `doc/GOOGLE.md`) → jusqu'à 6 **profils** (pseudo, avatar, niveau). Le joueur actif
   est retenu dans le navigateur ; le serveur vérifie à chaque fois que le profil appartient au compte (sinon 404).
 - **Résultats** : forme vérifiée (sinon 422) puis vraisemblance (sinon gardé « non vérifié », hors classements) ;
   débit limité. Hors ligne : file d'attente renvoyée depuis l'accueil.
@@ -279,6 +284,11 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Langue des scripts Playwright** : sans `locale`, Chromium se déclare en anglais et le site passe en anglais.
   Tous les scripts de `scripts/` ouvrent leur page avec `locale: 'fr-FR'` (les vérifications lisent des textes
   français) : garder ce réglage dans tout nouveau script.
+- **Google** : le script de Google n'est chargé que sur `compte.html`, seule page dont la CSP l'autorise
+  (`location = /compte.html` dans le vhost, posée par `activer-google.sh`, sudo). Une page qui voudrait le bouton
+  ailleurs doit recevoir la même règle. `csp-check.mjs` lancé avec une API qui annonce un faux ID client signale
+  « [GSI_LOGGER]: The given client ID is not found » : c'est Google qui répond, pas une violation.
+  Jamais de rattachement d'un compte Google à un compte existant par la seule adresse e-mail.
 - **Tests en ligne** : le résultat d'une partie n'est envoyé qu'à l'affichage de l'écran de fin ; un script qui
   quitte la page avant ne laisse aucune trace. Limite de 5 inscriptions par heure : ne pas relancer en boucle
   `verifier-en-ligne.mjs`, qui crée (puis supprime) un compte.

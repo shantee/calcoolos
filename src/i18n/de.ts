@@ -548,4 +548,49 @@ export const DE: Dictionnaire = {
   'pas encore de record': 'noch kein Rekord',
   'crée-en un dans l’espace famille': 'lege eines im Familienbereich an',
   'Gratuit. Le compte est ouvert par un adulte ; chaque enfant y aura son profil.': 'Kostenlos. Das Konto wird von einem Erwachsenen eröffnet; jedes Kind bekommt ein eigenes Profil.',
+  // « Continuer avec Google ».
+  'Première fois ? Le compte est créé aussitôt : vous confirmez être un adulte responsable et avoir lu la':
+    'Zum ersten Mal hier? Das Konto wird sofort angelegt: Sie bestätigen, ein verantwortlicher Erwachsener zu sein und Folgendes gelesen zu haben:',
+  '. Calcoolos ne reçoit de Google que votre adresse e-mail.':
+    '. Calcoolos erhält von Google nur Ihre E-Mail-Adresse.',
+  'ou avec une adresse e-mail':
+    'oder mit einer E-Mail-Adresse',
+  'Connexion…':
+    'Anmeldung…',
+  'Association…':
+    'Verknüpfung…',
+  'Compte Google associé.':
+    'Google-Konto verknüpft.',
+  'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. Un clic avec Google, ou une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.':
+    'Ein Familienkonto speichert die Fortschritte jedes Kindes auf all Ihren Geräten. Ein Klick mit Google oder eine E-Mail-Adresse und ein Passwort; Kinder haben nur einen Spitznamen. Ohne Konto kann man weiterhin als Gast spielen.',
+  'Ce compte a été créé avec Google : connectez-vous avec « Continuer avec Google ».':
+    'Dieses Konto wurde mit Google erstellt: Melden Sie sich mit „Weiter mit Google“ an.',
+  'Vous pourrez toujours vous connecter avec votre adresse e-mail et votre mot de passe.':
+    'Sie können sich weiterhin mit Ihrer E-Mail-Adresse und Ihrem Passwort anmelden.',
+  'Dissocier Google':
+    'Google trennen',
+  'Compte Google associé : un clic sur « Continuer avec Google » suffit pour vous connecter.':
+    'Google-Konto verknüpft: Ein Klick auf „Weiter mit Google“ genügt zur Anmeldung.',
+  'Se connecter plus vite':
+    'Schneller anmelden',
+  'Associez votre compte Google : la prochaine fois, un clic suffira, sans mot de passe. Vos profils et leurs résultats restent les mêmes.':
+    'Verknüpfen Sie Ihr Google-Konto: Beim nächsten Mal genügt ein Klick, ohne Passwort. Ihre Profile und deren Ergebnisse bleiben erhalten.',
+  'Recopiez l’adresse du compte pour confirmer':
+    'Geben Sie zur Bestätigung die Adresse des Kontos ein',
+  'La connexion avec Google n’est pas disponible.':
+    'Die Anmeldung mit Google ist nicht verfügbar.',
+  'Connexion Google refusée : réessaie.':
+    'Google-Anmeldung abgelehnt: Versuche es noch einmal.',
+  'Un compte Calcoolos existe déjà avec cette adresse. Connecte-toi une fois avec ton mot de passe, puis associe Google dans l’espace famille.':
+    'Mit dieser Adresse gibt es bereits ein Calcoolos-Konto. Melde dich einmal mit deinem Passwort an und verknüpfe dann Google im Familienbereich.',
+  'Ce compte Google n’a pas d’adresse e-mail vérifiée.':
+    'Dieses Google-Konto hat keine bestätigte E-Mail-Adresse.',
+  'Ce compte Google est déjà associé à un autre compte Calcoolos.':
+    'Dieses Google-Konto ist bereits mit einem anderen Calcoolos-Konto verknüpft.',
+  'Ce compte n’a pas de mot de passe : Google est sa seule façon de se connecter.':
+    'Dieses Konto hat kein Passwort: Google ist die einzige Anmeldemöglichkeit.',
+  'Recopie exactement l’adresse du compte pour confirmer.':
+    'Gib zur Bestätigung genau die Adresse des Kontos ein.',
+  'Adresse différente.':
+    'Andere Adresse.',
 };

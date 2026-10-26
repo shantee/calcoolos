@@ -444,6 +444,87 @@
   color: #dfeeea;
 }
 
+/* « Continuer avec Google » : le bouton est celui de Google (cadre blanc, logo officiel), posé sur
+   la carte ; la place est réservée pour que la page ne saute pas quand il arrive. */
+.google-bloc {
+  display: grid;
+  gap: 10px;
+  margin: 4px 0 16px;
+}
+
+.google-bouton {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+  max-width: 400px;
+  justify-self: center;
+}
+
+.carte .google-mention {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--brume);
+  text-align: center;
+}
+
+.ou {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--brume);
+}
+
+.ou::before,
+.ou::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.google-compte {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.05);
+  border: 2px solid rgb(255 255 255 / 0.1);
+}
+
+.google-compte h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.google-compte p {
+  margin: 0;
+}
+
+.google-compte .google-bouton {
+  justify-self: start;
+}
+
+.google-pastille {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  margin-right: 8px;
+  border-radius: 50%;
+  background: #fff;
+  color: #4285f4;
+  font-weight: 800;
+  font-size: 0.85em;
+  vertical-align: 0.05em;
+}
+
 .grille {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));

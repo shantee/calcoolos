@@ -174,6 +174,7 @@ Supprimer un compte supprime ses profils et leurs résultats (`ON DELETE CASCADE
 |---|---|---|
 | GET | `/etat` | connecté ? profils, jeton CSRF (aucune session créée pour un invité) |
 | POST | `/inscription`, `/connexion`, `/deconnexion`, `/mot-de-passe`, `/supprimer-compte` | compte |
+| POST | `/google` ; `/google/associer`, `/google/dissocier` (connecté) | « Continuer avec Google » (`doc/GOOGLE.md`) |
 | GET, POST | `/profils`, `/profils/{id}/modifier`, `/profils/{id}/supprimer` | profils (404 si le profil n'est pas au compte) |
 | POST | `/resultats` | enregistre un résultat |
 | GET | `/profils/{id}/resultats` | historique d'un profil (300 derniers) |

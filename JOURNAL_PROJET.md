@@ -28,6 +28,40 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-26 : Claude, session 12 (« Continuer avec Google »)
+
+Demande de Philippe : se connecter ou créer son compte d'un clic avec Google, sans parcours compliqué ; garder
+e-mail + mot de passe et le mode invité ; même système de profils ; pas de fusion par la seule adresse ; jetons
+vérifiés en PHP avec `sub` ; CSP non affaiblie ailleurs ; aucun secret dans git ; domaine modifiable.
+
+Fait :
+- Serveur : `server/src/Google.php` (vérification du JWT RS256 sans bibliothèque : clés de Google en cache,
+  `iss`, `aud`, `exp`, `iat`, seul RS256 accepté), migration `002_google.php` (`comptes.google_sub`, unique),
+  routes `POST /google`, `/google/associer`, `/google/dissocier` ; `/etat` annonce `googleClientId` (public) et,
+  connecté, `google` / `motDePasse`. Un compte créé avec Google n'a pas de mot de passe ; la connexion classique
+  lui est impossible (même temps de réponse) ; sa suppression se confirme en recopiant l'adresse. Adresse déjà
+  connue → 409 avec explication (se connecter par mot de passe puis associer). Limites d'essais réutilisées.
+- Interface : `src/platform/google.ts` (bouton officiel de Google, chargé seulement sur `compte.html` et
+  seulement si configuré ; disparaît si Google est injoignable) ; dans `compte.ts`, bloc Google en tête des cartes
+  « Se connecter » et « Créer mon compte », mention « adulte responsable », bloc « Se connecter plus vite »
+  (associer) ou « Compte Google associé » (dissocier) dans l'espace famille. Traductions anglaise et allemande.
+- CSP : règle propre à `compte.html` (script, styles et cadre de `accounts.google.com/gsi/` seulement,
+  `Referrer-Policy: strict-origin-when-cross-origin`) dans `deploy/nginx-calcoolos.conf`, `installer.sh` et le
+  nouveau `deploy/webdell/activer-google.sh` (sudo : ID client dans `shared/calcoolos.env` + règle du vhost,
+  sauvegardes, `nginx -t`, retour arrière). Page de confidentialité complétée.
+- Guide pour Philippe : `doc/GOOGLE.md` (console Google pas à pas, commande à lancer, changement de domaine).
+
+Vérifié : API 129/129 (SQLite et MariaDB 11.8), dont 8 sortes de jetons refusés ; Vitest 112 ; typecheck ;
+build ; `google-e2e.mjs` 33/33 (Google imité) ; `csp-check` : aucune violation, le vrai script de Google se
+charge sur `compte.html` (il répond seulement que l'ID client de test n'existe pas).
+
+Limites : **rien n'a été essayé avec le vrai Google** (pas encore d'ID client) ; un compte créé avec Google ne
+peut pas se donner de mot de passe (pas d'e-mails envoyés par le site) ; la mention « adulte » est une
+déclaration, comme la case du formulaire.
+
+Reste : Philippe crée l'ID client (`doc/GOOGLE.md` § 1), puis `activer-google.sh` sur le Dell, puis un essai réel
+en ligne (création, reconnexion, association) sur ordinateur et téléphone.
+
 ## 2026-10-26 : Claude, session 11 (pied de page, prototypes retirés)
 
 Demande de Philippe : retirer du pied de l'accueil « Dans tous les jeux, M coupe le son. Archives : prototype A ·

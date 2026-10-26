@@ -20,10 +20,17 @@ async function loadPlaywright() {
 }
 
 // Les en-têtes sont lus dans la configuration Nginx elle-même : une seule source.
+// compte.html a sa propre règle (bouton « Continuer avec Google ») ; les autres pages, la règle générale.
 const conf = readFileSync(new URL('../deploy/nginx-calcoolos.conf', import.meta.url), 'utf8');
-const headers = {};
-for (const m of conf.matchAll(/add_header\s+([\w-]+)\s+"([^"]+)"\s+always;/g)) headers[m[1]] = m[2];
-if (!headers['Content-Security-Policy']) throw new Error('CSP introuvable dans deploy/nginx-calcoolos.conf');
+const blocCompte = conf.match(/location = \/compte\.html \{[^}]*\}/)?.[0] ?? '';
+const lireEntetes = (texte) => {
+  const out = {};
+  for (const m of texte.matchAll(/add_header\s+([\w-]+)\s+"([^"]+)"\s+always;/g)) out[m[1]] = m[2];
+  return out;
+};
+const headers = lireEntetes(conf.replace(blocCompte, ''));
+const headersCompte = { ...headers, ...lireEntetes(blocCompte) };
+if (!headers['Content-Security-Policy'] || !blocCompte) throw new Error('CSP introuvable dans deploy/nginx-calcoolos.conf');
 
 const root = new URL('../dist/', import.meta.url).pathname;
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.png': 'image/png', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.json': 'application/json', '.webmanifest': 'application/manifest+json' };
@@ -41,7 +48,7 @@ const server = createServer((req, res) => {
   let file = join(root, decodeURIComponent(url.pathname));
   if (existsSync(file) && statSync(file).isDirectory()) file = join(file, 'index.html');
   if (!existsSync(file)) return void res.writeHead(404).end();
-  res.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream', ...headers });
+  res.writeHead(200, { 'Content-Type': types[extname(file)] ?? 'application/octet-stream', ...(url.pathname === '/compte.html' ? headersCompte : headers) });
   res.end(readFileSync(file));
 });
 await new Promise((r) => server.listen(4180, '127.0.0.1', r));

@@ -256,5 +256,103 @@ assert_true($left === 0 && $orphans === 0, 'profils et résultats effacés avec 
 assert_true((int) $db->query('SELECT COUNT(*) FROM resultats')->fetchColumn() === 1, 'les résultats de Bob restent');
 assert_status($alice->get('/profils'), 401, 'l’ancienne session d’Alice ne donne plus accès');
 
+// ---------------------------------------------------------------------------------------------
+section('Continuer avec Google');
+assert_status($guest->post('/google', ['credential' => 'x.y.z']), 404, 'Google non configuré : route indisponible');
+
+// Une fausse « Google » : notre propre paire de clés, publiée dans un fichier de clés local.
+$key = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+$other = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+$b64 = static fn (string $s): string => rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
+$rsa = openssl_pkey_get_details($key)['rsa'];
+$certs = tempnam(sys_get_temp_dir(), 'calcoolos-google-');
+file_put_contents($certs, json_encode(['keys' => [['kty' => 'RSA', 'alg' => 'RS256', 'use' => 'sig', 'kid' => 'cle-1', 'n' => $b64($rsa['n']), 'e' => $b64($rsa['e'])]]]));
+$clientId = '123-test.apps.googleusercontent.com';
+$gConfig = Config::fromArray(['DB_DSN' => $dsn, 'GOOGLE_CLIENT_ID' => $clientId, 'GOOGLE_CERTS_FILE' => $certs]);
+$gClient = static fn (string $ip): Client => Client::make($db, new MemorySession(), $gConfig, $clock, $ip);
+$token = static function (array $over = [], $signKey = null, array $head = []) use ($key, $b64, $clientId, &$now): string {
+    $h = $b64(json_encode($head + ['alg' => 'RS256', 'kid' => 'cle-1', 'typ' => 'JWT']));
+    $claims = array_filter($over + ['iss' => 'https://accounts.google.com', 'aud' => $clientId, 'sub' => '1100000000000000001',
+        'email' => 'Camille@gmail.com', 'email_verified' => true, 'iat' => $now, 'exp' => $now + 3600], static fn ($v) => $v !== null);
+    $p = $b64(json_encode($claims));
+    openssl_sign("$h.$p", $sig, $signKey ?? $key, OPENSSL_ALGO_SHA256);
+    return "$h.$p." . $b64($sig);
+};
+
+$camille = $gClient('198.51.100.20');
+$r = $camille->get('/etat');
+assert_true(($r->data['googleClientId'] ?? '') === $clientId, 'l’identifiant client Google (public) est donné aux invités');
+foreach ([
+    'jeton illisible' => 'pas-un-jeton',
+    'signé par une autre clé' => $token([], $other),
+    'pour un autre site (aud)' => $token(['aud' => 'autre.apps.googleusercontent.com']),
+    'émetteur inconnu' => $token(['iss' => 'https://pirate.example']),
+    'expiré' => $token(['exp' => $now - 3600, 'iat' => $now - 7200]),
+    'clé inconnue' => $token([], null, ['kid' => 'cle-inconnue']),
+    'algorithme « none »' => explode('.', $token([], null, ['alg' => 'none']))[0] . '.' . explode('.', $token())[1] . '.',
+    'charge modifiée' => (static function () use ($token, $b64, $now, $clientId): string {
+        [$h, , $s] = explode('.', $token());
+        return "$h." . $b64(json_encode(['iss' => 'accounts.google.com', 'aud' => $clientId, 'sub' => '666', 'email' => 'x@gmail.com', 'email_verified' => true, 'iat' => $now, 'exp' => $now + 60])) . ".$s";
+    })(),
+] as $what => $bad) {
+    assert_status($camille->post('/google', ['credential' => $bad, 'adulte' => true]), 401, "jeton refusé : $what");
+}
+assert_true(!$camille->session->active(), 'aucune session ouverte avec un jeton invalide');
+assert_true((int) $db->query("SELECT COUNT(*) FROM comptes WHERE email = 'camille@gmail.com'")->fetchColumn() === 0, 'aucun compte créé avec un jeton invalide');
+assert_status($camille->post('/google', ['credential' => $token(['email_verified' => false]), 'adulte' => true]), 422, 'adresse Google non vérifiée : pas de création');
+assert_status($camille->post('/google', ['credential' => $token()]), 422, 'création : mention « adulte » obligatoire');
+
+$r = $camille->post('/google', ['credential' => $token(), 'adulte' => true]);
+assert_status($r, 201, 'nouveau compte créé avec Google');
+assert_true($r->data['email'] === 'camille@gmail.com' && $r->data['google'] === true && $r->data['motDePasse'] === false, 'compte Google sans mot de passe');
+assert_true($camille->session->regenerations === 1, 'nouvel identifiant de session');
+$r = $camille->post('/profils', ['pseudo' => 'Jade', 'avatar' => 'chat', 'niveau' => 'eveil']);
+assert_status($r, 201, 'profil sur un compte Google (même système de profils)');
+$jade = $r->data['profils'][0];
+$now += 30;
+assert_status($camille->post('/resultats', $result($jade['id'])), 201, 'résultat sur un compte Google');
+assert_status($camille->post('/deconnexion'), 200, 'déconnexion du compte Google');
+assert_status($camille->post('/connexion', ['email' => 'camille@gmail.com', 'motDePasse' => '']), 401, 'pas de connexion par mot de passe vide');
+assert_status($camille->post('/connexion', ['email' => 'camille@gmail.com', 'motDePasse' => 'nimporte-quoi-1']), 401, 'compte Google : connexion classique impossible');
+assert_status($gClient('198.51.100.21')->post('/inscription', ['email' => 'camille@gmail.com', 'motDePasse' => 'assez-long-pour-passer', 'adulte' => true]), 409, 'inscription classique avec la même adresse : refusée');
+$r = $camille->post('/google', ['credential' => $token(['email' => 'camille.nouvelle@gmail.com'])]);
+assert_status($r, 200, 'reconnexion avec Google (même identifiant, même si l’adresse Google a changé)');
+assert_true(count($r->data['profils']) === 1 && $r->data['profils'][0]['pseudo'] === 'Jade', 'profil retrouvé');
+assert_true(count($camille->get("/profils/{$jade['id']}/resultats")->data['resultats']) === 1, 'résultats retrouvés');
+assert_status($camille->post('/mot-de-passe', ['ancien' => '', 'nouveau' => 'nouveau-mot-de-passe']), 403, 'compte Google : pas de changement de mot de passe sans l’ancien');
+assert_status($camille->post('/google/dissocier', ['motDePasse' => '']), 422, 'compte Google sans mot de passe : dissociation refusée');
+
+section('Associer Google à un compte existant');
+$bobG = $gClient('198.51.100.30');
+$r = $bobG->post('/google', ['credential' => $token(['sub' => '2200000000000000002', 'email' => 'bob@exemple.fr']), 'adulte' => true]);
+assert_status($r, 409, 'même adresse qu’un compte existant : jamais de fusion automatique');
+assert_true(!$bobG->session->active() && (int) $db->query("SELECT COUNT(*) FROM comptes WHERE email = 'bob@exemple.fr' AND google_sub IS NULL")->fetchColumn() === 1, 'compte existant intact, non associé');
+assert_status($bobG->post('/connexion', ['email' => 'bob@exemple.fr', 'motDePasse' => 'un-autre-mot-de-passe']), 200, 'Bob se connecte avec son mot de passe');
+$saved = $bobG->csrf;
+$bobG->csrf = '';
+assert_status($bobG->post('/google/associer', ['credential' => $token(['sub' => '2200000000000000002', 'email' => 'bob@exemple.fr'])]), 403, 'association protégée par le jeton CSRF');
+$bobG->csrf = $saved;
+assert_status($bobG->post('/google/associer', ['credential' => $token(['sub' => '1100000000000000001'])]), 409, 'compte Google déjà associé à un autre compte : refus');
+assert_status($bobG->post('/google/associer', ['credential' => $token([], $other)]), 401, 'association : jeton invalide refusé');
+$r = $bobG->post('/google/associer', ['credential' => $token(['sub' => '2200000000000000002', 'email' => 'bob@exemple.fr'])]);
+assert_status($r, 200, 'Google associé au compte de Bob');
+assert_true($r->data['google'] === true && $r->data['motDePasse'] === true, 'Bob garde aussi son mot de passe');
+$bobG->post('/deconnexion');
+$r = $gClient('198.51.100.31')->post('/google', ['credential' => $token(['sub' => '2200000000000000002', 'email' => 'bob@exemple.fr'])]);
+assert_status($r, 200, 'Bob se connecte désormais avec Google');
+assert_true(count($r->data['profils']) === 1 && $r->data['profils'][0]['pseudo'] === 'Sam', 'profils de Bob conservés');
+assert_status($bobG->post('/connexion', ['email' => 'bob@exemple.fr', 'motDePasse' => 'un-autre-mot-de-passe']), 200, 'et toujours avec son mot de passe');
+assert_status($bobG->post('/google/dissocier', ['motDePasse' => 'faux-faux-faux']), 403, 'dissociation protégée par le mot de passe');
+$r = $bobG->post('/google/dissocier', ['motDePasse' => 'un-autre-mot-de-passe']);
+assert_true($r->status === 200 && $r->data['google'] === false, 'Google dissocié');
+assert_status($gClient('198.51.100.32')->post('/google', ['credential' => $token(['sub' => '2200000000000000002', 'email' => 'bob@exemple.fr']), 'adulte' => true]), 409, 'après dissociation : plus de connexion Google');
+
+section('Suppression d’un compte Google');
+assert_status($camille->post('/supprimer-compte', ['confirmation' => 'autre@gmail.com']), 403, 'confirmation par l’adresse exacte');
+assert_status($camille->post('/supprimer-compte', ['confirmation' => ' Camille@gmail.com ']), 200, 'compte Google supprimé');
+assert_true((int) $db->query("SELECT COUNT(*) FROM profils WHERE pseudo = 'Jade'")->fetchColumn() === 0, 'ses profils sont effacés');
+assert_status($gClient('198.51.100.20')->post('/google', ['credential' => $token()]), 422, 'après suppression, Google ne retrouve plus de compte (nouvelle création seulement)');
+@unlink($certs);
+
 echo "\n" . ($failures === 0 ? "OK : $count vérifications ($dsn)\n" : "$failures échec(s) sur $count vérifications\n");
 exit($failures === 0 ? 0 : 1);

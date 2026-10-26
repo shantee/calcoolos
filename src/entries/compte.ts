@@ -9,6 +9,7 @@ import { AVATARS, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { TIER_NAMES } from '../platform/stats';
 import { field, h, showErrors } from '../platform/dom';
+import { boutonGoogle, oublierGoogle } from '../platform/google';
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
 
@@ -32,8 +33,45 @@ function busy(form: HTMLFormElement, on: boolean): void {
   for (const b of form.querySelectorAll('button')) b.disabled = on;
 }
 
+// --- Continuer avec Google -------------------------------------------------------------------------
+/**
+ * Bloc « Continuer avec Google » + « ou avec une adresse e-mail ». Le bouton de Google arrive
+ * quand son script est chargé ; s'il ne vient pas, le bloc disparaît et le formulaire reste.
+ */
+function blocGoogle(clientId: string): HTMLElement {
+  const zone = h('div', {});
+  const bloc = h('div', { class: 'google-bloc' },
+    zone,
+    h('p', { class: 'message', role: 'status' }),
+    h('p', { class: 'google-mention' },
+      'Première fois ? Le compte est créé aussitôt : vous confirmez être un adulte responsable et avoir lu la ',
+      h('a', { href: 'confidentialite.html' }, 'page de confidentialité'), '. Calcoolos ne reçoit de Google que votre adresse e-mail.'),
+    h('p', { class: 'ou' }, h('span', {}, 'ou avec une adresse e-mail')),
+  );
+  requestAnimationFrame(() => void boutonGoogle(zone, clientId, connexionGoogle));
+  return bloc;
+}
+
+function messagesGoogle(texte: string, classe: 'erreur' | 'ok' | '' = 'erreur'): void {
+  for (const m of root.querySelectorAll<HTMLElement>('.google-bloc .message, .google-compte .message')) {
+    m.className = classe ? `message ${classe}` : 'message';
+    m.textContent = texte;
+  }
+}
+
+/** Jeton reçu de Google (espace parents, non connecté) : connexion, ou création du compte. */
+async function connexionGoogle(jeton: string): Promise<void> {
+  messagesGoogle(t('Connexion…'), '');
+  const r = await api.post<AccountState>('/google', { credential: jeton, adulte: true }).catch(() => null);
+  if (r?.status === 200 || r?.status === 201) {
+    if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+    return void render(r.data);
+  }
+  messagesGoogle(r?.data.erreur ?? t('Le serveur ne répond pas.'));
+}
+
 // --- Non connecté -------------------------------------------------------------------------------
-function renderGuest(): void {
+function renderGuest(googleClientId?: string): void {
   const msgLogin = h('p', { class: 'message', role: 'status' });
   const login = h('form', { class: 'formulaire', novalidate: true },
     field('Adresse e-mail', h('input', { type: 'email', name: 'email', autocomplete: 'email', required: true }), 'email'),
@@ -74,21 +112,26 @@ function renderGuest(): void {
   // Arrivée par « Créer mon compte » (#inscription) ou « Se connecter » (#connexion) : la bonne carte en
   // premier, le curseur dans son premier champ.
   const cartes = {
-    connexion: h('section', { class: 'carte', id: 'connexion', 'aria-labelledby': 't-login' }, h('h2', { id: 't-login' }, 'Se connecter'), login),
+    connexion: h('section', { class: 'carte', id: 'connexion', 'aria-labelledby': 't-login' }, h('h2', { id: 't-login' }, 'Se connecter'),
+      googleClientId ? blocGoogle(googleClientId) : null,
+      login),
     inscription: h('section', { class: 'carte', id: 'inscription', 'aria-labelledby': 't-signup' },
       h('h2', { id: 't-signup' }, 'Créer mon compte'),
       h('p', { class: 'discret' }, 'Gratuit. Le compte est ouvert par un adulte ; chaque enfant y aura son profil.'),
+      googleClientId ? blocGoogle(googleClientId) : null,
       signup),
   };
   const voulu = window.location.hash === '#inscription' ? 'inscription' : window.location.hash === '#connexion' ? 'connexion' : null;
   root.replaceChildren(
     h('h1', {}, 'Espace parents'),
-    h('p', { class: 'chapeau' }, 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. On ne demande qu’une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'),
+    h('p', { class: 'chapeau' }, googleClientId
+      ? 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. Un clic avec Google, ou une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'
+      : 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. On ne demande qu’une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'),
     h('div', { class: 'grille' }, ...(voulu === 'inscription' ? [cartes.inscription, cartes.connexion] : [cartes.connexion, cartes.inscription])),
   );
   if (voulu) {
     cartes[voulu].classList.add('carte-voulue');
-    cartes[voulu].querySelector('input')?.focus({ preventScroll: true });
+    cartes[voulu].querySelector<HTMLInputElement>('form input')?.focus({ preventScroll: true });
     cartes[voulu].scrollIntoView({ block: 'center' });
   }
 }
@@ -179,7 +222,50 @@ function newProfileCard(refresh: (profiles: Profile[]) => void): HTMLElement {
   return h('section', { class: 'carte', 'aria-labelledby': 't-new' }, h('h2', { id: 't-new' }, 'Nouveau profil de joueur'), form);
 }
 
-function accountCard(email: string): HTMLElement {
+/** Connexion avec Google depuis l'espace famille : associer (ou dissocier) un compte Google. */
+function blocGoogleCompte(state: AccountState): HTMLElement | null {
+  if (state.google) {
+    if (!state.motDePasse) {
+      return h('div', { class: 'google-compte' }, h('p', {}, 'Ce compte a été créé avec Google : connectez-vous avec « Continuer avec Google ».'));
+    }
+    const msg = h('p', { class: 'message', role: 'status' });
+    const form = h('form', { class: 'formulaire', novalidate: true },
+      h('p', {}, 'Vous pourrez toujours vous connecter avec votre adresse e-mail et votre mot de passe.'),
+      field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'current-password' }), 'motDePasse'),
+      msg,
+      h('div', { class: 'actions' }, h('button', { class: 'bouton petit secondaire', type: 'submit' }, 'Dissocier Google')),
+    );
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const r = await api.post<AccountState>('/google/dissocier', { motDePasse: new FormData(form).get('motDePasse') }).catch(() => null);
+      if (r?.status === 200) return void render(r.data);
+      showErrors(form, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
+    });
+    return h('div', { class: 'google-compte' },
+      h('p', {}, h('span', { class: 'google-pastille', 'aria-hidden': 'true' }, 'G'), 'Compte Google associé : un clic sur « Continuer avec Google » suffit pour vous connecter.'),
+      h('details', {}, h('summary', {}, 'Dissocier Google'), form));
+  }
+  if (!state.googleClientId) return null;
+  const zone = h('div', {});
+  requestAnimationFrame(() => void boutonGoogle(zone, state.googleClientId!, async (jeton) => {
+    messagesGoogle(t('Association…'), '');
+    const r = await api.post<AccountState>('/google/associer', { credential: jeton }).catch(() => null);
+    if (r?.status === 200) {
+      render(r.data);
+      messagesGoogle(t('Compte Google associé.'), 'ok');
+      return;
+    }
+    messagesGoogle(r?.data.erreur ?? t('Le serveur ne répond pas.'));
+  }));
+  return h('div', { class: 'google-compte google-bloc-compte' },
+    h('h3', {}, 'Se connecter plus vite'),
+    h('p', {}, 'Associez votre compte Google : la prochaine fois, un clic suffira, sans mot de passe. Vos profils et leurs résultats restent les mêmes.'),
+    zone,
+    h('p', { class: 'message', role: 'status' }));
+}
+
+function accountCard(state: AccountState): HTMLElement {
+  const email = state.email ?? '';
   const msgPw = h('p', { class: 'message', role: 'status' });
   const pw = h('form', { class: 'formulaire', novalidate: true },
     field('Mot de passe actuel', h('input', { type: 'password', name: 'ancien', autocomplete: 'current-password' }), 'ancien'),
@@ -203,7 +289,9 @@ function accountCard(email: string): HTMLElement {
   const msgDel = h('p', { class: 'message', role: 'status' });
   const del = h('form', { class: 'formulaire', novalidate: true },
     h('p', {}, 'Supprime le compte, tous les profils et tous les résultats. C’est immédiat et définitif.'),
-    field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'current-password' }), 'motDePasse'),
+    state.motDePasse === false
+      ? field('Recopiez l’adresse du compte pour confirmer', h('input', { type: 'email', name: 'confirmation', autocomplete: 'off' }), 'confirmation')
+      : field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'current-password' }), 'motDePasse'),
     msgDel,
     h('div', { class: 'actions' }, h('button', { class: 'bouton petit danger', type: 'submit' }, 'Supprimer mon compte')),
   );
@@ -211,7 +299,7 @@ function accountCard(email: string): HTMLElement {
     e.preventDefault();
     if (!window.confirm(t('Supprimer définitivement le compte et toutes ses données ?'))) return;
     const d = new FormData(del);
-    const r = await api.post('/supprimer-compte', { motDePasse: d.get('motDePasse') }).catch(() => null);
+    const r = await api.post('/supprimer-compte', { motDePasse: d.get('motDePasse'), confirmation: d.get('confirmation') }).catch(() => null);
     if (r?.status === 200) {
       setActivePlayer(null);
       window.location.reload();
@@ -223,6 +311,7 @@ function accountCard(email: string): HTMLElement {
   const logout = h('button', { class: 'bouton secondaire', type: 'button' }, 'Se déconnecter');
   logout.addEventListener('click', async () => {
     await api.post('/deconnexion').catch(() => null);
+    oublierGoogle();
     setActivePlayer(null);
     window.location.reload();
   });
@@ -231,7 +320,8 @@ function accountCard(email: string): HTMLElement {
     h('h2', { id: 't-account' }, 'Le compte'),
     h('p', {}, 'Connecté avec ', h('b', {}, email), '.'),
     h('div', { class: 'actions' }, logout, h('a', { class: 'bouton secondaire', href: apiUrl('/export'), download: 'calcoolos-mes-donnees.json' }, 'Télécharger nos données')),
-    h('details', {}, h('summary', {}, 'Changer le mot de passe'), pw),
+    blocGoogleCompte(state),
+    state.motDePasse === false ? null : h('details', {}, h('summary', {}, 'Changer le mot de passe'), pw),
     h('details', {}, h('summary', {}, 'Supprimer le compte'), del),
   );
 }
@@ -252,14 +342,14 @@ function renderAccount(state: AccountState): void {
     h('p', { class: 'chapeau' }, 'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses résultats ne sont visibles que dans cet espace, sauf si vous l’autorisez à apparaître dans les classements publics, et alors seulement sous un nom inventé.'),
     grid,
     h('div', { style: 'height: 22px' }),
-    accountCard(state.email ?? ''),
+    accountCard(state),
   );
 }
 
 let dernierEtat: AccountState | null = null;
 // Depuis la barre, « Créer mon compte » ou « Se connecter » sur cette même page : on remet la bonne carte devant.
 window.addEventListener('hashchange', () => {
-  if (dernierEtat && !dernierEtat.connecte) renderGuest();
+  if (dernierEtat && !dernierEtat.connecte) renderGuest(dernierEtat.googleClientId);
 });
 
 function render(state: AccountState | null, refreshBar = true): void {
@@ -272,7 +362,7 @@ function render(state: AccountState | null, refreshBar = true): void {
     return;
   }
   if (state.connecte) renderAccount(state);
-  else renderGuest();
+  else renderGuest(state.googleClientId);
   if (refreshBar) void topbar('compte');
 }
 

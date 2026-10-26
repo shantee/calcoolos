@@ -10,7 +10,8 @@ use PDO;
  * L'API JSON de la plateforme.
  *
  * - Les invités n'ont besoin de rien ici (tout reste dans leur navigateur).
- * - Un adulte (parent) crée un compte : e-mail + mot de passe.
+ * - Un adulte (parent) crée un compte : e-mail + mot de passe, ou « Continuer avec Google »
+ *   (même compte, mêmes profils : seul le moyen de se connecter change).
  * - Il crée des profils de joueurs privés : pseudo, avatar, niveau. Rien d'autre.
  * - Les résultats sont rattachés à un profil ; seul le compte propriétaire les voit.
  * - Classements publics : seulement les profils dont l'adulte l'a autorisé, sous un
@@ -33,6 +34,7 @@ final class Api
 
     /** @var \Closure(): int */
     private \Closure $clock;
+    private Google $google;
 
     /** @param (\Closure(): int)|null $clock horloge (secondes), remplaçable dans les tests */
     public function __construct(
@@ -42,6 +44,7 @@ final class Api
         ?\Closure $clock = null,
     ) {
         $this->clock = $clock ?? static fn (): int => time();
+        $this->google = new Google($config, $this->clock);
     }
 
     public function handle(Request $r): Response
@@ -77,6 +80,9 @@ final class Api
         if ($m === 'POST' && $p === '/connexion') {
             return $this->login($r);
         }
+        if ($m === 'POST' && $p === '/google') {
+            return $this->googleLogin($r);
+        }
         if ($m === 'GET' && $p === '/classements') {
             return $this->leaderboards($r);
         }
@@ -91,6 +97,12 @@ final class Api
         }
         if ($m === 'POST' && $p === '/mot-de-passe') {
             return $this->changePassword($r, $account);
+        }
+        if ($m === 'POST' && $p === '/google/associer') {
+            return $this->googleLink($r, $account);
+        }
+        if ($m === 'POST' && $p === '/google/dissocier') {
+            return $this->googleUnlink($r, $account);
         }
         if ($m === 'GET' && $p === '/profils') {
             return new Response(200, ['profils' => $this->profiles($account)]);
@@ -216,21 +228,42 @@ final class Api
 
     private function state(): Response
     {
+        $guest = ['connecte' => false] + $this->googleConfig();
         $id = $this->session->active() ? $this->session->get('compte') : null;
         if (!is_int($id)) {
-            return new Response(200, ['connecte' => false]);
+            return new Response(200, $guest);
         }
         try {
             $account = $this->account();
         } catch (HttpError) {
-            return new Response(200, ['connecte' => false]);
+            return new Response(200, $guest);
         }
-        return new Response(200, [
+        return new Response(200, $this->connected($account, (string) $this->session->get('csrf')));
+    }
+
+    /** L'identifiant client Google (public), seulement si la connexion Google est configurée. */
+    private function googleConfig(): array
+    {
+        return $this->google->enabled() ? ['googleClientId' => $this->google->clientId()] : [];
+    }
+
+    /**
+     * État renvoyé une fois connecté (toutes les façons de se connecter renvoient le même).
+     * @param array{id: int, email: string} $account
+     */
+    private function connected(array $account, string $csrf): array
+    {
+        $q = $this->db->prepare('SELECT mot_de_passe, google_sub FROM comptes WHERE id = ?');
+        $q->execute([$account['id']]);
+        $row = $q->fetch() ?: [];
+        return [
             'connecte' => true,
             'email' => $account['email'],
-            'csrf' => $this->session->get('csrf'),
+            'csrf' => $csrf,
             'profils' => $this->profiles($account),
-        ]);
+            'motDePasse' => ($row['mot_de_passe'] ?? '') !== '',
+            'google' => ($row['google_sub'] ?? null) !== null,
+        ] + $this->googleConfig();
     }
 
     /** @return array{0: string, 1: string} */
@@ -273,7 +306,7 @@ final class Api
             ->execute([$email, self::hash($password), $this->stamp(), $this->stamp()]);
         $id = (int) $this->db->lastInsertId();
         $csrf = $this->startSession($id);
-        return new Response(201, ['connecte' => true, 'email' => $email, 'csrf' => $csrf, 'profils' => []]);
+        return new Response(201, $this->connected(['id' => $id, 'email' => $email], $csrf));
     }
 
     private function login(Request $r): Response
@@ -286,9 +319,10 @@ final class Api
         $q = $this->db->prepare('SELECT id, mot_de_passe FROM comptes WHERE email = ?');
         $q->execute([$email]);
         $row = $q->fetch();
-        // Même travail que l'adresse existe ou non (pas d'indice par le temps de réponse).
-        $hash = $row ? (string) $row['mot_de_passe'] : self::dummyHash();
-        $ok = password_verify($password, $hash) && $row;
+        // Même travail que l'adresse existe ou non, ou que le compte n'ait pas de mot de passe (créé
+        // avec Google) : pas d'indice par le temps de réponse.
+        $hash = $row && $row['mot_de_passe'] !== '' ? (string) $row['mot_de_passe'] : self::dummyHash();
+        $ok = password_verify($password, $hash) && $row && $row['mot_de_passe'] !== '';
         if (!$ok) {
             $this->remember($ipKey);
             $this->remember($mailKey);
@@ -300,8 +334,100 @@ final class Api
         }
         $this->db->prepare('UPDATE comptes SET derniere_connexion = ? WHERE id = ?')->execute([$this->stamp(), $id]);
         $csrf = $this->startSession($id);
-        $account = ['id' => $id, 'email' => $email];
-        return new Response(200, ['connecte' => true, 'email' => $email, 'csrf' => $csrf, 'profils' => $this->profiles($account)]);
+        return new Response(200, $this->connected(['id' => $id, 'email' => $email], $csrf));
+    }
+
+    // --- Continuer avec Google --------------------------------------------------------------------
+
+    private function googleToken(Request $r, string $ipKey): array
+    {
+        if (!$this->google->enabled()) {
+            throw new HttpError(404, 'La connexion avec Google n’est pas disponible.');
+        }
+        $this->limit($ipKey, self::LOGIN_LIMIT * 3, self::LOGIN_WINDOW);
+        try {
+            return $this->google->verify($r->json()['credential'] ?? null);
+        } catch (HttpError $e) {
+            $this->remember($ipKey);
+            throw $e;
+        }
+    }
+
+    /**
+     * Connexion par Google : le compte associé à cet identifiant Google ; sinon, un nouveau compte.
+     * Jamais de rattachement automatique à un compte existant par la seule adresse e-mail : son
+     * propriétaire doit d'abord se connecter avec son mot de passe, puis associer Google.
+     */
+    private function googleLogin(Request $r): Response
+    {
+        $ipKey = 'google-ip:' . $this->ipKey($r);
+        $g = $this->googleToken($r, $ipKey);
+        $q = $this->db->prepare('SELECT id, email FROM comptes WHERE google_sub = ?');
+        $q->execute([$g['sub']]);
+        $row = $q->fetch();
+        if ($row) {
+            $id = (int) $row['id'];
+            $this->db->prepare('UPDATE comptes SET derniere_connexion = ? WHERE id = ?')->execute([$this->stamp(), $id]);
+            $csrf = $this->startSession($id);
+            return new Response(200, $this->connected(['id' => $id, 'email' => (string) $row['email']], $csrf));
+        }
+        $q = $this->db->prepare('SELECT 1 FROM comptes WHERE email = ?');
+        $q->execute([$g['email']]);
+        if ($q->fetch()) {
+            throw new HttpError(409, 'Un compte Calcoolos existe déjà avec cette adresse. Connecte-toi une fois avec ton mot de passe, puis associe Google dans l’espace famille.');
+        }
+        if (!$g['emailVerifie']) {
+            throw new HttpError(422, 'Ce compte Google n’a pas d’adresse e-mail vérifiée.');
+        }
+        // Le bouton est accompagné de la mention « en continuant, vous confirmez être un adulte… ».
+        if (($r->json()['adulte'] ?? false) !== true) {
+            throw new HttpError(422, 'Le compte doit être créé par un adulte responsable.');
+        }
+        $signupKey = 'inscription:' . $this->ipKey($r);
+        $this->limit($signupKey, self::SIGNUP_LIMIT, self::SIGNUP_WINDOW);
+        $this->remember($signupKey);
+        $this->db->prepare('INSERT INTO comptes (email, mot_de_passe, google_sub, cree_le, derniere_connexion) VALUES (?, ?, ?, ?, ?)')
+            ->execute([$g['email'], '', $g['sub'], $this->stamp(), $this->stamp()]);
+        $id = (int) $this->db->lastInsertId();
+        $csrf = $this->startSession($id);
+        return new Response(201, $this->connected(['id' => $id, 'email' => $g['email']], $csrf));
+    }
+
+    /**
+     * Associe un compte Google au compte connecté (qui a donc prouvé qu'il en est le propriétaire).
+     * @param array{id: int, email: string} $account
+     */
+    private function googleLink(Request $r, array $account): Response
+    {
+        $g = $this->googleToken($r, 'google-ip:' . $this->ipKey($r));
+        $q = $this->db->prepare('SELECT id FROM comptes WHERE google_sub = ?');
+        $q->execute([$g['sub']]);
+        $owner = $q->fetchColumn();
+        if ($owner !== false && (int) $owner !== $account['id']) {
+            throw new HttpError(409, 'Ce compte Google est déjà associé à un autre compte Calcoolos.');
+        }
+        $this->db->prepare('UPDATE comptes SET google_sub = ? WHERE id = ?')->execute([$g['sub'], $account['id']]);
+        return new Response(200, $this->connected($account, (string) $this->session->get('csrf')));
+    }
+
+    /** @param array{id: int, email: string} $account */
+    private function googleUnlink(Request $r, array $account): Response
+    {
+        if (!$this->hasPassword($account)) {
+            throw new HttpError(422, 'Ce compte n’a pas de mot de passe : Google est sa seule façon de se connecter.');
+        }
+        $password = $r->json()['motDePasse'] ?? '';
+        $this->verifyPassword($account, is_string($password) ? $password : '');
+        $this->db->prepare('UPDATE comptes SET google_sub = NULL WHERE id = ?')->execute([$account['id']]);
+        return new Response(200, $this->connected($account, (string) $this->session->get('csrf')));
+    }
+
+    /** @param array{id: int, email: string} $account */
+    private function hasPassword(array $account): bool
+    {
+        $q = $this->db->prepare('SELECT mot_de_passe FROM comptes WHERE id = ?');
+        $q->execute([$account['id']]);
+        return (string) $q->fetchColumn() !== '';
     }
 
     /** @param array{id: int, email: string} $account */
@@ -338,8 +464,14 @@ final class Api
     /** @param array{id: int, email: string} $account */
     private function deleteAccount(Request $r, array $account): Response
     {
-        $password = $r->json()['motDePasse'] ?? '';
-        $this->verifyPassword($account, is_string($password) ? $password : '');
+        $in = $r->json();
+        if ($this->hasPassword($account)) {
+            $password = $in['motDePasse'] ?? '';
+            $this->verifyPassword($account, is_string($password) ? $password : '');
+        } elseif (!is_string($in['confirmation'] ?? null) || strtolower(trim($in['confirmation'])) !== $account['email']) {
+            // Compte créé avec Google (sans mot de passe) : on confirme en recopiant l'adresse.
+            throw new HttpError(403, 'Recopie exactement l’adresse du compte pour confirmer.', ['confirmation' => 'Adresse différente.']);
+        }
         // ON DELETE CASCADE : profils et résultats partent avec le compte.
         $this->db->prepare('DELETE FROM comptes WHERE id = ?')->execute([$account['id']]);
         $this->session->destroy();
@@ -349,7 +481,7 @@ final class Api
     /** @param array{id: int, email: string} $account */
     private function export(array $account): Response
     {
-        $q = $this->db->prepare('SELECT email, cree_le, derniere_connexion FROM comptes WHERE id = ?');
+        $q = $this->db->prepare('SELECT email, cree_le, derniere_connexion, google_sub IS NOT NULL AS google_associe FROM comptes WHERE id = ?');
         $q->execute([$account['id']]);
         $profiles = [];
         foreach ($this->profiles($account) as $p) {

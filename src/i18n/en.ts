@@ -548,4 +548,49 @@ export const EN: Dictionnaire = {
   'pas encore de record': 'no record yet',
   'crée-en un dans l’espace famille': 'create one in the family space',
   'Gratuit. Le compte est ouvert par un adulte ; chaque enfant y aura son profil.': 'Free. The account is opened by an adult; each child gets their own profile.',
+  // « Continuer avec Google ».
+  'Première fois ? Le compte est créé aussitôt : vous confirmez être un adulte responsable et avoir lu la':
+    'First time? The account is created right away: you confirm you are a responsible adult and have read the',
+  '. Calcoolos ne reçoit de Google que votre adresse e-mail.':
+    '. Calcoolos only receives your email address from Google.',
+  'ou avec une adresse e-mail':
+    'or with an email address',
+  'Connexion…':
+    'Signing in…',
+  'Association…':
+    'Linking…',
+  'Compte Google associé.':
+    'Google account linked.',
+  'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. Un clic avec Google, ou une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.':
+    'A family account keeps each child’s progress on all your devices. One click with Google, or an email address and a password; children only have a nickname. Without an account, you can still play as a guest.',
+  'Ce compte a été créé avec Google : connectez-vous avec « Continuer avec Google ».':
+    'This account was created with Google: sign in with “Continue with Google”.',
+  'Vous pourrez toujours vous connecter avec votre adresse e-mail et votre mot de passe.':
+    'You can still sign in with your email address and password.',
+  'Dissocier Google':
+    'Unlink Google',
+  'Compte Google associé : un clic sur « Continuer avec Google » suffit pour vous connecter.':
+    'Google account linked: one click on “Continue with Google” is enough to sign in.',
+  'Se connecter plus vite':
+    'Sign in faster',
+  'Associez votre compte Google : la prochaine fois, un clic suffira, sans mot de passe. Vos profils et leurs résultats restent les mêmes.':
+    'Link your Google account: next time, one click will do, no password. Your profiles and their results stay the same.',
+  'Recopiez l’adresse du compte pour confirmer':
+    'Type the account’s address to confirm',
+  'La connexion avec Google n’est pas disponible.':
+    'Sign-in with Google is not available.',
+  'Connexion Google refusée : réessaie.':
+    'Google sign-in refused: try again.',
+  'Un compte Calcoolos existe déjà avec cette adresse. Connecte-toi une fois avec ton mot de passe, puis associe Google dans l’espace famille.':
+    'A Calcoolos account already exists with this address. Sign in once with your password, then link Google in the family space.',
+  'Ce compte Google n’a pas d’adresse e-mail vérifiée.':
+    'This Google account has no verified email address.',
+  'Ce compte Google est déjà associé à un autre compte Calcoolos.':
+    'This Google account is already linked to another Calcoolos account.',
+  'Ce compte n’a pas de mot de passe : Google est sa seule façon de se connecter.':
+    'This account has no password: Google is its only way to sign in.',
+  'Recopie exactement l’adresse du compte pour confirmer.':
+    'Type the account’s exact address to confirm.',
+  'Adresse différente.':
+    'Different address.',
 };

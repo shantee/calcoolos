@@ -130,6 +130,8 @@ else
   cp -a "$vhost" "$backup/$domain.conf"
   # Mêmes en-têtes que deploy/nginx-calcoolos.conf (lus par scripts/csp-check.mjs) : garder identiques.
   csp="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+  # Espace parents : la même, plus le bouton « Continuer avec Google » (idem activer-google.sh).
+  csp_google="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; media-src 'self' blob:; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
   block="$(cat <<EOF
   $marker : début
   # API PHP : toutes les adresses /api/… vont au même point d'entrée de la version en service.
@@ -164,6 +166,17 @@ open_basedir=$app/:$home/logs/:/tmp/;";
     add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
     add_header X-Frame-Options "DENY" always;
     try_files \$uri \$uri/ =404;
+  }
+
+  # Espace parents : en plus, le bouton « Continuer avec Google » (voir activer-google.sh).
+  location = /compte.html {
+    add_header Cache-Control "no-cache" always;
+    add_header Content-Security-Policy "$csp_google" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+    add_header X-Frame-Options "DENY" always;
+    try_files \$uri =404;
   }
   $marker : fin
 

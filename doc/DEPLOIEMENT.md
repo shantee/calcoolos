@@ -136,10 +136,17 @@ simple est d'ajouter le nouveau domaine au site existant, comme pour smoothsayin
    **Cloudflare : demander l'accord de Philippe**.
 3. Éventuellement, rediriger l'ancien nom vers le nouveau avec une 301 dans le bloc 80.
 4. Passer `CALCOOLOS_DOMAIN=nouveau.domaine` à `publier.sh`, ou changer la valeur par défaut dans le script.
+5. « Continuer avec Google » : ajouter la nouvelle origine dans la console Google (`doc/GOOGLE.md`).
 
 Les données sont conservées : même base, mêmes dossiers. Le cookie de session est lié au nom de domaine, donc les
 familles devront **se reconnecter une fois** sur la nouvelle adresse. La progression des invités est dans leur
 navigateur, liée elle aussi au domaine : elle ne suit pas.
+
+## Connexion avec Google
+
+Code publié ; activation en deux temps (console Google par Philippe, puis `sudo bash activer-google.sh <ID client>`
+sur le Dell) : tout est dans `doc/GOOGLE.md`. L'identifiant client est dans `shared/calcoolos.env`
+(`GOOGLE_CLIENT_ID`), jamais dans le dépôt.
 
 ## Sécurité : ce qui est en place
 

@@ -16,6 +16,12 @@ export interface AccountState {
   email?: string;
   csrf?: string;
   profils?: Profile[];
+  /** Le compte a-t-il un mot de passe ? (non s'il a été créé avec Google) */
+  motDePasse?: boolean;
+  /** Un compte Google est-il associé ? */
+  google?: boolean;
+  /** Identifiant client Google (public) : présent seulement si « Continuer avec Google » est configuré. */
+  googleClientId?: string;
 }
 
 export interface ApiReply<T = Record<string, unknown>> {
