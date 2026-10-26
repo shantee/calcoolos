@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "captures": "node scripts/captures.mjs",
     "api": "php -S 127.0.0.1:8080 server/public/index.php",
     "test:api": "php server/tests/run.php"
   },

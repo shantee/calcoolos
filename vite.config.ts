@@ -79,8 +79,6 @@ export default defineConfig({
         tableau: resolve(import.meta.dirname, 'tableau.html'),
         classements: resolve(import.meta.dirname, 'classements.html'),
         confidentialite: resolve(import.meta.dirname, 'confidentialite.html'),
-        prototypeA: resolve(import.meta.dirname, 'prototypes/a.html'),
-        prototypeB: resolve(import.meta.dirname, 'prototypes/b.html'),
       },
     },
   },

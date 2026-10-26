@@ -5,7 +5,6 @@ l'accueil** (chantier 01, 25/10/2026), créées par Philippe. Inventaire au 25/1
 
 | Ressource | Provenance | Licence |
 |---|---|---|
-| Tous les sprites et décors de la variante A (cubes, chiffres pixel, ennemi, pancarte, phare, ciel, îles, nuages, escargot, particules) | générés par code : `src/art/variant-a.ts` avec l'outil maison `src/art/pixelforge.ts` | code du projet |
 | Police pixel des chiffres (7×10) | dessinée pour le projet dans `src/art/pixelforge.ts` | code du projet |
 | Tous les sprites et décors de la variante B | dessinés par code (Canvas 2D) : `src/art/variant-b.ts` | code du projet |
 | Monstres du jeu, escargot, chouette, visage de la lune, poisson volant, cœurs, bouclier, rubans, panneaux, pierres, fissures, gravats, bulles | dessinés par code : `src/art/world-b.ts` | code du projet |

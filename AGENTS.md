@@ -64,7 +64,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Élément | État |
 |---|---|
 | Socle (Vite + TypeScript + Phaser 4.2.1), accueil, niveaux | fait |
-| Direction artistique | B « 2D illustrée gouache nocturne » retenue (prototypes A pixel et B figés dans `prototypes/`) |
+| Direction artistique | B « 2D illustrée gouache nocturne » retenue (prototypes A et B supprimés le 26/10/2026, visibles dans l'historique git et `CAPTURES/`) |
 | Jeu 1 **Cubes de siège** | fait, validé par Philippe ; **bonus volants** (Super Poussée, Gel, Méga-tir) ajoutés en session 8 |
 | Jeu 2 **Pluie de météores** | fait (grande passe d'effets) |
 | Jeu 3 **Le Dragon gourmand** | fait |
@@ -117,7 +117,6 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/accueil-e2e.mjs` | accueil (chantier 02) : logo, espace joueur, niveau, 4 jeux au bon niveau, inscription, profils, formats, langues, animations réduites |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
-| `scripts/captures.mjs` | captures des prototypes |
 
 PHP absent du poste Fedora : lancer l'API dans un conteneur, `podman run --rm --name calcoolos-api-dev --network host
 -v "$PWD":/app:z -w /app docker.io/library/php:8.3-cli php -S 127.0.0.1:8080 server/public/index.php` (et de même
@@ -294,9 +293,8 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 4. `npm test`, `npm run test:api`, `npm run typecheck`, `npm run build`, `scripts/csp-check.mjs`.
 5. Mettre à jour `JOURNAL_PROJET.md` (nouvelle section datée : demande, fait, limites), `README.md`,
    `doc/ARCHITECTURE.md`, `ART_ASSETS.md`, `doc/IDEES_JEUX.md` si besoin ; commit ; push.
-6. Aperçu claude.ai (si disponible) : copier `dist/assets`, `dist/jeu`, `dist/prototypes` dans un dossier avec la page
-   lanceur `calcoolos-apercu.html` (pas d'`index.html` dans les fichiers ; retirer les liens « retour » des
-   prototypes) et republier sur la même adresse.
+6. Aperçu claude.ai (si disponible) : copier `dist/assets`, `dist/jeu` dans un dossier avec la page
+   lanceur `calcoolos-apercu.html` (pas d'`index.html` dans les fichiers) et republier sur la même adresse.
 
 ## 11. Ce qui reste à faire (par priorité)
 

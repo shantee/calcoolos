@@ -42,7 +42,6 @@ Navigateur                                         Serveur Dell (kit prêt, pas 
 | `src/entries/*.ts` | une entrée par page (accueil, compte, tableau, classements, jeux) | selon la page |
 | `server/` | API PHP : `Api.php` (routes), `Games.php` (contrôle des scores), `Db.php` (migrations), `Session.php` | — |
 | `src/game/fx.ts` | feu d'artifice et confettis partagés | oui |
-| `src/game/siege/base-scene.ts`, `scene-a.ts`, `scene-b.ts` | prototypes du point de contrôle B (figés) | oui |
 | `src/game/sfx.ts` | sons synthétisés (Web Audio), coupables | non |
 | `src/art/` | génération des visuels (aucun fichier image) | non |
 

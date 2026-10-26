@@ -28,6 +28,20 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-26 : Claude, session 11 (pied de page, prototypes retirés)
+
+Demande de Philippe : retirer du pied de l'accueil « Dans tous les jeux, M coupe le son. Archives : prototype A ·
+prototype B », et se débarrasser des prototypes.
+
+- Paragraphe retiré de `index.html` (et sa règle `.parents .discret`).
+- Supprimés : `prototypes/a.html`, `prototypes/b.html`, `src/entries/proto-a.ts`, `proto-b.ts`,
+  `src/game/siege/base-scene.ts`, `scene-a.ts`, `scene-b.ts`, `src/art/variant-a.ts`, `scripts/captures.mjs`
+  (+ entrées de `vite.config.ts`, script `captures` de `package.json`, 12 textes de `en.ts` / `de.ts`). Aucun jeu
+  n'en dépendait ; `pixelforge.ts` reste (Décollage !). Les anciennes captures `CAPTURES/proto-*` restent comme
+  trace du choix de direction artistique ; le code est dans l'historique git.
+- La touche M coupe toujours le son dans les 4 jeux (seule la mention a disparu).
+- Vérifié : 112 tests, typecheck, build ; publié.
+
 ## 2026-10-26 : Claude, session 10 (chantier 02 : logo animé, comptes, espace joueur, niveau)
 
 **Demande de Philippe** : transformer l'accueil en vrai accueil de plateforme de jeux :

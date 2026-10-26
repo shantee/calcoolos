@@ -1370,12 +1370,6 @@ h1 {
   font-weight: 800;
 }
 
-.parents .discret {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--brume);
-}
-
 /* ---------- Téléphone et tablette ---------- */
 
 /* Une colonne : les vignettes des jeux remontent juste sous le titre, visibles dès le premier écran. */

@@ -42,18 +42,13 @@ Pages :
 - `/jeu/dragon-gourmand.html` : Le Dragon gourmand ;
 - `/jeu/decollage.html` : Décollage ! ;
 - `/compte.html` (espace parents), `/tableau.html` (mes progrès), `/classements.html`, `/confidentialite.html` ;
-- `/prototypes/a.html`, `/prototypes/b.html` : prototypes du choix de direction artistique (figés).
+- (les prototypes A et B du choix de direction artistique ont été retirés le 26/10/2026 : historique git).
 
 Paramètres d'URL utiles : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123` (partie reproductible),
 `?calme` (animations réduites, comme le réglage système « réduire les animations »), `?accelere=4` (monstres
 accélérés, pour les tests).
 
-### Captures
-
-```bash
-npm run build && npm run preview &
-node scripts/captures.mjs http://localhost:4173 CAPTURES
-```
+### Parties automatiques
 
 Partie complète jouée automatiquement (gagnée, ou perdue avec `perdre`) :
 
@@ -106,7 +101,6 @@ autorisation et sous un nom inventé.
 brand.json            nom et slogan de la plateforme (le seul endroit à modifier pour renommer)
 index.html            accueil (illustrations : src/images/accueil/, originaux : sources-images/accueil/)
 jeu/                  pages des jeux
-prototypes/           pages des deux variantes graphiques (figées)
 compte.html, tableau.html, classements.html, confidentialite.html   pages de la plateforme
 src/core/             logique pure et testée : hasard reproductible, énigmes, barème, paliers, calculs
 src/game/             jeux Phaser : siege/, meteors/, dragon/ (logique pure + scène), sons, effets partagés
