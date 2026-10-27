@@ -138,27 +138,28 @@ assert_status($newClient('198.51.100.9')->post('/inscription', ['email' => 'alic
 section('Jeton CSRF');
 $saved = $alice->csrf;
 $alice->csrf = 'faux';
-assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'dragon', 'niveau' => 'explorateur']), 403, 'mauvais jeton refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 403, 'mauvais jeton refusé');
 $alice->csrf = $saved;
 
 section('Profils');
-assert_status($alice->post('/profils', ['pseudo' => 'L', 'avatar' => 'dragon', 'niveau' => 'explorateur']), 422, 'pseudo trop court');
-assert_status($alice->post('/profils', ['pseudo' => '<script>', 'avatar' => 'dragon', 'niveau' => 'explorateur']), 422, 'pseudo avec balise refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'L', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 422, 'pseudo trop court');
+assert_status($alice->post('/profils', ['pseudo' => '<script>', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 422, 'pseudo avec balise refusé');
 assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'licorne', 'niveau' => 'explorateur']), 422, 'avatar inconnu');
-assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'dragon', 'niveau' => 'expert']), 422, 'niveau inconnu');
-$r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'dragon', 'niveau' => 'explorateur']);
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'chouette', 'niveau' => 'explorateur']), 422, 'ancien avatar refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'expert']), 422, 'niveau inconnu');
+$r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'explorateur']);
 assert_status($r, 201, 'profil créé');
 $lina = $r->data['profils'][0];
 assert_true(array_keys($lina) === ['id', 'pseudo', 'avatar', 'niveau'], 'profil : pseudo, avatar, niveau, rien d\'autre');
 $r = $alice->post('/profils', ['pseudo' => 'Noé', 'avatar' => 'robot', 'niveau' => 'eveil']);
 $noe = $r->data['profils'][1];
 for ($i = 0; $i < 4; $i++) {
-    $alice->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'chat', 'niveau' => 'eveil']);
+    $alice->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'chat-noir', 'niveau' => 'eveil']);
 }
-assert_status($alice->post('/profils', ['pseudo' => 'Septième', 'avatar' => 'chat', 'niveau' => 'eveil']), 422, 'six profils au maximum');
-$r = $alice->post("/profils/{$noe['id']}/modifier", ['niveau' => 'explorateur', 'avatar' => 'baleine']);
+assert_status($alice->post('/profils', ['pseudo' => 'Septième', 'avatar' => 'chat-noir', 'niveau' => 'eveil']), 422, 'six profils au maximum');
+$r = $alice->post("/profils/{$noe['id']}/modifier", ['niveau' => 'explorateur', 'avatar' => 'requin']);
 assert_status($r, 200, 'profil modifié');
-assert_true($r->data['profils'][1]['niveau'] === 'explorateur' && $r->data['profils'][1]['avatar'] === 'baleine', 'modifications enregistrées');
+assert_true($r->data['profils'][1]['niveau'] === 'explorateur' && $r->data['profils'][1]['avatar'] === 'requin', 'modifications enregistrées');
 
 section('Résultats');
 $r = $alice->post('/resultats', $result($lina['id']));
@@ -300,7 +301,7 @@ $r = $camille->post('/google', ['credential' => $token(), 'adulte' => true]);
 assert_status($r, 201, 'nouveau compte créé avec Google');
 assert_true($r->data['email'] === 'camille@gmail.com' && $r->data['google'] === true && $r->data['motDePasse'] === false, 'compte Google sans mot de passe');
 assert_true($camille->session->regenerations === 1, 'nouvel identifiant de session');
-$r = $camille->post('/profils', ['pseudo' => 'Jade', 'avatar' => 'chat', 'niveau' => 'eveil']);
+$r = $camille->post('/profils', ['pseudo' => 'Jade', 'avatar' => 'chat-noir', 'niveau' => 'eveil']);
 assert_status($r, 201, 'profil sur un compte Google (même système de profils)');
 $jade = $r->data['profils'][0];
 $now += 30;

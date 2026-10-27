@@ -5,7 +5,7 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';
 import { api, apiUrl, type AccountState, type Profile } from '../platform/api';
-import { AVATARS, avatarImg } from '../platform/avatars';
+import { AVATAR_PAR_DEFAUT, AVATARS, avatarId, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { TIER_NAMES } from '../platform/stats';
 import { field, h, showErrors } from '../platform/dom';
@@ -21,10 +21,10 @@ function tierSelect(name: string, value = 'explorateur'): HTMLSelectElement {
   return s;
 }
 
-function avatarPicker(name: string, value = 'dragon'): HTMLFieldSetElement {
+function avatarPicker(name: string, value = AVATAR_PAR_DEFAUT): HTMLFieldSetElement {
   const fs = h('fieldset', { class: 'avatars-choix' }, h('legend', {}, 'Avatar'));
   for (const [id, a] of Object.entries(AVATARS)) {
-    const input = h('input', { type: 'radio', name, value: id, checked: id === value, 'aria-label': a.label });
+    const input = h('input', { type: 'radio', name, value: id, checked: id === avatarId(value), 'aria-label': a.label });
     fs.append(h('label', { title: a.label }, input, avatarImg(id, 52, '')));
   }
   return fs;

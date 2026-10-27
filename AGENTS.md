@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 27/10/2026 (session 13 : classements publics sous le pseudo, « Aide-moi à trouver un pseudo »).
+Dernière mise à jour : 27/10/2026 (session 14 : 49 avatars pixel art de Philippe à la place des avatars dessinés par code).
 
 ---
 
@@ -34,7 +34,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 - **Aide en deux phrases** sur l'accueil et dans l'écran de début de chaque jeu.
 - **Tout est fait maison dans les jeux** : aucun fichier image ni son importé. Les visuels sont dessinés par code
   (Canvas 2D ou PixelForge), les sons et musiques sont synthétisés en direct (Web Audio). **Exception voulue par
-  Philippe : les quatre illustrations de l'accueil** (chantier 01), fournies par lui (`ART_ASSETS.md`).
+  Philippe : les quatre illustrations de l'accueil** (chantier 01) **et les 49 avatars des profils** (27/10/2026),
+  fournis par lui (`ART_ASSETS.md`).
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
   classements publics sous ce **pseudo** (simplification voulue par Philippe le 27/10/2026, plus d'autorisation ni de
   nom inventé ; « Aide-moi à trouver un pseudo » en propose des rigolos), export et suppression des données.
@@ -79,7 +80,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 115 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
+Tests : 118 tests TypeScript (Vitest, dont 7 pour les langues, 7 pour le niveau et 3 pour les avatars), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
 plateforme dans Chromium (21 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
@@ -142,6 +143,7 @@ brand.json                 nom, slogan (seul endroit à modifier pour renommer)
 index.html                 accueil : ouverture (logo, table de lancement « Qui joue ? » + niveau, vignettes), carnet
                            (compte), une vitrine par jeu, fenêtre <dialog> du premier niveau
 src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
+src/images/avatars/        49 avatars WebP 128 × 128 découpés dans sources-images/avatars/grille-avatars.png
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
 src/core/                  logique pure partagée : rng (mulberry32), puzzle (somme minimale, sac à dos),
@@ -283,6 +285,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Sur le Dell, `php` est la 8.4** : utiliser `php8.5` (celle du site) pour les outils en ligne de commande.
 - **Vhost régénéré par CloudPanel** : le bloc `# Calcoolos (installer.sh)` (API et en-têtes) disparaît ; relancer
   `deploy/webdell/installer.sh` (sudo), qui le remet sans toucher au reste.
+- **Avatars** : la liste de `src/platform/avatars.ts` est recopiée dans `Api::AVATARS` (même ordre, vérifié par
+  `tests/avatars.test.ts`). Retirer un avatar = l'enlever des deux listes + une migration qui convertit les profils
+  qui l'avaient. Un identifiant inconnu s'affiche comme l'avatar par défaut (`astronaute`).
 - **Langue des scripts Playwright** : sans `locale`, Chromium se déclare en anglais et le site passe en anglais.
   Tous les scripts de `scripts/` ouvrent leur page avec `locale: 'fr-FR'` (les vérifications lisent des textes
   français) : garder ce réglage dans tout nouveau script.

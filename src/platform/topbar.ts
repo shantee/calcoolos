@@ -8,7 +8,7 @@
  */
 import '../styles/logo.css';
 import { api, accountState, type AccountState, type Profile } from './api';
-import { avatarImg } from './avatars';
+import { AVATAR_INVITE, avatarImg } from './avatars';
 import { h } from './dom';
 import { logo } from './logo';
 import { activePlayer, setActivePlayer, syncActivePlayer, type ActivePlayer } from './player';
@@ -98,7 +98,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     'aria-controls': 'panneau-joueur',
     'aria-haspopup': 'true',
   },
-  h('span', { class: 'joueur-avatar' }, avatarImg(joueur?.avatar ?? 'chouette', 40, '')),
+  h('span', { class: 'joueur-avatar' }, avatarImg(joueur?.avatar ?? AVATAR_INVITE, 40, '')),
   h('span', { class: 'joueur-texte' }, nom, statut),
   h('span', { class: 'joueur-chevron', 'aria-hidden': 'true' }));
   bouton.title = 'Espace joueur';
@@ -106,7 +106,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
   // --- Le panneau.
   const panneau = h('div', { class: 'panneau-joueur', id: 'panneau-joueur', role: 'dialog', 'aria-label': 'Espace joueur', hidden: true });
   const tete = h('div', { class: 'panneau-tete' },
-    avatarImg(joueur?.avatar ?? 'chouette', 64, ''),
+    avatarImg(joueur?.avatar ?? AVATAR_INVITE, 64, ''),
     h('div', {},
       h('p', { class: 'panneau-nom' }, joueur ? joueur.pseudo : connecte ? 'Personne n’est choisi' : 'Tu joues en invité'),
       h('p', { class: 'panneau-sous' },
@@ -129,7 +129,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
       b.addEventListener('click', () => choisir(p));
       liste.append(b);
     }
-    const inv = h('button', { type: 'button', 'aria-pressed': String(!joueur) }, avatarImg('chouette', 36, ''), 'Invité');
+    const inv = h('button', { type: 'button', 'aria-pressed': String(!joueur) }, avatarImg(AVATAR_INVITE, 36, ''), 'Invité');
     inv.addEventListener('click', () => choisir(null));
     liste.append(inv);
     panneau.append(h('p', { class: 'panneau-titre' }, 'Qui joue ?'), liste);

@@ -28,6 +28,41 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-27 : Claude, session 14 (nouveaux avatars)
+
+Demande de Philippe : remplacer les avatars dessinés par code (« pas très beaux ») par sa grille pixel art de
+49 avatars (`sources-images/avatars/grille-avatars.png`, 1312 × 1199, 7 × 7), proposée à la création et à la
+modification d'un profil ; puis « mélange-les un peu, les Adventure Time sont en premier ».
+
+**Fait**
+- Découpe : bords de chaque case détectés automatiquement (cases de 152 à 178 px, pas toutes carrées), 5 px retirés
+  (coins arrondis), carré central, WebP 128 × 128 (`magick`, Lanczos, q86) : `src/images/avatars/<id>.webp`, 324 Ko
+  en tout. Chargées par `import.meta.glob` (fichiers servis par le site, rien en `data:`).
+- `src/platform/avatars.ts` : 49 avatars (identifiant + nom), ordre mélangé une fois pour toutes (personnages voisins
+  de la grille éloignés, Adventure Time dispersés) ; avatar par défaut `astronaute`, invité `fantome` ; niveaux :
+  Éveil `axolotl`, Explorateur `chat-aviateur`, Stratège `robot`, Maître `sorcier`.
+- Anciens avatars : migration `003_avatars.php` (dragon → flamme, chouette → pigeon, escargot → axolotl, chat →
+  chat-aviateur, baleine → requin, poisson → poisson-astro ; robot et canard gardent leur nom) ; le navigateur fait
+  la même conversion pour un joueur actif retenu sous l'ancien nom (`avatarId()`).
+- Serveur : `Api::AVATARS` = même liste, même ordre (vérifié par `tests/avatars.test.ts`, ainsi que la longueur
+  ≤ 20 de la colonne) ; test API « ancien avatar refusé ».
+- Style : vignettes carrées à coins arrondis, rondes dans les pastilles (barre, « Qui joue ? », niveaux) ; grille de
+  choix qui s'adapte à la largeur (5 par ligne sur téléphone), avatar choisi agrandi avec anneau safran.
+- Noms des avatars traduits en anglais et en allemand.
+- Les anciens dessins restent dans les jeux (chouette, escargot, chat astronaute…) : seuls les avatars changent.
+
+**Vérifié** : Vitest 118/118, types, construction ; captures (`CAPTURES/avatars/`) de l'espace famille, du choix,
+de l'accueil invité et du panneau joueur, ordinateur et téléphone, avec une API imitée dans le Chrome des agents ;
+49 images chargées, aucune cassée ; l'avatar choisi part bien au serveur.
+
+**Limites**
+- Tests de l'API PHP non lancés sur le poste (podman refusé par le bac à sable) : ils tournent sur le Dell avant
+  la migration, à la publication (`mettre-en-service.sh`, retour arrière automatique).
+- Plusieurs avatars reprennent des personnages connus (Adventure Time : Finn, Jake, Princesse Chewing-gum,
+  Marceline, BMO ; Rick de Rick et Morty ; Lapin crétin ; Kakashi de Naruto ; Noiraude de Ghibli) et deux animaux
+  fument (chat à lunettes, pingouin) : signalé à Philippe, à retirer d'une ligne si besoin (liste dans
+  `avatars.ts` et `Api.php`, plus une ligne de migration pour les profils qui les auraient choisis).
+
 ## 2026-10-27 : Claude, session 13 (classements sous le pseudo, pseudos rigolos)
 
 Demande de Philippe : supprimer la case « Apparaître dans les classements publics, sous le nom inventé… »

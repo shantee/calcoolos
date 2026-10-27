@@ -24,7 +24,16 @@ use PDO;
 final class Api
 {
     public const MAX_PROFILES = 6;
-    private const AVATARS = ['dragon', 'chouette', 'escargot', 'robot', 'chat', 'baleine', 'canard', 'poisson'];
+    /** Même liste, même ordre que src/platform/avatars.ts (vignettes de src/images/avatars/). */
+    public const AVATARS = [
+        'banane', 'extraterrestre', 'champignon', 'elfe', 'chat-aviateur', 'lapin', 'renard',
+        'robot', 'panda', 'vache', 'sorcier', 'console', 'faucheuse', 'poisson-astro',
+        'nouilles', 'cyclope', 'ogre', 'panda-roux', 'vampire', 'axolotl', 'ninja-masque',
+        'diablotin', 'chat-noir', 'savant', 'pizza', 'pingouin', 'fantome', 'pieuvre-pirate',
+        'requin', 'ninja', 'aventurier', 'astronaute', 'canard', 'boule-de-suie', 'flamme',
+        'princesse', 'viking', 'yeti', 'pigeon', 'roi-squelette', 'hamster', 'grenouille',
+        'corgi', 'cactus', 'musicienne', 'cheveux-bleus', 'chat-lunettes', 'donut', 'chien-jaune',
+    ];
     private const LOGIN_LIMIT = 8;
     private const LOGIN_WINDOW = 900;
     private const SIGNUP_LIMIT = 5;

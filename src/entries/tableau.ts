@@ -11,7 +11,7 @@ import { api, type Profile } from '../platform/api';
 import { activePlayer } from '../platform/player';
 import { localHistory, type StoredResult } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, OP_NAMES, TIER_NAMES, formatDuration, summarize, type Summary } from '../platform/stats';
-import { avatarImg } from '../platform/avatars';
+import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { h } from '../platform/dom';
 import { t } from '../i18n/traduire';
 import { locale } from '../i18n/langue';
@@ -179,7 +179,7 @@ void (async () => {
     b.addEventListener('click', () => pick(p.id));
     chooser.append(b);
   }
-  const g = h('button', { type: 'button', 'data-id': 'invite' }, avatarImg('chouette', 56, ''), 'Cet appareil (invité)');
+  const g = h('button', { type: 'button', 'data-id': 'invite' }, avatarImg(AVATAR_INVITE, 56, ''), 'Cet appareil (invité)');
   g.addEventListener('click', () => pick(null));
   chooser.append(g);
   pick(profiles.some((p) => p.id === wanted) ? wanted ?? null : profiles[0]?.id ?? null);

@@ -14,10 +14,10 @@ export const estNiveau = (v: unknown): v is TierId => typeof v === 'string' && (
 
 /** Ce que chaque niveau propose, en une ligne (d'après src/core/expressions.ts et difficulty.ts). */
 export const NIVEAU_INFOS: Record<TierId, { nom: string; public: string; exemple: string; detail: string; avatar: string }> = {
-  eveil: { nom: 'Éveil', public: '7-8 ans', exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', avatar: 'escargot' },
-  explorateur: { nom: 'Explorateur', public: '9-10 ans', exemple: '27 + 15', detail: 'Calculs jusqu’à 50, tables de 2, 5 et 10.', avatar: 'chat' },
+  eveil: { nom: 'Éveil', public: '7-8 ans', exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', avatar: 'axolotl' },
+  explorateur: { nom: 'Explorateur', public: '9-10 ans', exemple: '27 + 15', detail: 'Calculs jusqu’à 50, tables de 2, 5 et 10.', avatar: 'chat-aviateur' },
   stratege: { nom: 'Stratège', public: '11-12 ans', exemple: '7 × 8', detail: 'Calculs jusqu’à 100, toutes les tables, divisions.', avatar: 'robot' },
-  maitre: { nom: 'Maître', public: 'ados et adultes', exemple: '84 ÷ 7', detail: 'Calculs jusqu’à 200, tables jusqu’à 12, plus rapide.', avatar: 'dragon' },
+  maitre: { nom: 'Maître', public: 'ados et adultes', exemple: '84 ÷ 7', detail: 'Calculs jusqu’à 200, tables jusqu’à 12, plus rapide.', avatar: 'sorcier' },
 };
 
 export function niveauRetenu(): TierId | null {

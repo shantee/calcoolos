@@ -207,6 +207,7 @@ h1 {
 .lancement .qui-joue .avatar {
   width: 40px;
   height: 40px;
+  border-radius: 50%;
 }
 
 .statut-invite {
@@ -307,8 +308,9 @@ h1 {
 }
 
 .niveau-perso .avatar {
-  width: 50px;
-  height: 50px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
 }
 
 .niveau-nom {

@@ -128,8 +128,8 @@ const ajouter = async (pseudo, avatar, niveau) => {
   await form.locator('button[type="submit"]').click();
   await page.waitForSelector(`article.profil h3:has-text("${pseudo}")`);
 };
-await ajouter('Lina', 'chat', 'eveil');
-await ajouter('Noé', 'dragon', 'maitre');
+await ajouter('Lina', 'chat-noir', 'eveil');
+await ajouter('Noé', 'sorcier', 'maitre');
 check(true, 'compte créé, deux profils ajoutés');
 
 // --- 3. Accueil connecté --------------------------------------------------------------------------------

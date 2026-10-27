@@ -132,7 +132,7 @@ const addProfile = async (pseudo, avatar, niveau) => {
   await form.locator('button[type="submit"]').click();
   await page.waitForSelector(`h3:text-is("${pseudo}")`);
 };
-await addProfile('Lina', 'dragon', 'explorateur');
+await addProfile('Lina', 'astronaute', 'explorateur');
 await addProfile('Noé', 'robot', 'eveil');
 const linaCard = page.locator('article.profil', { has: page.locator('h3:text-is("Lina")') });
 check((await linaCard.locator('input[type="checkbox"]').count()) === 0, 'plus de case « classements publics » sur le profil');

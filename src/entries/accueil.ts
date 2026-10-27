@@ -5,7 +5,7 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { EVT_JOUEUR, rafraichirJoueur, topbar } from '../platform/topbar';
 import { logo } from '../platform/logo';
-import { avatarImg } from '../platform/avatars';
+import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { flushQueue, localHistory, type StoredResult } from '../platform/results';
 import { NIVEAU_INFOS, estNiveau, niveauDepart, niveauRetenu, retenirNiveau } from '../platform/niveau';
@@ -55,7 +55,7 @@ function apply(): void {
   document.querySelector('#niveau')?.classList.toggle('a-choisir', !lv);
   for (const r of document.querySelectorAll<HTMLElement>('.rappel-niveau')) {
     r.replaceChildren(
-      avatarImg(info?.avatar ?? 'chouette', 34, ''),
+      avatarImg(info?.avatar ?? AVATAR_INVITE, 34, ''),
       h('span', {}, info ? h('span', {}, 'Niveau ', h('b', {}, info.nom)) : h('b', {}, 'Niveau à choisir'), h('small', {}, info ? 'changer' : 'avant de jouer')),
     );
   }
@@ -174,7 +174,7 @@ function renderPlayers(profiles: Profile[]): void {
     list.append(b);
   };
   for (const p of profiles) add(p.pseudo, p.avatar, current?.id === p.id, () => choisirJoueur(p));
-  add('Invité', 'chouette', !current, () => choisirJoueur(null));
+  add('Invité', AVATAR_INVITE, !current, () => choisirJoueur(null));
   if (profiles.length === 0) {
     list.append(h('p', { class: 'discret' }, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-en un dans l’espace famille'), '.'));
   }
