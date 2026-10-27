@@ -4,9 +4,9 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';
 import { api } from '../platform/api';
-import { avatarImg } from '../platform/avatars';
+import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer } from '../platform/player';
-import { lastGame, localHistory } from '../platform/results';
+import { localHistory, type GameId } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, TIER_NAMES } from '../platform/stats';
 import { h } from '../platform/dom';
 
@@ -15,75 +15,95 @@ interface Row {
   nom: string;
   avatar: string;
   score: number;
+  famille?: boolean;
+}
+
+interface Board {
+  jeu: GameId;
+  niveau: string;
+  mode: string;
+  public: Row[];
+  famille?: Row[];
 }
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
+const MEDALS = ['🥇', '🥈', '🥉'];
+const MODES = ['defi', 'tranquille'];
 
-function select(name: string, options: Record<string, string>, value: string): HTMLSelectElement {
-  const s = h('select', { name, id: `choix-${name}` });
-  for (const [id, label] of Object.entries(options)) s.append(h('option', { value: id, selected: id === value }, label));
-  return s;
+const boardTitle = (b: Board) => `${TIER_NAMES[b.niveau] ?? b.niveau} · ${MODE_NAMES[b.mode] ?? b.mode}`;
+const place = (rang: number) => (rang <= 3 ? MEDALS[rang - 1] : `${rang}e`);
+
+function rowEl(r: Row, me: string | undefined): HTMLElement {
+  const cls = [r.famille ? 'famille' : '', r.famille && r.nom === me ? 'moi' : ''].filter(Boolean).join(' ');
+  return h('li', { class: cls || undefined },
+    h('span', { class: 'rang' }, r.rang ? place(r.rang) : ''),
+    avatarImg(r.avatar, 28, ''),
+    h('span', { class: 'nom' }, r.nom),
+    h('span', { class: 'score' }, String(r.score)));
 }
 
-function table(rows: Row[], ranked: boolean): HTMLElement {
-  if (rows.length === 0) return h('p', { class: 'discret' }, 'Personne pour l’instant.');
-  return h('div', { class: 'defile' }, h('table', { class: 'tableau' },
-    h('thead', {}, h('tr', {}, h('th', { class: 'nombre' }, '#'), h('th', {}, 'Joueur'), h('th', { class: 'nombre' }, 'Meilleur score'))),
-    h('tbody', {}, ...rows.map((r, i) => h('tr', {},
-      h('td', { class: 'nombre' }, String(ranked ? r.rang ?? i + 1 : i + 1)),
-      h('td', {}, avatarImg(r.avatar, 32, ''), r.nom),
-      h('td', { class: 'nombre' }, String(r.score)),
-    ))),
-  ));
+/** Un classement : le top, puis les joueurs de la famille plus loin (avec leur rang), ou le score de l'invité. */
+function boardEl(b: Board, me: string | undefined, guestBest: number | null): HTMLElement {
+  const top = b.public.filter((r) => (r.rang ?? 0) <= 5);
+  const after = b.public.filter((r) => (r.rang ?? 0) > 5);
+  const list = h('ol', { class: 'podium' }, ...top.map((r) => rowEl(r, me)));
+  if (after.length > 0) list.append(h('li', { class: 'ellipse', 'aria-hidden': 'true' }, '…'), ...after.map((r) => rowEl(r, me)));
+  if (guestBest !== null) {
+    list.append(h('li', { class: 'invite' }, h('span', { class: 'rang' }), avatarImg(AVATAR_INVITE, 28, ''),
+      h('span', { class: 'nom' }, 'Toi (cet appareil)'), h('span', { class: 'score' }, String(guestBest))));
+  }
+  const vide = b.public.length === 0 && guestBest === null;
+  return h('section', { class: `classement${vide ? ' vide' : ''}` },
+    h('h3', {}, boardTitle(b)),
+    vide ? h('p', { class: 'discret' }, 'Personne pour l’instant : à toi de jouer !') : list);
+}
+
+/** Classement en famille : seulement les tableaux où au moins deux profils ont joué (renvoyés par le serveur). */
+function familyCard(boards: Board[]): HTMLElement | null {
+  const played = boards.filter((b) => b.famille);
+  if (played.length === 0) return null;
+  return h('section', { class: 'carte famille-classements' },
+    h('h2', {}, 'Dans la famille'),
+    h('ul', {}, ...played.map((b) => h('li', {},
+      h('b', {}, `${GAME_NAMES[b.jeu]} · ${boardTitle(b)} : `),
+      ...b.famille!.flatMap((r, i) => [i > 0 ? ' · ' : '', `${MEDALS[i] ?? `${i + 1}e`} ${r.nom} ${r.score}`]),
+    ))));
 }
 
 void (async () => {
   const state = await topbar('classements');
-  const tier = activePlayer()?.niveau ?? (() => {
-    try {
-      return localStorage.getItem('calcoolos.niveau') ?? 'explorateur';
-    } catch {
-      return 'explorateur';
-    }
-  })();
-  // On ouvre sur la dernière partie jouée ici, sinon sur le Dragon en Défi.
-  const last = lastGame();
-  const jeu = select('jeu', GAME_NAMES, last && last.jeu in GAME_NAMES ? last.jeu : 'dragon');
-  const niveau = select('niveau', TIER_NAMES, last && last.niveau in TIER_NAMES ? last.niveau : tier);
-  const mode = select('mode', MODE_NAMES, last && last.mode in MODE_NAMES ? last.mode : 'defi');
-  const out = h('div', { 'aria-live': 'polite' });
-  const load = async () => {
-    out.replaceChildren(h('p', { class: 'discret' }, 'Chargement…'));
-    const r = await api.get<{ public: Row[]; famille?: Row[] }>(`/classements?jeu=${jeu.value}&niveau=${niveau.value}&mode=${mode.value}`).catch(() => null);
-    if (r?.status !== 200) {
-      out.replaceChildren(h('p', { class: 'message erreur' }, state ? r?.data.erreur ?? 'Le serveur ne répond pas.' : 'Les classements ont besoin du serveur : indisponible pour le moment.'));
-      return;
-    }
-    const cards = [h('section', { class: 'carte' }, h('h2', {}, 'Classement public'), table(r.data.public, true))];
-    if (r.data.famille) cards.push(h('section', { class: 'carte' }, h('h2', {}, 'Dans la famille'), table(r.data.famille, false)));
-    else cards.push(guestCard());
-    out.replaceChildren(h('div', { class: 'grille' }, ...cards));
+  const me = activePlayer()?.pseudo;
+  root.replaceChildren(h('h1', {}, 'Classements'), h('p', { class: 'chapeau' }, 'Chargement…'));
+  const r = await api.get<{ classements: Board[] }>('/classements').catch(() => null);
+  if (r?.status !== 200) {
+    root.replaceChildren(h('h1', {}, 'Classements'),
+      h('p', { class: 'message erreur' }, state ? r?.data.erreur ?? 'Le serveur ne répond pas.' : 'Les classements ont besoin du serveur : indisponible pour le moment.'));
+    return;
+  }
+  const boards = r.data.classements;
+  const connected = state?.connecte === true;
+  // Invité : ses parties restent sur l'appareil ; on glisse son meilleur score dans chaque classement.
+  const history = connected ? [] : localHistory();
+  const guestBest = (b: Board) => {
+    const best = history.filter((x) => x.jeu === b.jeu && x.niveau === b.niveau && x.mode === b.mode).reduce((m, x) => Math.max(m, x.score), -1);
+    return best >= 0 ? best : null;
   };
-  // Invité : ses parties restent sur l'appareil ; on lui montre son meilleur score et comment entrer au classement.
-  const guestCard = () => {
-    const best = localHistory()
-      .filter((x) => x.jeu === jeu.value && x.niveau === niveau.value && x.mode === mode.value)
-      .reduce((m, x) => Math.max(m, x.score), -1);
-    return h('section', { class: 'carte' }, h('h2', {}, 'Sur cet appareil'),
-      best >= 0 ? h('p', {}, 'Ton meilleur score : ', h('b', {}, String(best))) : h('p', { class: 'discret' }, 'Pas encore de partie ici dans ce jeu, ce niveau et ce mode.'),
-      h('p', {}, 'En mode invité, les scores restent sur cet appareil. Pour apparaître dans le classement public, gagné ou perdu : '),
-      h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'));
-  };
-  for (const s of [jeu, niveau, mode]) s.addEventListener('change', () => void load());
+
+  const games = Object.keys(GAME_NAMES) as GameId[];
+  const sections = games.map((jeu) => h('section', { class: 'jeu-classements', id: `jeu-${jeu}` },
+    h('h2', {}, GAME_NAMES[jeu]),
+    ...MODES.map((mode) => h('div', { class: 'classements-ligne' },
+      ...boards.filter((b) => b.jeu === jeu && b.mode === mode).map((b) => boardEl(b, me, connected ? null : guestBest(b))))),
+  ));
   root.replaceChildren(
     h('h1', {}, 'Classements'),
-    h('p', { class: 'chapeau' }, 'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur.'),
-    h('div', { class: 'onglets' },
-      h('label', { class: 'champ' }, 'Jeu', jeu),
-      h('label', { class: 'champ' }, 'Niveau', niveau),
-      h('label', { class: 'champ' }, 'Mode', mode),
-    ),
-    out,
+    h('p', { class: 'chapeau' }, 'Tous les jeux, tous les niveaux, en Défi et en Tranquille. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur.'),
+    h('nav', { class: 'sommaire-jeux', 'aria-label': 'Aller au jeu' }, ...games.map((jeu) => h('a', { href: `#jeu-${jeu}` }, GAME_NAMES[jeu]))),
+    connected
+      ? familyCard(boards) ?? ''
+      : h('section', { class: 'carte invite-classements' },
+        h('p', {}, 'En mode invité, tes scores restent sur cet appareil : ils apparaissent ici en pointillés, mais pas dans le classement des autres. Pour y entrer, gagné ou perdu : ',
+          h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'))),
+    ...sections,
   );
-  await load();
 })();

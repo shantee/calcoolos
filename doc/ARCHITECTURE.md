@@ -178,7 +178,7 @@ Supprimer un compte supprime ses profils et leurs résultats (`ON DELETE CASCADE
 | GET, POST | `/profils`, `/profils/{id}/modifier`, `/profils/{id}/supprimer` | profils (404 si le profil n'est pas au compte) |
 | POST | `/resultats` | enregistre un résultat |
 | GET | `/profils/{id}/resultats` | historique d'un profil (300 derniers) |
-| GET | `/classements?jeu=&niveau=&mode=` | top 20 public (tous les profils, sous leur pseudo, scores vérifiés) + classement familial si connecté |
+| GET | `/classements` | tous les classements d’un coup (jeu × niveau × mode) : top 5 public (pseudo, scores vérifiés) ; si connecté, profils de la famille marqués et ajoutés avec leur rang, et classement familial là où au moins deux profils ont joué |
 | GET | `/export` | toutes les données du compte (fichier JSON) |
 
 ### Résultats : refusés, gardés « non classés », ou vérifiés

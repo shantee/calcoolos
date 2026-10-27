@@ -115,7 +115,7 @@ assert_status($r, 200, 'état invité');
 assert_true($r->data === ['connecte' => false], 'invité non connecté');
 assert_true(!$guest->session->active(), 'aucune session (donc aucun cookie) pour un invité');
 assert_status($guest->get('/profils'), 401, 'profils interdits sans compte');
-assert_status($guest->get('/classements', ['jeu' => 'dragon', 'niveau' => 'eveil', 'mode' => 'defi']), 200, 'classements publics lisibles');
+assert_status($guest->get('/classements'), 200, 'classements publics lisibles');
 assert_status($guest->get('/nimporte'), 401, 'route privée inconnue : 401 d’abord');
 
 section('Inscription');
@@ -201,17 +201,32 @@ $now += 30;
 assert_status($bob->post('/resultats', $result($sam['id'], ['score' => 12000])), 201, 'résultat de Sam');
 
 section('Classements');
-$q = ['jeu' => 'dragon', 'niveau' => 'explorateur', 'mode' => 'defi'];
-$r = $guest->get('/classements', $q);
-assert_true(!isset($r->data['famille']), 'pas de classement familial pour un invité');
-$row = array_values(array_filter($r->data['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
+$board = static fn (Response $r, string $jeu, string $niveau, string $mode): array => array_values(array_filter(
+    $r->data['classements'],
+    static fn (array $b): bool => $b['jeu'] === $jeu && $b['niveau'] === $niveau && $b['mode'] === $mode,
+))[0];
+$r = $guest->get('/classements');
+assert_true(count($r->data['classements']) === 4 * 4 * 2, 'tous les classements d’un coup (jeu × niveau × mode)');
+$b = $board($r, 'dragon', 'explorateur', 'defi');
+assert_true(!isset($b['famille']), 'pas de classement familial pour un invité');
+$row = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
 assert_true($row !== null, 'Lina au classement public sous son pseudo, sans autorisation à donner');
 assert_true($row['score'] === 8000, 'seul le meilleur score VÉRIFIÉ compte (pas 39000)');
 assert_true(!str_contains($r->body(), '@'), 'jamais l\'e-mail au classement public');
 assert_true(array_keys($row) === ['rang', 'nom', 'avatar', 'score'], 'aucune autre donnée exposée');
-$r = $alice->get('/classements', $q);
-assert_true(count($r->data['famille']) === 1 && $r->data['famille'][0]['nom'] === 'Lina', 'classement familial avec le vrai pseudo, pour la famille seulement');
-assert_status($guest->get('/classements', ['jeu' => 'dragon', 'niveau' => 'x', 'mode' => 'defi']), 422, 'classement inconnu');
+assert_true($board($r, 'cubes', 'maitre', 'tranquille')['public'] === [], 'classement vide sans partie');
+$r = $alice->get('/classements');
+$b = $board($r, 'dragon', 'explorateur', 'defi');
+$mark = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
+assert_true(($mark['famille'] ?? false) === true, 'Lina marquée « famille » pour sa famille');
+assert_true(!isset($b['famille']), 'pas de classement familial avec un seul membre');
+$now += 30;
+assert_status($alice->post('/resultats', $result($noe['id'], ['score' => 5000])), 201, 'résultat de Noé');
+$b = $board($alice->get('/classements'), 'dragon', 'explorateur', 'defi');
+assert_true(array_column($b['famille'] ?? [], 'nom') === ['Lina', 'Noé'], 'classement familial dès deux membres, sans rang public');
+$r = $bob->get('/classements');
+$seen = array_values(array_filter($board($r, 'dragon', 'explorateur', 'defi')['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
+assert_true(!isset($seen['famille']), 'Lina n’est pas marquée « famille » chez Bob');
 
 section('Connexion');
 $alice2 = $newClient('198.51.100.1');

@@ -179,12 +179,10 @@ check((await page.textContent('#tableau-corps'))?.includes('enregistrés sur le 
 await shot('8-progres-lina', true);
 
 await page.goto(`${base}/classements.html`, { waitUntil: 'networkidle' });
-await page.waitForSelector('#choix-mode');
-await page.selectOption('#choix-mode', 'tranquille');
-await page.waitForSelector('text=Classement public');
+await page.waitForSelector('.jeu-classements');
 await page.waitForTimeout(500);
-const board = await page.textContent('#contenu');
-check(/Classement public[\s\S]*Lina[\s\S]*Dans la famille/.test(board), 'Lina au classement public sous son pseudo, et dans la famille');
+const board = await page.textContent('#jeu-dragon');
+check(/Explorateur · Tranquille[\s\S]*Lina/.test(board) && (await page.locator('#jeu-dragon li.famille').count()) > 0, 'Lina au classement public sous son pseudo, marquée « famille », sans menu à choisir');
 await shot('9-classements', true);
 
 // --- 5. Une autre famille ne voit rien ------------------------------------------------------------
@@ -204,7 +202,7 @@ const status = await other.evaluate(async (id) => (await fetch(`api/profils/${id
 check(status === 404, `une autre famille ne lit pas les résultats de Lina (HTTP ${status})`);
 const exp = await other.evaluate(async () => (await fetch('api/export')).text());
 check(!exp.includes('Lina'), 'l’export d’une autre famille ne contient pas Lina');
-const pub = await other.evaluate(async () => (await fetch('api/classements?jeu=dragon&niveau=explorateur&mode=tranquille')).text());
+const pub = await other.evaluate(async () => (await fetch('api/classements')).text());
 check(pub.includes('"Lina"') && !pub.includes('@'), 'le classement public montre le pseudo, jamais l’e-mail');
 await ctx2.close();
 

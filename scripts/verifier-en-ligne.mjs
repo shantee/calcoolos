@@ -181,7 +181,7 @@ const charts = await p2.evaluate(() => document.querySelectorAll('#tableau-corps
 check((await p2.textContent('#tableau-corps'))?.includes('enregistrés sur le serveur') && charts > 0, `tableau de bord du serveur avec graphiques (${charts})`);
 await p2.screenshot({ path: `${out}/telephone-progres.png`, fullPage: true });
 await p2.goto(`${base}/classements.html`, { waitUntil: 'networkidle' });
-await p2.waitForSelector('#choix-mode');
+await p2.waitForSelector('.jeu-classements');
 await p2.screenshot({ path: `${out}/telephone-classements.png`, fullPage: true });
 
 // Nettoyage : suppression du compte de test (cascade sur profils et résultats).

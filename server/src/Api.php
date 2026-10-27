@@ -93,7 +93,7 @@ final class Api
             return $this->googleLogin($r);
         }
         if ($m === 'GET' && $p === '/classements') {
-            return $this->leaderboards($r);
+            return $this->leaderboards();
         }
         // Tout le reste exige d'être connecté.
         $account = $this->account();
@@ -685,35 +685,67 @@ final class Api
 
     // --- Classements ------------------------------------------------------------------------------
 
-    private function leaderboards(Request $r): Response
+    /** Nombre de joueurs montrés par classement public (les profils de la famille s'ajoutent après). */
+    private const TOP = 5;
+
+    /**
+     * Tous les classements d'un coup (jeu × niveau × mode), pour les afficher sur une seule page.
+     * Public : meilleur score vérifié de chaque profil, sous son pseudo ; si on est connecté, les
+     * profils de la famille sont marqués et ajoutés avec leur rang même hors du top.
+     * Famille : seulement là où au moins deux profils de la famille ont joué.
+     */
+    private function leaderboards(): Response
     {
-        $jeu = $r->query['jeu'] ?? '';
-        $niveau = $r->query['niveau'] ?? '';
-        $mode = $r->query['mode'] ?? '';
-        if (!isset(Games::CATALOG[$jeu]) || !in_array($niveau, Games::TIERS, true) || !in_array($mode, Games::MODES, true)) {
-            throw new HttpError(422, 'Classement inconnu.');
+        $boards = [];
+        foreach (array_keys(Games::CATALOG) as $jeu) {
+            foreach (Games::TIERS as $niveau) {
+                foreach (Games::MODES as $mode) {
+                    $boards["$jeu/$niveau/$mode"] = ['jeu' => $jeu, 'niveau' => $niveau, 'mode' => $mode, 'public' => []];
+                }
+            }
         }
-        // Public : tous les profils, sous leur pseudo, scores vérifiés seulement.
-        $q = $this->db->prepare('SELECT p.pseudo AS nom, p.avatar AS avatar, MAX(r.score) AS score
-            FROM resultats r JOIN profils p ON p.id = r.profil_id
-            WHERE r.jeu = ? AND r.niveau = ? AND r.mode = ? AND r.verifie = 1
-            GROUP BY p.id, p.pseudo, p.avatar ORDER BY score DESC, p.id ASC LIMIT 20');
-        $q->execute([$jeu, $niveau, $mode]);
-        $public = [];
-        foreach ($q->fetchAll() as $i => $row) {
-            $public[] = ['rang' => $i + 1, 'nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
-        }
-        $out = ['public' => $public];
-        // Famille : les profils du compte connecté, privés, avec leur vrai pseudo.
         $id = $this->session->active() ? $this->session->get('compte') : null;
-        if (is_int($id)) {
-            $q = $this->db->prepare('SELECT p.pseudo AS nom, p.avatar AS avatar, MAX(r.score) AS score
-                FROM resultats r JOIN profils p ON p.id = r.profil_id
-                WHERE p.compte_id = ? AND r.jeu = ? AND r.niveau = ? AND r.mode = ?
-                GROUP BY p.id, p.pseudo, p.avatar ORDER BY score DESC');
-            $q->execute([$id, $jeu, $niveau, $mode]);
-            $out['famille'] = array_map(static fn (array $row): array => ['nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']], $q->fetchAll());
+        $mine = is_int($id) ? $id : -1;
+        $q = $this->db->query('SELECT r.jeu, r.niveau, r.mode, p.compte_id, p.pseudo AS nom, p.avatar, MAX(r.score) AS score
+            FROM resultats r JOIN profils p ON p.id = r.profil_id
+            WHERE r.verifie = 1
+            GROUP BY r.jeu, r.niveau, r.mode, p.id, p.compte_id, p.pseudo, p.avatar
+            ORDER BY r.jeu, r.niveau, r.mode, score DESC, p.id ASC');
+        $rank = [];
+        foreach ($q->fetchAll() as $row) {
+            $key = "{$row['jeu']}/{$row['niveau']}/{$row['mode']}";
+            if (!isset($boards[$key])) {
+                continue;
+            }
+            $rang = $rank[$key] = ($rank[$key] ?? 0) + 1;
+            $own = (int) $row['compte_id'] === $mine;
+            if ($rang > self::TOP && !$own) {
+                continue;
+            }
+            $entry = ['rang' => $rang, 'nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
+            if ($own) {
+                $entry['famille'] = true;
+            }
+            $boards[$key]['public'][] = $entry;
         }
-        return new Response(200, $out);
+        if (is_int($id)) {
+            // Toutes les parties de la famille comptent ici, vérifiées ou non : c'est entre soi.
+            $q = $this->db->prepare('SELECT r.jeu, r.niveau, r.mode, p.pseudo AS nom, p.avatar, MAX(r.score) AS score
+                FROM resultats r JOIN profils p ON p.id = r.profil_id
+                WHERE p.compte_id = ?
+                GROUP BY r.jeu, r.niveau, r.mode, p.id, p.pseudo, p.avatar
+                ORDER BY r.jeu, r.niveau, r.mode, score DESC, p.id ASC');
+            $q->execute([$id]);
+            $family = [];
+            foreach ($q->fetchAll() as $row) {
+                $family["{$row['jeu']}/{$row['niveau']}/{$row['mode']}"][] = ['nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
+            }
+            foreach ($family as $key => $rows) {
+                if (isset($boards[$key]) && count($rows) >= 2) {
+                    $boards[$key]['famille'] = $rows;
+                }
+            }
+        }
+        return new Response(200, ['classements' => array_values($boards)]);
     }
 }

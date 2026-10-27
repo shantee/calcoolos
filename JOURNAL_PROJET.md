@@ -28,6 +28,20 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-27 : Claude, session 16 (classements sur une seule page)
+
+Demande de Philippe : plus de menus déroulants, tous les classements de tous les jeux sur la même page ; pas de
+classement « famille » s'il n'y a qu'un membre.
+
+- **API** : `GET /classements` (sans paramètre) renvoie les 32 classements (jeu × niveau × mode) en une requête : top 5
+  public ; si on est connecté, les profils de la famille sont marqués (`famille: true`) et ajoutés avec leur rang même
+  hors du top ; le classement familial n'existe que là où **au moins deux** profils de la famille ont joué.
+- **Page** : un bloc par jeu (raccourcis en haut), une ligne Défi puis une ligne Tranquille, un petit tableau par
+  niveau (médailles, avatar, score). La famille ressort en doré, le joueur actif encadré ; l'invité voit son meilleur
+  score local en pointillés dans chaque tableau. Carte « Dans la famille » en haut, seulement si utile.
+- Tests API et scripts e2e mis à jour ; captures dans `CAPTURES/classements/`.
+- Plus tard, si les jeux/modes/niveaux se multiplient : remettre un sélecteur (idée de Philippe).
+
 ## 2026-10-27 : Claude, session 15 (Décollage ! : couleurs de calculs, demi-cœurs, plus de temps)
 
 Demande de Philippe : plus de cœurs (6 ou 8), une ou deux secondes de plus (surtout Tranquille et Éveil) ; trois
