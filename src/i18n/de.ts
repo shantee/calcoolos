@@ -111,8 +111,8 @@ export const DE: Dictionnaire = {
   'Les classements ont besoin du serveur : indisponible pour le moment.': 'Die Bestenlisten brauchen den Server: im Moment nicht erreichbar.',
   'Classement public': 'Öffentliche Bestenliste',
   'Dans la famille': 'In der Familie',
-  'Un classement par jeu, par niveau et par mode. Seuls y figurent les joueurs qu’un parent a autorisés, sous un nom inventé (jamais leur pseudo), et seulement les scores jugés vraisemblables par le serveur.':
-    'Eine Bestenliste pro Spiel, Level und Modus. Dort erscheinen nur Spieler, die ein Elternteil erlaubt hat, unter einem erfundenen Namen (nie ihr Spitzname), und nur Punktestände, die der Server für glaubwürdig hält.',
+  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.':
+    'Eine Bestenliste pro Spiel, Level und Modus, mit dem Spitznamen jedes Spielers und nur Punkteständen, die der Server für glaubwürdig hält.',
   Jeu: 'Spiel',
   Niveau: 'Level',
   Mode: 'Modus',
@@ -130,15 +130,13 @@ export const DE: Dictionnaire = {
   'Créer un espace famille': 'Einen Familienbereich anlegen',
   'Jouer avec ce profil': 'Mit diesem Profil spielen',
   Pseudo: 'Spitzname',
-  'Un surnom suffit : pas de nom de famille.': 'Ein Spitzname reicht: kein Nachname.',
+  'Un surnom suffit : pas de nom de famille. Il apparaît dans les classements publics.': 'Ein Spitzname reicht: kein Nachname. Er erscheint in öffentlichen Bestenlisten.',
+  '🎲 Aide-moi à trouver un pseudo': '🎲 Hilf mir, einen Spitznamen zu finden',
   Enregistrer: 'Speichern',
-  'Autre nom': 'Anderer Name',
   'Supprimer ce profil': 'Dieses Profil löschen',
   'Supprimer le profil « {*} » et tous ses résultats ? C’est définitif.': 'Das Profil „{}“ und alle seine Ergebnisse löschen? Das ist endgültig.',
   'Voir ses progrès': 'Fortschritte ansehen',
   Modifier: 'Bearbeiten',
-  'Apparaître dans les classements publics, sous le nom inventé «': 'In öffentlichen Bestenlisten erscheinen, unter dem erfundenen Namen „',
-  '» (jamais le pseudo). Désactivé par défaut.': '“ (nie der Spitzname). Standardmäßig aus.',
   'ex. Lina, Super Noé': 'z. B. Lina, Super Noah',
   'Ajouter le profil': 'Profil hinzufügen',
   'Nouveau profil de joueur': 'Neues Spielerprofil',
@@ -155,8 +153,8 @@ export const DE: Dictionnaire = {
   'Connecté avec': 'Angemeldet als',
   'Télécharger nos données': 'Unsere Daten herunterladen',
   'Supprimer le compte': 'Konto löschen',
-  'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses résultats ne sont visibles que dans cet espace, sauf si vous l’autorisez à apparaître dans les classements publics, et alors seulement sous un nom inventé.':
-    'Jedes Kind hat ein eigenes Profil: Spitzname, Avatar, Level. Seine Ergebnisse sind nur in diesem Bereich sichtbar, außer Sie erlauben ihm, in öffentlichen Bestenlisten zu erscheinen, und dann nur unter einem erfundenen Namen.',
+  'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses meilleurs scores apparaissent dans les classements publics sous son pseudo ; le reste de ses résultats n’est visible que dans cet espace.':
+    'Jedes Kind hat ein eigenes Profil: Spitzname, Avatar, Level. Seine besten Punktestände erscheinen in öffentlichen Bestenlisten unter seinem Spitznamen; der Rest seiner Ergebnisse ist nur in diesem Bereich sichtbar.',
   'Serveur indisponible': 'Server nicht erreichbar',
   'L’espace famille n’est pas joignable pour le moment (ou ce site fonctionne sans serveur). On peut toujours jouer en invité : les résultats restent sur cet appareil.':
     'Der Familienbereich ist im Moment nicht erreichbar (oder diese Seite läuft ohne Server). Man kann trotzdem als Gast spielen: Die Ergebnisse bleiben auf diesem Gerät.',

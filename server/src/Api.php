@@ -14,8 +14,8 @@ use PDO;
  *   (même compte, mêmes profils : seul le moyen de se connecter change).
  * - Il crée des profils de joueurs privés : pseudo, avatar, niveau. Rien d'autre.
  * - Les résultats sont rattachés à un profil ; seul le compte propriétaire les voit.
- * - Classements publics : seulement les profils dont l'adulte l'a autorisé, sous un
- *   nom public généré (jamais le pseudo, jamais l'e-mail).
+ * - Classements publics : tous les profils, sous leur pseudo (jamais l'e-mail), avec
+ *   seulement les scores vérifiés.
  *
  * Protection CSRF : toute requête POST doit être en JSON et porter l'en-tête
  * `X-Calcoolos` (impossible depuis un formulaire d'un autre site) ; une fois
@@ -499,19 +499,17 @@ final class Api
 
     /**
      * @param array{id: int, email: string} $account
-     * @return list<array{id: int, pseudo: string, avatar: string, niveau: string, classementPublic: bool, nomPublic: string}>
+     * @return list<array{id: int, pseudo: string, avatar: string, niveau: string, }>
      */
     private function profiles(array $account): array
     {
-        $q = $this->db->prepare('SELECT id, pseudo, avatar, niveau, classement_public, nom_public FROM profils WHERE compte_id = ? ORDER BY id');
+        $q = $this->db->prepare('SELECT id, pseudo, avatar, niveau FROM profils WHERE compte_id = ? ORDER BY id');
         $q->execute([$account['id']]);
         return array_map(static fn (array $p): array => [
             'id' => (int) $p['id'],
             'pseudo' => (string) $p['pseudo'],
             'avatar' => (string) $p['avatar'],
             'niveau' => (string) $p['niveau'],
-            'classementPublic' => (bool) $p['classement_public'],
-            'nomPublic' => (string) $p['nom_public'],
         ], $q->fetchAll());
     }
 
@@ -591,17 +589,6 @@ final class Api
         if (array_key_exists('niveau', $in)) {
             $sets[] = 'niveau = ?';
             $args[] = self::tier($in['niveau']);
-        }
-        if (array_key_exists('classementPublic', $in)) {
-            if (!is_bool($in['classementPublic'])) {
-                throw new HttpError(422, 'Données invalides.');
-            }
-            $sets[] = 'classement_public = ?';
-            $args[] = $in['classementPublic'] ? 1 : 0;
-        }
-        if (($in['nouveauNomPublic'] ?? false) === true) {
-            $sets[] = 'nom_public = ?';
-            $args[] = Names::publicName();
         }
         if ($sets) {
             $args[] = $profile['id'];
@@ -697,11 +684,11 @@ final class Api
         if (!isset(Games::CATALOG[$jeu]) || !in_array($niveau, Games::TIERS, true) || !in_array($mode, Games::MODES, true)) {
             throw new HttpError(422, 'Classement inconnu.');
         }
-        // Public : uniquement les profils autorisés par l'adulte, sous leur nom public.
-        $q = $this->db->prepare('SELECT p.nom_public AS nom, p.avatar AS avatar, MAX(r.score) AS score
+        // Public : tous les profils, sous leur pseudo, scores vérifiés seulement.
+        $q = $this->db->prepare('SELECT p.pseudo AS nom, p.avatar AS avatar, MAX(r.score) AS score
             FROM resultats r JOIN profils p ON p.id = r.profil_id
-            WHERE r.jeu = ? AND r.niveau = ? AND r.mode = ? AND r.verifie = 1 AND p.classement_public = 1
-            GROUP BY p.id, p.nom_public, p.avatar ORDER BY score DESC, p.id ASC LIMIT 20');
+            WHERE r.jeu = ? AND r.niveau = ? AND r.mode = ? AND r.verifie = 1
+            GROUP BY p.id, p.pseudo, p.avatar ORDER BY score DESC, p.id ASC LIMIT 20');
         $q->execute([$jeu, $niveau, $mode]);
         $public = [];
         foreach ($q->fetchAll() as $i => $row) {

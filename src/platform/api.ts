@@ -7,8 +7,6 @@ export interface Profile {
   pseudo: string;
   avatar: string;
   niveau: string;
-  classementPublic: boolean;
-  nomPublic: string;
 }
 
 export interface AccountState {

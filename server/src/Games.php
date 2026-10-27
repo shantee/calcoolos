@@ -136,7 +136,10 @@ final class Games
     }
 }
 
-/** Noms publics générés (jamais le pseudo choisi par la famille). */
+/**
+ * Noms publics générés. Plus affichés depuis le 27/10/2026 (les classements publics montrent le
+ * pseudo) ; on remplit encore la colonne `profils.nom_public`, qui est obligatoire.
+ */
 final class Names
 {
     /** Créature et genre grammatical (m/f), pour accorder l'adjectif. */

@@ -63,7 +63,7 @@ void (async () => {
   for (const s of [jeu, niveau, mode]) s.addEventListener('change', () => void load());
   root.replaceChildren(
     h('h1', {}, 'Classements'),
-    h('p', { class: 'chapeau' }, 'Un classement par jeu, par niveau et par mode. Seuls y figurent les joueurs qu’un parent a autorisés, sous un nom inventé (jamais leur pseudo), et seulement les scores jugés vraisemblables par le serveur.'),
+    h('p', { class: 'chapeau' }, 'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.'),
     h('div', { class: 'onglets' },
       h('label', { class: 'champ' }, 'Jeu', jeu),
       h('label', { class: 'champ' }, 'Niveau', niveau),

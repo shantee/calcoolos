@@ -135,10 +135,12 @@ const addProfile = async (pseudo, avatar, niveau) => {
 await addProfile('Lina', 'dragon', 'explorateur');
 await addProfile('Noé', 'robot', 'eveil');
 const linaCard = page.locator('article.profil', { has: page.locator('h3:text-is("Lina")') });
-await linaCard.locator('input[type="checkbox"]').check();
-await page.waitForTimeout(400);
-const publicName = await linaCard.locator('b').first().textContent();
-check(!!publicName && !publicName.includes('Lina'), `nom public inventé : ${publicName}`);
+check((await linaCard.locator('input[type="checkbox"]').count()) === 0, 'plus de case « classements publics » sur le profil');
+const nouveau = page.locator('form', { has: page.locator('button:text-is("Ajouter le profil")') });
+await nouveau.locator('button.pseudo-aide').click();
+const idee = await nouveau.locator('input[name="pseudo"]').inputValue();
+check(/^[\p{L}\p{N} _-]{2,20}$/u.test(idee), `« Aide-moi à trouver un pseudo » : ${idee}`);
+await nouveau.locator('input[name="pseudo"]').fill('');
 await shot('5-espace-famille', true);
 
 // --- 3. Qui joue ? --------------------------------------------------------------------------------
@@ -182,7 +184,7 @@ await page.selectOption('#choix-mode', 'tranquille');
 await page.waitForSelector('text=Classement public');
 await page.waitForTimeout(500);
 const board = await page.textContent('#contenu');
-check(board.includes(publicName) && board.includes('Dans la famille'), 'Lina au classement public sous son nom inventé, et dans la famille');
+check(/Classement public[\s\S]*Lina[\s\S]*Dans la famille/.test(board), 'Lina au classement public sous son pseudo, et dans la famille');
 await shot('9-classements', true);
 
 // --- 5. Une autre famille ne voit rien ------------------------------------------------------------
@@ -203,7 +205,7 @@ check(status === 404, `une autre famille ne lit pas les résultats de Lina (HTTP
 const exp = await other.evaluate(async () => (await fetch('api/export')).text());
 check(!exp.includes('Lina'), 'l’export d’une autre famille ne contient pas Lina');
 const pub = await other.evaluate(async () => (await fetch('api/classements?jeu=dragon&niveau=explorateur&mode=tranquille')).text());
-check(!pub.includes('"Lina"') && !pub.includes('@'), 'le classement public ne montre ni pseudo ni e-mail');
+check(pub.includes('"Lina"') && !pub.includes('@'), 'le classement public montre le pseudo, jamais l’e-mail');
 await ctx2.close();
 
 // --- 6. Export et déconnexion ---------------------------------------------------------------------

@@ -10,6 +10,7 @@ import { activePlayer, setActivePlayer } from '../platform/player';
 import { TIER_NAMES } from '../platform/stats';
 import { field, h, showErrors } from '../platform/dom';
 import { boutonGoogle, oublierGoogle } from '../platform/google';
+import { pseudoAuHasard } from '../platform/pseudos';
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
 
@@ -27,6 +28,19 @@ function avatarPicker(name: string, value = 'dragon'): HTMLFieldSetElement {
     fs.append(h('label', { title: a.label }, input, avatarImg(id, 52, '')));
   }
   return fs;
+}
+
+/** Champ « Pseudo » avec le bouton « Aide-moi à trouver un pseudo » (jeux de mots sur les maths). */
+function pseudoField(value = ''): HTMLElement {
+  const input = h('input', { name: 'pseudo', value, maxlength: 20, required: true, placeholder: 'ex. Lina, Super Noé' });
+  const aide = h('button', { class: 'bouton petit secondaire pseudo-aide', type: 'button' }, '🎲 Aide-moi à trouver un pseudo');
+  aide.addEventListener('click', () => {
+    input.value = pseudoAuHasard(input.value);
+    input.focus();
+  });
+  return h('div', { class: 'champ-pseudo' },
+    field('Pseudo', input, 'pseudo', 'Un surnom suffit : pas de nom de famille. Il apparaît dans les classements publics.'),
+    aide);
 }
 
 function busy(form: HTMLFormElement, on: boolean): void {
@@ -147,7 +161,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
   });
 
   const edit = h('form', { class: 'formulaire', novalidate: true },
-    field('Pseudo', h('input', { name: 'pseudo', value: p.pseudo, maxlength: 20, required: true }), 'pseudo', 'Un surnom suffit : pas de nom de famille.'),
+    pseudoField(p.pseudo),
     field('Niveau', tierSelect('niveau', p.niveau), 'niveau'),
     avatarPicker(`avatar-${p.id}`, p.avatar),
     h('div', { class: 'actions' }, h('button', { class: 'bouton petit', type: 'submit' }, 'Enregistrer')),
@@ -164,18 +178,6 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
     showErrors(edit, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
 
-  const publicBox = h('input', { type: 'checkbox', checked: p.classementPublic });
-  publicBox.addEventListener('change', async () => {
-    const r = await api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { classementPublic: publicBox.checked }).catch(() => null);
-    if (r?.status === 200) refresh(r.data.profils);
-    else publicBox.checked = !publicBox.checked;
-  });
-  const rename = h('button', { class: 'bouton petit secondaire', type: 'button' }, 'Autre nom');
-  rename.addEventListener('click', async () => {
-    const r = await api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { nouveauNomPublic: true }).catch(() => null);
-    if (r?.status === 200) refresh(r.data.profils);
-  });
-
   const del = h('button', { class: 'bouton petit danger', type: 'button' }, 'Supprimer ce profil');
   del.addEventListener('click', async () => {
     if (!window.confirm(t(`Supprimer le profil « ${p.pseudo} » et tous ses résultats ? C’est définitif.`))) return;
@@ -190,9 +192,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
     h('div', { class: 'profil-tete' }, avatarImg(p.avatar, 64, ''), h('div', {}, h('h3', {}, p.pseudo), h('span', { class: 'discret' }, TIER_NAMES[p.niveau] ?? p.niveau))),
     h('div', { class: 'actions' }, play, h('a', { class: 'bouton petit secondaire', href: `tableau.html?profil=${p.id}` }, 'Voir ses progrès')),
     h('details', {}, h('summary', {}, 'Modifier'), edit),
-    h('label', { class: 'case' }, publicBox, h('span', {},
-      'Apparaître dans les classements publics, sous le nom inventé « ', h('b', {}, p.nomPublic), ' » (jamais le pseudo). Désactivé par défaut.')),
-    h('div', { class: 'actions' }, rename, del),
+    h('div', { class: 'actions' }, del),
     msg,
   );
 }
@@ -200,7 +200,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
 function newProfileCard(refresh: (profiles: Profile[]) => void): HTMLElement {
   const msg = h('p', { class: 'message', role: 'status' });
   const form = h('form', { class: 'formulaire', novalidate: true },
-    field('Pseudo', h('input', { name: 'pseudo', maxlength: 20, required: true, placeholder: 'ex. Lina, Super Noé' }), 'pseudo', 'Un surnom suffit : pas de nom de famille.'),
+    pseudoField(),
     field('Niveau', tierSelect('niveau'), 'niveau'),
     avatarPicker('avatar-nouveau'),
     msg,
@@ -339,7 +339,7 @@ function renderAccount(state: AccountState): void {
   refresh(state.profils ?? []);
   root.replaceChildren(
     h('h1', {}, 'Espace famille'),
-    h('p', { class: 'chapeau' }, 'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses résultats ne sont visibles que dans cet espace, sauf si vous l’autorisez à apparaître dans les classements publics, et alors seulement sous un nom inventé.'),
+    h('p', { class: 'chapeau' }, 'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses meilleurs scores apparaissent dans les classements publics sous son pseudo ; le reste de ses résultats n’est visible que dans cet espace.'),
     grid,
     h('div', { style: 'height: 22px' }),
     accountCard(state),

@@ -111,8 +111,8 @@ export const EN: Dictionnaire = {
   'Les classements ont besoin du serveur : indisponible pour le moment.': 'Leaderboards need the server: unavailable right now.',
   'Classement public': 'Public leaderboard',
   'Dans la famille': 'In the family',
-  'Un classement par jeu, par niveau et par mode. Seuls y figurent les joueurs qu’un parent a autorisés, sous un nom inventé (jamais leur pseudo), et seulement les scores jugés vraisemblables par le serveur.':
-    'One leaderboard per game, level and mode. Only players allowed by a parent appear, under a made-up name (never their nickname), and only scores the server finds believable.',
+  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.':
+    'One leaderboard per game, level and mode, with each player’s nickname and only scores the server finds believable.',
   Jeu: 'Game',
   Niveau: 'Level',
   Mode: 'Mode',
@@ -130,15 +130,13 @@ export const EN: Dictionnaire = {
   'Créer un espace famille': 'Create a family space',
   'Jouer avec ce profil': 'Play with this profile',
   Pseudo: 'Nickname',
-  'Un surnom suffit : pas de nom de famille.': 'A nickname is enough: no surname.',
+  'Un surnom suffit : pas de nom de famille. Il apparaît dans les classements publics.': 'A nickname is enough: no surname. It appears in public leaderboards.',
+  '🎲 Aide-moi à trouver un pseudo': '🎲 Help me find a nickname',
   Enregistrer: 'Save',
-  'Autre nom': 'Another name',
   'Supprimer ce profil': 'Delete this profile',
   'Supprimer le profil « {*} » et tous ses résultats ? C’est définitif.': 'Delete the profile “{}” and all its results? This cannot be undone.',
   'Voir ses progrès': 'See progress',
   Modifier: 'Edit',
-  'Apparaître dans les classements publics, sous le nom inventé «': 'Appear in public leaderboards, under the made-up name “',
-  '» (jamais le pseudo). Désactivé par défaut.': '” (never the nickname). Off by default.',
   'ex. Lina, Super Noé': 'e.g. Lina, Super Noah',
   'Ajouter le profil': 'Add profile',
   'Nouveau profil de joueur': 'New player profile',
@@ -155,8 +153,8 @@ export const EN: Dictionnaire = {
   'Connecté avec': 'Logged in as',
   'Télécharger nos données': 'Download our data',
   'Supprimer le compte': 'Delete the account',
-  'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses résultats ne sont visibles que dans cet espace, sauf si vous l’autorisez à apparaître dans les classements publics, et alors seulement sous un nom inventé.':
-    'Each child has a profile: a nickname, an avatar, a level. Their results are only visible in this space, unless you allow them to appear in public leaderboards, and then only under a made-up name.',
+  'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses meilleurs scores apparaissent dans les classements publics sous son pseudo ; le reste de ses résultats n’est visible que dans cet espace.':
+    'Each child has a profile: a nickname, an avatar, a level. Their best scores appear in public leaderboards under their nickname; the rest of their results are only visible in this space.',
   'Serveur indisponible': 'Server unavailable',
   'L’espace famille n’est pas joignable pour le moment (ou ce site fonctionne sans serveur). On peut toujours jouer en invité : les résultats restent sur cet appareil.':
     'The family space can’t be reached right now (or this site runs without a server). You can still play as a guest: results stay on this device.',

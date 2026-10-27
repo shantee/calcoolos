@@ -92,8 +92,8 @@ village jusqu'à la planète Bonbon, en passant par la mer de nuages, le ciel de
 certaines plateformes : bouclier, sablier (plus de temps), turbo, étoile, cœur.
 
 **Plateforme** : sans compte, tout reste dans le navigateur (aucun cookie). Un adulte peut créer un espace famille :
-un profil par enfant (pseudo, avatar, niveau), progrès sur tous les appareils, classements publics seulement sur
-autorisation et sous un nom inventé.
+un profil par enfant (pseudo, avatar, niveau), progrès sur tous les appareils, classements publics sous le pseudo
+(un bouton propose des pseudos rigolos).
 
 ## Organisation
 

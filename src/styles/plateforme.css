@@ -607,6 +607,15 @@ form.formulaire {
   outline-offset: 1px;
 }
 
+.champ-pseudo {
+  display: grid;
+  gap: 8px;
+}
+
+.champ-pseudo .pseudo-aide {
+  justify-self: start;
+}
+
 .case {
   display: flex;
   gap: 10px;

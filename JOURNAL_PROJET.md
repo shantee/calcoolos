@@ -28,6 +28,26 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-27 : Claude, session 13 (classements sous le pseudo, pseudos rigolos)
+
+Demande de Philippe : supprimer la case « Apparaître dans les classements publics, sous le nom inventé… »
+(« inutile et confusant, on va faire simple ») ; tout le monde au classement public **sous son pseudo** (« on
+changera si une personne s'en plaint ») ; à la création du profil, un bouton « Aide-moi à trouver un pseudo » qui
+propose des pseudos sympas : jeux de mots sur les maths, mais aussi des trucs marrants (« Super Calculateur »,
+« Roi des Nombres ») et des animaux (« Lama Fâché », « Poisson Malin »).
+
+Fait :
+- Serveur : `/classements` affiche le pseudo de tous les profils (scores vérifiés seulement, jamais l'e-mail) ;
+  `classementPublic` / `nomPublic` retirés des profils et de `/profils/{id}/modifier`. Colonnes laissées en base
+  (aucune migration ; `nom_public` est encore rempli car obligatoire).
+- Espace famille : case et bouton « Autre nom » retirés ; bouton « 🎲 Aide-moi à trouver un pseudo » sous le champ
+  Pseudo (nouveau profil et « Modifier ») ; textes de l'espace famille, des classements et de la confidentialité
+  mis à jour (+ anglais et allemand).
+- `src/platform/pseudos.ts` : 22 jeux de mots (Léa Dition, Sir Conférence, Pierre Amide…), 24 titres (Super
+  Calculateur, Roi des Nombres…), 22 animaux × 18 adjectifs accordés (Lama Fâché, Chouette Maligne…).
+
+Tests : Vitest 115 (dont 3 pour les pseudos : tous acceptés par le serveur), API 126, parcours plateforme 21/21.
+
 ## 2026-10-26 : Claude, session 12 (« Continuer avec Google »)
 
 Demande de Philippe : se connecter ou créer son compte d'un clic avec Google, sans parcours compliqué ; garder

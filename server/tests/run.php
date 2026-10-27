@@ -149,8 +149,7 @@ assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'dragon'
 $r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'dragon', 'niveau' => 'explorateur']);
 assert_status($r, 201, 'profil créé');
 $lina = $r->data['profils'][0];
-assert_true($lina['classementPublic'] === false, 'profil privé par défaut');
-assert_true(preg_match('/^\S+ \S+ \d\d$/u', $lina['nomPublic']) === 1, 'nom public généré : ' . $lina['nomPublic']);
+assert_true(array_keys($lina) === ['id', 'pseudo', 'avatar', 'niveau'], 'profil : pseudo, avatar, niveau, rien d\'autre');
 $r = $alice->post('/profils', ['pseudo' => 'Noé', 'avatar' => 'robot', 'niveau' => 'eveil']);
 $noe = $r->data['profils'][1];
 for ($i = 0; $i < 4; $i++) {
@@ -203,19 +202,14 @@ assert_status($bob->post('/resultats', $result($sam['id'], ['score' => 12000])),
 section('Classements');
 $q = ['jeu' => 'dragon', 'niveau' => 'explorateur', 'mode' => 'defi'];
 $r = $guest->get('/classements', $q);
-assert_true($r->data['public'] === [], 'profils privés absents du classement public');
 assert_true(!isset($r->data['famille']), 'pas de classement familial pour un invité');
-$alice->post("/profils/{$lina['id']}/modifier", ['classementPublic' => true]);
-$r = $guest->get('/classements', $q);
-assert_true(count($r->data['public']) === 1, 'Lina apparaît après autorisation');
-$row = $r->data['public'][0];
+$row = array_values(array_filter($r->data['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
+assert_true($row !== null, 'Lina au classement public sous son pseudo, sans autorisation à donner');
 assert_true($row['score'] === 8000, 'seul le meilleur score VÉRIFIÉ compte (pas 39000)');
-assert_true($row['nom'] === $lina['nomPublic'] && !str_contains($r->body(), 'Lina') && !str_contains($r->body(), '@'), 'nom public seulement : ni pseudo ni e-mail');
+assert_true(!str_contains($r->body(), '@'), 'jamais l\'e-mail au classement public');
 assert_true(array_keys($row) === ['rang', 'nom', 'avatar', 'score'], 'aucune autre donnée exposée');
 $r = $alice->get('/classements', $q);
 assert_true(count($r->data['famille']) === 1 && $r->data['famille'][0]['nom'] === 'Lina', 'classement familial avec le vrai pseudo, pour la famille seulement');
-$r = $alice->post("/profils/{$lina['id']}/modifier", ['nouveauNomPublic' => true]);
-assert_status($r, 200, 'nouveau nom public');
 assert_status($guest->get('/classements', ['jeu' => 'dragon', 'niveau' => 'x', 'mode' => 'defi']), 422, 'classement inconnu');
 
 section('Connexion');

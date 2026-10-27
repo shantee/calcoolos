@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 26/10/2026 (session 12 : **« Continuer avec Google »**, code publié, activation à faire chez Google).
+Dernière mise à jour : 27/10/2026 (session 13 : classements publics sous le pseudo, « Aide-moi à trouver un pseudo »).
 
 ---
 
@@ -36,7 +36,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
   (Canvas 2D ou PixelForge), les sons et musiques sont synthétisés en direct (Web Audio). **Exception voulue par
   Philippe : les quatre illustrations de l'accueil** (chantier 01), fournies par lui (`ART_ASSETS.md`).
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
-  classements publics sur autorisation de l'adulte et sous un **nom inventé**, export et suppression des données.
+  classements publics sous ce **pseudo** (simplification voulue par Philippe le 27/10/2026, plus d'autorisation ni de
+  nom inventé ; « Aide-moi à trouver un pseudo » en propose des rigolos), export et suppression des données.
 - **Honnêteté** : on ne dit pas qu'une chose marche sans l'avoir vue marcher dans un vrai navigateur ; on écrit les
   limites (sons jamais écoutés par un humain, tests en GPU logiciel, etc.).
 - **Communication avec Philippe** : en français simple, sans jargon, en disant ce qui marche, comment le voir, les
@@ -78,8 +79,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 112 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 129 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
-plateforme dans Chromium (20 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
+Tests : 115 tests TypeScript (Vitest, dont 7 pour les langues et 7 pour le niveau), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
+plateforme dans Chromium (21 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
 appareil).
@@ -210,8 +211,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   est retenu dans le navigateur ; le serveur vérifie à chaque fois que le profil appartient au compte (sinon 404).
 - **Résultats** : forme vérifiée (sinon 422) puis vraisemblance (sinon gardé « non vérifié », hors classements) ;
   débit limité. Hors ligne : file d'attente renvoyée depuis l'accueil.
-- **Classements** par jeu × niveau × mode : profils autorisés seulement, nom public inventé (« Dragon Futé 42 »),
-  scores vérifiés seulement ; classement familial privé.
+- **Classements** par jeu × niveau × mode : tous les profils, sous leur pseudo, scores vérifiés seulement ;
+  classement familial privé. Les colonnes `profils.classement_public` et `nom_public` restent en base mais ne
+  servent plus (27/10/2026). Pseudos proposés : `src/platform/pseudos.ts`.
 - **Sécurité** : session PHP créée seulement à la connexion (cookie HttpOnly, SameSite=Lax, Secure en prod) ; CSRF par
   en-tête `X-Calcoolos` + JSON obligatoire + jeton de session + vérification de l'origine ; limites d'essais ; IP
   gardées en empreinte 24 h ; SQL préparé ; CSP stricte.
@@ -235,7 +237,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   courte (« {*} sur {*} » avalerait toute phrase contenant « sur »). Les textes à plusieurs lignes, ou coupés par
   « · » ou trois espaces, sont traduits morceau par morceau.
 - **Choix de la langue** : `localStorage['calcoolos.langue']`, sinon `navigator.languages` (fr, de, en), sinon
-  anglais. Un clic sur un drapeau enregistre et recharge la page. Le nom inventé des classements (« Dragon Futé 42 »)
+  anglais. Un clic sur un drapeau enregistre et recharge la page. Les pseudos proposés
   et la page de confidentialité restent en français.
 - **Oublis** : `window.__tradManquantes` (console) liste les textes restés en français sur la page.
 - **Largeur** : l'allemand est plus long ; les textes des jeux ont été vérifiés sur captures (début, partie, fin des
