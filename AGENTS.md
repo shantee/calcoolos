@@ -310,10 +310,10 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 
 0. **À reprendre en premier (arrêt du 26/10/2026 au soir) : activer « Continuer avec Google ».** Le code est
    publié (`4a17d26`, migration `002_google.php` appliquée) ; le bouton reste caché tant que rien n'est configuré.
-   1. Philippe, dans la console Google : projet « Calcoolos », Google Auth Platform (Externe, page de
-      confidentialité, domaine `zfx.fr`), **Publier l'application**, client « Application Web » avec l'origine
-      `https://calculos.zfx.fr` (pas d'URI de redirection). Pas à pas : `doc/GOOGLE.md` § 1. Il donne seulement
-      l'**ID client** (jamais le code secret, jamais son mot de passe Google).
+   1. ~~Console Google~~ **fait le 27/10/2026** (compte philippe25@gmail.com) : projet `calcoolos`, application
+      « Calcoolos » publiée (Externe, sans logo pour éviter la vérification), domaine `zfx.fr`, client Web
+      « Calcoolos site web » (origines `https://calculos.zfx.fr`, `http://localhost:5173`, `http://localhost`).
+      ID client (public) : `82220296605-2srbvkp5bs0rr17uri95da6tagbj6tgo.apps.googleusercontent.com`.
    2. Philippe lance (sudo, il tape son mot de passe) :
       `ssh -t shantee@192.168.1.26 'sudo bash /home/calculos-zfx-fr/calcoolos/current/deploy/webdell/activer-google.sh <ID>'`
       (sauvegarde, `nginx -t`, retour arrière automatique ; annulation : `--desactiver`).
