@@ -111,8 +111,6 @@ export const EN: Dictionnaire = {
   'Les classements ont besoin du serveur : indisponible pour le moment.': 'Leaderboards need the server: unavailable right now.',
   'Classement public': 'Public leaderboard',
   'Dans la famille': 'In the family',
-  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.':
-    'One leaderboard per game, level and mode, with each player’s nickname and only scores the server finds believable.',
   Jeu: 'Game',
   Niveau: 'Level',
   Mode: 'Mode',
@@ -255,7 +253,6 @@ export const EN: Dictionnaire = {
   'Session terminée : reconnecte-toi.': 'Session ended: log in again.',
   'serveur indisponible': 'server unavailable',
   'Résultat refusé.': 'Result refused.',
-  'Mode invité : résultat gardé sur cet appareil.': 'Guest mode: result kept on this device.',
   'Résultat enregistré pour {*} : nouveau record !': 'Result saved for {}: new record!',
   'Résultat enregistré pour {*}.': 'Result saved for {}.',
   'Résultat enregistré pour {*} (non classé).': 'Result saved for {} (not ranked).',
@@ -591,4 +588,10 @@ export const EN: Dictionnaire = {
     'Type the account’s exact address to confirm.',
   'Adresse différente.':
     'Different address.',
+  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur.': 'One leaderboard per game, level and mode, with each player’s nickname. Every game counts, won or lost, as long as the server finds the score believable.',
+  'Mode invité : score gardé ici, hors classement.': 'Guest mode: score kept here, not ranked.',
+  'Sur cet appareil': 'On this device',
+  'Ton meilleur score : ': 'Your best score: ',
+  'Pas encore de partie ici dans ce jeu, ce niveau et ce mode.': 'No game here yet for this game, level and mode.',
+  'En mode invité, les scores restent sur cet appareil. Pour apparaître dans le classement public, gagné ou perdu : ': 'In guest mode, scores stay on this device. To appear in the public leaderboard, won or lost: ',
 };

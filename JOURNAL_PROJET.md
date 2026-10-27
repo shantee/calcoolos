@@ -48,6 +48,14 @@ Fait :
 
 Tests : Vitest 115 (dont 3 pour les pseudos : tous acceptés par le serveur), API 126, parcours plateforme 21/21.
 
+Suite (même jour) : Philippe a perdu une partie de Cubes de siège en Explorateur et voulait la voir au classement.
+Le serveur compte déjà les parties perdues (score vérifié) ; deux causes possibles côté page :
+- la page Classements s'ouvrait toujours sur le Dragon en Défi → elle s'ouvre maintenant sur **la dernière partie
+  jouée** sur l'appareil (`calcoolos.derniere-partie`, écrit par `reportResult`) ;
+- en invité, rien ne part au serveur → carte « Sur cet appareil » (meilleur score local + « Créer mon compte ») et
+  message de fin « Mode invité : score gardé ici, hors classement. » (vérifié sur capture : tient dans le cadre).
+Base de production non consultée (lecture refusée) : on ne sait pas laquelle des deux causes l'a touché.
+
 ## 2026-10-26 : Claude, session 12 (« Continuer avec Google »)
 
 Demande de Philippe : se connecter ou créer son compte d'un clic avec Google, sans parcours compliqué ; garder

@@ -37,6 +37,7 @@ export type ReportOutcome =
 
 const HISTORY_KEY = 'calcoolos.historique';
 const QUEUE_KEY = 'calcoolos.envois';
+const LAST_KEY = 'calcoolos.derniere-partie';
 const MAX_LOCAL = 300;
 
 function read<T>(key: string): T[] {
@@ -59,6 +60,16 @@ function write(key: string, value: unknown[]): void {
 /** Historique de l'invité sur cet appareil (le plus récent d'abord). */
 export function localHistory(): StoredResult[] {
   return read<StoredResult>(HISTORY_KEY);
+}
+
+/** Jeu, niveau et mode de la dernière partie jouée sur cet appareil (invité ou profil). */
+export function lastGame(): { jeu: string; niveau: string; mode: string } | null {
+  try {
+    const v = JSON.parse(localStorage.getItem(LAST_KEY) ?? 'null') as { jeu?: unknown; niveau?: unknown; mode?: unknown } | null;
+    return v && typeof v.jeu === 'string' && typeof v.niveau === 'string' && typeof v.mode === 'string' ? { jeu: v.jeu, niveau: v.niveau, mode: v.mode } : null;
+  } catch {
+    return null;
+  }
 }
 
 export function clearLocalHistory(): void {
@@ -99,6 +110,11 @@ async function send(profile: number, r: GameResult): Promise<{ status: number; d
 
 export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
   const r = cleanResult(raw);
+  try {
+    localStorage.setItem(LAST_KEY, JSON.stringify({ jeu: r.jeu, niveau: r.niveau, mode: r.mode }));
+  } catch {
+    /* stockage indisponible */
+  }
   const player = activePlayer();
   if (!player) {
     addLocal(r);
@@ -144,7 +160,7 @@ export async function flushQueue(): Promise<number> {
 export function outcomeText(o: ReportOutcome): string {
   switch (o.kind) {
     case 'local':
-      return 'Mode invité : résultat gardé sur cet appareil.';
+      return 'Mode invité : score gardé ici, hors classement.';
     case 'serveur':
       return o.verifie ? `Résultat enregistré pour ${o.pseudo}${o.record ? ' : nouveau record !' : '.'}` : `Résultat enregistré pour ${o.pseudo} (non classé).`;
     case 'attente':

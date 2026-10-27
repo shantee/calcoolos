@@ -41,7 +41,7 @@ describe('traduction', () => {
   it('traduit ligne par ligne et morceau par morceau', async () => {
     const { t } = await avecLangue('en');
     expect(t('Score 40\nNouveau record !')).toBe('Score 40\nNew record!');
-    expect(t('★★☆   Mode invité : résultat gardé sur cet appareil.')).toBe('★★☆   Guest mode: result kept on this device.');
+    expect(t('★★☆   Mode invité : score gardé ici, hors classement.')).toBe('★★☆   Guest mode: score kept here, not ranked.');
   });
   it('laisse en français un texte inconnu et le note', async () => {
     const { t, manquantes } = await avecLangue('en');

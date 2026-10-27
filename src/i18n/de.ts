@@ -111,8 +111,6 @@ export const DE: Dictionnaire = {
   'Les classements ont besoin du serveur : indisponible pour le moment.': 'Die Bestenlisten brauchen den Server: im Moment nicht erreichbar.',
   'Classement public': 'Öffentliche Bestenliste',
   'Dans la famille': 'In der Familie',
-  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.':
-    'Eine Bestenliste pro Spiel, Level und Modus, mit dem Spitznamen jedes Spielers und nur Punkteständen, die der Server für glaubwürdig hält.',
   Jeu: 'Spiel',
   Niveau: 'Level',
   Mode: 'Modus',
@@ -255,7 +253,6 @@ export const DE: Dictionnaire = {
   'Session terminée : reconnecte-toi.': 'Sitzung beendet: Melde dich neu an.',
   'serveur indisponible': 'Server nicht erreichbar',
   'Résultat refusé.': 'Ergebnis abgelehnt.',
-  'Mode invité : résultat gardé sur cet appareil.': 'Gastmodus: Ergebnis auf diesem Gerät gespeichert.',
   'Résultat enregistré pour {*} : nouveau record !': 'Ergebnis für {} gespeichert: neuer Rekord!',
   'Résultat enregistré pour {*}.': 'Ergebnis für {} gespeichert.',
   'Résultat enregistré pour {*} (non classé).': 'Ergebnis für {} gespeichert (nicht gewertet).',
@@ -591,4 +588,10 @@ export const DE: Dictionnaire = {
     'Gib zur Bestätigung genau die Adresse des Kontos ein.',
   'Adresse différente.':
     'Andere Adresse.',
+  'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur.': 'Eine Bestenliste pro Spiel, Level und Modus, mit dem Spitznamen jedes Spielers. Jede Partie zählt, gewonnen oder verloren, solange der Server den Punktestand für glaubwürdig hält.',
+  'Mode invité : score gardé ici, hors classement.': 'Gastmodus: hier gespeichert, ohne Rangliste.',
+  'Sur cet appareil': 'Auf diesem Gerät',
+  'Ton meilleur score : ': 'Dein bester Punktestand: ',
+  'Pas encore de partie ici dans ce jeu, ce niveau et ce mode.': 'Noch keine Partie hier in diesem Spiel, Level und Modus.',
+  'En mode invité, les scores restent sur cet appareil. Pour apparaître dans le classement public, gagné ou perdu : ': 'Im Gastmodus bleiben die Punktestände auf diesem Gerät. Um in der öffentlichen Bestenliste zu erscheinen, ob gewonnen oder verloren: ',
 };

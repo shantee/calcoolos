@@ -6,6 +6,7 @@ import { topbar } from '../platform/topbar';
 import { api } from '../platform/api';
 import { avatarImg } from '../platform/avatars';
 import { activePlayer } from '../platform/player';
+import { lastGame, localHistory } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, TIER_NAMES } from '../platform/stats';
 import { h } from '../platform/dom';
 
@@ -45,9 +46,11 @@ void (async () => {
       return 'explorateur';
     }
   })();
-  const jeu = select('jeu', GAME_NAMES, 'dragon');
-  const niveau = select('niveau', TIER_NAMES, tier);
-  const mode = select('mode', MODE_NAMES, 'defi');
+  // On ouvre sur la dernière partie jouée ici, sinon sur le Dragon en Défi.
+  const last = lastGame();
+  const jeu = select('jeu', GAME_NAMES, last && last.jeu in GAME_NAMES ? last.jeu : 'dragon');
+  const niveau = select('niveau', TIER_NAMES, last && last.niveau in TIER_NAMES ? last.niveau : tier);
+  const mode = select('mode', MODE_NAMES, last && last.mode in MODE_NAMES ? last.mode : 'defi');
   const out = h('div', { 'aria-live': 'polite' });
   const load = async () => {
     out.replaceChildren(h('p', { class: 'discret' }, 'Chargement…'));
@@ -58,12 +61,23 @@ void (async () => {
     }
     const cards = [h('section', { class: 'carte' }, h('h2', {}, 'Classement public'), table(r.data.public, true))];
     if (r.data.famille) cards.push(h('section', { class: 'carte' }, h('h2', {}, 'Dans la famille'), table(r.data.famille, false)));
+    else cards.push(guestCard());
     out.replaceChildren(h('div', { class: 'grille' }, ...cards));
+  };
+  // Invité : ses parties restent sur l'appareil ; on lui montre son meilleur score et comment entrer au classement.
+  const guestCard = () => {
+    const best = localHistory()
+      .filter((x) => x.jeu === jeu.value && x.niveau === niveau.value && x.mode === mode.value)
+      .reduce((m, x) => Math.max(m, x.score), -1);
+    return h('section', { class: 'carte' }, h('h2', {}, 'Sur cet appareil'),
+      best >= 0 ? h('p', {}, 'Ton meilleur score : ', h('b', {}, String(best))) : h('p', { class: 'discret' }, 'Pas encore de partie ici dans ce jeu, ce niveau et ce mode.'),
+      h('p', {}, 'En mode invité, les scores restent sur cet appareil. Pour apparaître dans le classement public, gagné ou perdu : '),
+      h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'));
   };
   for (const s of [jeu, niveau, mode]) s.addEventListener('change', () => void load());
   root.replaceChildren(
     h('h1', {}, 'Classements'),
-    h('p', { class: 'chapeau' }, 'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur et seulement les scores jugés vraisemblables par le serveur.'),
+    h('p', { class: 'chapeau' }, 'Un classement par jeu, par niveau et par mode, avec le pseudo de chaque joueur. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur.'),
     h('div', { class: 'onglets' },
       h('label', { class: 'champ' }, 'Jeu', jeu),
       h('label', { class: 'champ' }, 'Niveau', niveau),
