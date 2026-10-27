@@ -60,8 +60,9 @@ de l'accueil invité et du panneau joueur, ordinateur et téléphone, avec une A
   la migration, à la publication (`mettre-en-service.sh`, retour arrière automatique).
 - Plusieurs avatars reprennent des personnages connus (Adventure Time : Finn, Jake, Princesse Chewing-gum,
   Marceline, BMO ; Rick de Rick et Morty ; Lapin crétin ; Kakashi de Naruto ; Noiraude de Ghibli) et deux animaux
-  fument (chat à lunettes, pingouin) : signalé à Philippe, à retirer d'une ligne si besoin (liste dans
-  `avatars.ts` et `Api.php`, plus une ligne de migration pour les profils qui les auraient choisis).
+  fument (chat à lunettes, pingouin). **Décision de Philippe (27/10/2026) : on garde tout** (« pas un truc tout
+  lisse tout fade ») ; si un ayant droit nous contacte, on retire l'avatar concerné (liste dans `avatars.ts` et
+  `Api.php`, plus une ligne de migration pour les profils qui l'auraient choisi).
 
 ## 2026-10-27 : Claude, session 13 (classements sous le pseudo, pseudos rigolos)
 
