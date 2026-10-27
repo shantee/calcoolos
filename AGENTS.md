@@ -58,6 +58,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 4. Tout ce qui est visible par l'utilisateur est **écrit en français** (interface, docs, commentaires du code). Le
    français est la version de référence ; l'anglais et l'allemand sont des traductions posées par-dessus
    (`src/i18n/`, voir § 8 bis), qu'on n'est **pas obligé** de tenir à jour (souhait de Philippe, 26/10/2026).
+   **Depuis le 27/10/2026 : on travaille en français uniquement** : ne plus tester en anglais ni en allemand, ne
+   pas traduire les nouveaux textes (ils restent en français dans les autres langues) ; on y reviendra plus tard.
 5. Ne pas créer d'écrans factices : une fonctionnalité annoncée doit marcher dans le navigateur, ou être signalée
    comme non faite.
 
