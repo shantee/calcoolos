@@ -13,7 +13,8 @@ import * as A from '../../art/pixel-rocket';
 import { P, PX } from '../../art/pixel-rocket';
 import type { PixelCanvas } from '../../art/pixelforge';
 import { Sfx } from '../sfx';
-import { RocketSession, SUMMIT, ZONES, MAX_VX, type Platform, type RocketEvent, type Star } from './session';
+import { RocketSession, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
+import type { Grade } from '../../core/calc-grade';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
@@ -26,6 +27,13 @@ const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
 const tint = (hex: string): number => parseInt(hex.slice(1), 16);
+
+/** Couleur de l'encadré selon la difficulté du calcul ; les points disent aussi la difficulté (daltoniens). */
+const GRADE_LOOK: Record<Grade, { fill: string; edge: string; text: string; label: string }> = {
+  facile: { fill: '#1e4d36', edge: P.G, text: P.L, label: 'facile ●' },
+  moyen: { fill: P.m, edge: '#f08a2c', text: '#ffb05a', label: 'moyen ●●' },
+  difficile: { fill: P.V, edge: P.R, text: P.p, label: 'difficile ●●●' },
+};
 
 function style(size: number, color: string, stroke = 0): Phaser.Types.GameObjects.Text.TextStyle {
   return { fontFamily: FONT, fontSize: `${size}px`, fontStyle: '700', color, stroke: P.K, strokeThickness: stroke };
@@ -113,6 +121,8 @@ export class RocketScene extends Phaser.Scene {
 
   // Interface
   private qPanel!: Phaser.GameObjects.Container;
+  private qBg!: Phaser.GameObjects.Image;
+  private qTag!: Phaser.GameObjects.Text;
   private qText!: Phaser.GameObjects.BitmapText;
   private qTokens: Phaser.GameObjects.BitmapText[] = [];
   private qBar!: Phaser.GameObjects.Graphics;
@@ -478,10 +488,13 @@ export class RocketScene extends Phaser.Scene {
     const fixed = <T extends Phaser.GameObjects.GameObject & { setScrollFactor(x: number): T }>(o: T): T => o.setScrollFactor(0);
     // Panneau du calcul.
     this.qPanel = this.add.container(W / 2, 74).setScrollFactor(0).setDepth(60);
-    this.qPanel.add(this.add.image(0, 0, this.tx('f-qpanel', () => A.frame(104, 30, P.N, P.B))).setScale(PX));
+    for (const [g, look] of Object.entries(GRADE_LOOK)) this.tx(`f-qpanel-${g}`, () => A.gradePanel(104, 30, look.fill, look.edge));
+    this.qBg = this.add.image(0, 0, 'f-qpanel-facile').setScale(PX);
+    // Étiquette de difficulté, juste sous l'encadré.
+    this.qTag = this.txt(0, 74, '', style(20, P.W, 5)).setOrigin(0.5);
     this.qText = this.num(0, -8, '');
     this.qBar = this.add.graphics();
-    this.qPanel.add([this.qText, this.qBar]);
+    this.qPanel.add([this.qBg, this.qTag, this.qText, this.qBar]);
     this.qPanel.setVisible(false);
     fixed(this.txt(84, 14, 'Score', style(22, P.W, 5)).setDepth(60));
     this.scoreText = fixed(this.num(170, 30, '0', 3).setOrigin(0, 0.5).setDepth(60));
@@ -592,7 +605,8 @@ export class RocketScene extends Phaser.Scene {
     const k = Phaser.Math.Clamp(q.left / q.time, 0, 1);
     const w = 352;
     const blocks = Math.ceil((w * k) / 8);
-    const col = k > 0.5 ? 0x38b764 : k > 0.25 ? 0xffcd75 : 0xb13e53;
+    // Barre neutre (les couleurs disent la difficulté) ; elle clignote quand le temps presse.
+    const col = k > 0.3 || Math.floor(this.time.now / 160) % 2 ? 0xf4f4f4 : 0x566c86;
     this.qBar.fillStyle(0x1a1c2c, 1).fillRect(-w / 2 - 4, 28, w + 8, 16);
     this.qBar.fillStyle(col, 1);
     for (let i = 0; i < blocks; i++) this.qBar.fillRect(-w / 2 + i * 8, 32, 6, 8);
@@ -612,11 +626,14 @@ export class RocketScene extends Phaser.Scene {
     this.comboText.setText(s.combo > 1 ? `×${s.combo}` : '');
     this.hud.removeAll(true);
     let x = W - 110;
+    let y = 40;
     if (s.lives !== null) {
-      for (let i = 0; i < Math.max(3, s.lives); i++) {
-        this.hud.add(this.add.image(x - i * 34, 40, this.tx(`f-heart-${i < s.lives ? 1 : 0}`, () => A.heartIcon(i < (s.lives ?? 0)))).setScale(PX));
+      // Huit cœurs, qui se vident par moitiés ; les bonus passent sur la ligne du dessous.
+      for (let i = 0; i < MAX_LIVES; i++) {
+        const fill: A.HeartFill = s.lives >= i + 1 ? 'plein' : s.lives >= i + 0.5 ? 'demi' : 'vide';
+        this.hud.add(this.add.image(x - i * 31, 40, this.tx(`f-heart-${fill}`, () => A.heartIcon(fill))).setScale(PX));
       }
-      x -= Math.max(3, s.lives) * 34 + 10;
+      y = 88;
     }
     const icons: Array<[boolean, string, A.PowerLook, string]> = [
       [s.shield, 'bouclier', 'bouclier', ''],
@@ -625,8 +642,8 @@ export class RocketScene extends Phaser.Scene {
     ];
     for (const [on, , look, label] of icons) {
       if (!on) continue;
-      this.hud.add(this.add.image(x, 40, `f-pow-${look}`).setScale(3));
-      if (label) this.hud.add(this.txt(x + 16, 46, label, style(16, P.W, 4)));
+      this.hud.add(this.add.image(x, y, `f-pow-${look}`).setScale(3));
+      if (label) this.hud.add(this.txt(x + 16, y + 6, label, style(16, P.W, 4)));
       x -= 50;
     }
   }
@@ -738,7 +755,7 @@ export class RocketScene extends Phaser.Scene {
       this.tintCalc(P.r);
       this.qBar.clear();
       if (!this.reducedMotion) this.tweens.add({ targets: this.qPanel, x: { from: W / 2 - 12, to: W / 2 }, duration: 400, ease: 'Elastic.easeOut' });
-      this.refreshHud();
+      this.loseHeart(r.lifeLost);
       return;
     }
     // Bonne réponse : poussée !
@@ -759,6 +776,13 @@ export class RocketScene extends Phaser.Scene {
     }
     if (!this.reducedMotion) for (let i = 0; i < 4; i++) this.puff(this.ship.x + Phaser.Math.Between(-20, 20), this.ship.y + Phaser.Math.Between(0, 20), true);
     this.refreshHud();
+  }
+
+  /** Calcul raté en Défi : « −½ ♥ » ou « −1 ♥ » au-dessus de la fusée, défaite s'il n'en reste plus. */
+  private loseHeart(lost: number): void {
+    this.refreshHud();
+    if (lost > 0) this.floatText(this.ship.x - 70, this.ship.y - 90, lost < 1 ? '−½ ♥' : '−1 ♥', P.r, 28);
+    if (this.session?.phase === 'lost') this.time.delayedCall(700, () => this.defeat());
   }
 
   private onBackspace(): void {
@@ -817,18 +841,22 @@ export class RocketScene extends Phaser.Scene {
   private onEvent(ev: RocketEvent): void {
     const s = this.session!;
     switch (ev.type) {
-      case 'question':
+      case 'question': {
+        const look = GRADE_LOOK[ev.q.grade];
+        this.qBg.setTexture(`f-qpanel-${ev.q.grade}`);
+        this.qTag.setText(look.label).setColor(look.text);
         this.qPanel.setVisible(true);
         this.qPanel.setScale(1).setX(W / 2);
         this.refreshQuestion();
         if (!this.reducedMotion) this.tweens.add({ targets: this.qPanel, scaleY: { from: 0.3, to: 1 }, duration: 180, ease: 'Back.easeOut' });
         break;
+      }
       case 'timeout':
         this.sfx.timeout();
         this.setCalc(`${ev.q.expr.text} = ${ev.q.expr.answer}`);
         this.tintCalc(P.g);
         this.qBar.clear();
-        this.refreshHud();
+        this.loseHeart(ev.lifeLost);
         break;
       case 'land': {
         const v = this.views.get(ev.platform.id);
@@ -1094,12 +1122,21 @@ export class RocketScene extends Phaser.Scene {
     ex.add(this.add.image(90, 20, 'f-rocket-joie').setOrigin(0.5, 1).setScale(PX * 0.8));
     ex.add(this.add.image(90, 22, 'f-flame-1-0').setOrigin(0.5, 0).setScale(PX * 0.8));
     c.add(ex);
-    c.add(this.txt(W / 2, top + 330, 'Chiffres : clavier ou pavé  ·  Pilote : ← → (ou Q D) ou les boutons', style(18, P.C)).setOrigin(0.5));
-    c.add(this.txt(W / 2, top + 360, `Les calculs faciles filent vite ! · Niveau ${this.tier.label} (${this.tier.public})`, style(18, P.g)).setOrigin(0.5));
+    c.add(this.txt(W / 2, top + 330, `Chiffres : clavier ou pavé  ·  Pilote : ← → (ou Q D)  ·  Niveau ${this.tier.label}`, style(18, P.C)).setOrigin(0.5));
+    // Les trois couleurs de calculs, chacune écrite dans sa couleur.
+    const legend = (['facile', 'moyen', 'difficile'] as const).map((g) => this.txt(0, top + 362, GRADE_LOOK[g].label, style(18, GRADE_LOOK[g].text, 4)).setOrigin(0, 0.5));
+    const tail = this.txt(0, top + 362, ': plus c’est dur, plus ça rapporte', style(18, P.g)).setOrigin(0, 0.5);
+    const row = [...legend, tail];
+    let lx = W / 2 - (row.reduce((a, t) => a + t.width, 0) + 14 * (row.length - 1)) / 2;
+    for (const t of row) {
+      t.setX(lx);
+      lx += t.width + 14;
+      c.add(t);
+    }
     this.addOverlayButton(W / 2 - 140, top + 440, 'Tranquille', false, () => this.startGame('tranquille'));
     this.addOverlayButton(W / 2 + 140, top + 440, 'Défi', true, () => this.startGame('defi'));
     c.add(this.txt(W / 2 - 140, top + 486, 'plus de temps, rien à perdre', style(16, P.g)).setOrigin(0.5));
-    c.add(this.txt(W / 2 + 140, top + 486, '3 cœurs, chutes dangereuses', style(16, P.g)).setOrigin(0.5));
+    c.add(this.txt(W / 2 + 140, top + 486, '8 cœurs : un raté coûte ½ ♥, 1 ♥ si vert', style(16, P.g)).setOrigin(0.5));
     this.overlayFocus = 1;
     this.refreshOverlayFocus();
   }

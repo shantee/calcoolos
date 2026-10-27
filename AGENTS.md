@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 27/10/2026 (session 14 : 49 avatars pixel art de Philippe à la place des avatars dessinés par code).
+Dernière mise à jour : 27/10/2026 (session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
 
 ---
 
@@ -80,7 +80,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 118 tests TypeScript (Vitest, dont 7 pour les langues, 7 pour le niveau et 3 pour les avatars), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
+Tests : 127 tests TypeScript (Vitest, dont 7 pour les langues, 7 pour le niveau, 3 pour les avatars et 6 pour les couleurs de calculs), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
 plateforme dans Chromium (21 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
@@ -147,7 +147,8 @@ src/images/avatars/        49 avatars WebP 128 × 128 découpés dans sources-im
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
 src/core/                  logique pure partagée : rng (mulberry32), puzzle (somme minimale, sac à dos),
-                           scoring, difficulty (4 paliers), adaptive, waves, expressions (calculs par palier)
+                           scoring, difficulty (4 paliers), adaptive, waves, expressions (calculs par palier),
+                           calc-grade (calcul vert / orange / rouge selon le niveau)
 src/game/siege/            Cubes de siège : round.ts, session.ts (logique), game-scene.ts (Phaser)
 src/game/meteors/          Pluie de météores : session.ts, meteor-scene.ts
 src/game/dragon/           Le Dragon gourmand : session.ts, dragon-scene.ts
@@ -198,8 +199,9 @@ Phaser qui ne fait que montrer et animer. La scène, en fin de partie, appelle `
   pour faire exactement un nombre (additions ; multiplications en Stratège/Maître) ; le total n'est jamais affiché ;
   trop mangé = hoquet. Objectif toujours atteignable, jamais coincé après une bouchée. Trois ciels (chauves-souris,
   orage), souffle de feu, écailles d'or.
-- **Décollage !** (pixel art ×4) : un calcul chronométré est toujours affiché (2-3 s pour un calcul facile, plus pour
-  7 × 8 ou 56 ÷ 8) ; bonne réponse = poussée ; on pilote la fusée pour se poser sur des plateformes, du village à la
+- **Décollage !** (pixel art ×4) : un calcul chronométré est toujours affiché, dans un encadré vert, orange ou rouge
+  selon sa difficulté pour le niveau (`src/core/calc-grade.ts`) ; plus il est dur, plus il donne de temps et de
+  points ; en Défi, 8 cœurs, un calcul raté coûte ½ cœur (1 si vert) ; bonne réponse = poussée ; on pilote la fusée pour se poser sur des plateformes, du village à la
   planète Bonbon (5 étages). Plateformes mobiles et fragiles (qui se reforment), bonus, étoiles, montgolfière de
   secours. Chaque plateforme est à portée d'une poussée (testé sur 200 mondes).
 

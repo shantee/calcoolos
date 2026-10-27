@@ -856,8 +856,25 @@ export function arrow(dir: -1 | 1, pressed: boolean): PixelCanvas {
   return pc;
 }
 
-export function heartIcon(full: boolean): PixelCanvas {
-  return art(['.KK.KK.', 'KRrKRRK', 'KRRRRRK', '.KRRRK.', '..KRK..', '...K...'], full ? {} : { R: P.d, r: P.h });
+export type HeartFill = 'plein' | 'demi' | 'vide';
+
+/** Cœur des vies ; « demi » : moitié gauche rouge, moitié droite vide. */
+export function heartIcon(fill: HeartFill): PixelCanvas {
+  const rows = ['.KK.KK.', 'KRrKRRK', 'KRRRRRK', '.KRRRK.', '..KRK..', '...K...'];
+  const empty = { E: P.d, e: P.h };
+  if (fill === 'vide') return art(rows.map((r) => r.replace(/R/g, 'E').replace(/r/g, 'e')), empty);
+  if (fill === 'demi') return art(rows.map((r) => r.slice(0, 4) + r.slice(4).replace(/R/g, 'E').replace(/r/g, 'e')), empty);
+  return art(rows);
+}
+
+/** Cadre du calcul, bordé de la couleur de sa difficulté (vert, orange, rouge). */
+export function gradePanel(w: number, h: number, fill: string, edge: string): PixelCanvas {
+  const pc = frame(w, h, fill, edge);
+  pc.fill(1, 1, w - 2, 2, edge);
+  pc.fill(1, h - 4, w - 2, 2, edge);
+  pc.fill(1, 1, 2, h - 3, edge);
+  pc.fill(w - 3, 1, 2, h - 3, edge);
+  return pc;
 }
 
 export function miniRocket(): PixelCanvas {

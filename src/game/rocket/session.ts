@@ -7,11 +7,16 @@
  * poussées, la gravité reprend ses droits et il faut se poser sur une plateforme.
  * On pilote à gauche et à droite pendant le vol.
  *
+ * Chaque calcul a une couleur (vert facile, orange moyen, rouge difficile, voir
+ * core/calc-grade) : plus il est dur, plus il donne de temps et de points. En Défi,
+ * un calcul raté (faux ou temps écoulé) coûte un demi-cœur, un cœur entier s'il était vert.
+ *
  * Repère : x de 0 à WORLD_W (pixels de la scène), y = altitude en pixels (vers le haut).
  * La position de la fusée est celle du milieu de sa base.
  */
 import { createRng, type Rng } from '../../core/rng';
-import { pickExpression, type Expression } from '../../core/expressions';
+import type { Expression } from '../../core/expressions';
+import { gradeOf, pickGrade, pickGraded, type Grade } from '../../core/calc-grade';
 import type { TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 
@@ -78,6 +83,7 @@ export interface Star {
 
 export interface Question {
   expr: Expression;
+  grade: Grade;
   /** Temps total accordé (s). */
   time: number;
   left: number;
@@ -94,15 +100,22 @@ export interface Rocket {
 
 export const ROCKET_MODES: Record<Mode, { lives: number | null; timeFactor: number }> = {
   tranquille: { lives: null, timeFactor: 1.5 },
-  defi: { lives: 3, timeFactor: 1 },
+  defi: { lives: 8, timeFactor: 1 },
 };
+/** Cœurs au plus (le bonus cœur ne dépasse pas le départ). */
+export const MAX_LIVES = 8;
+/** Cœurs perdus pour un calcul raté (faux ou temps écoulé), en Défi : rater un vert coûte plus cher. */
+export const MISS_COST: Record<Grade, number> = { facile: 1, moyen: 0.5, difficile: 0.5 };
+/** Multiplicateur de points : un calcul difficile vaut le risque. */
+export const GRADE_POINTS: Record<Grade, number> = { facile: 1, moyen: 1.5, difficile: 2 };
+/** Secondes en plus selon la couleur (le calcul lui-même compte déjà dans la base). */
+const GRADE_TIME: Record<Grade, number> = { facile: 0, moyen: 1, difficile: 2 };
 
 const TIER_TIME: Record<TierId, number> = { eveil: 1.6, explorateur: 1.3, stratege: 1.12, maitre: 1 };
-const NEXT_TIER: Record<TierId, TierId> = { eveil: 'explorateur', explorateur: 'stratege', stratege: 'maitre', maitre: 'maitre' };
 
 export type RocketEvent =
   | { type: 'question'; q: Question }
-  | { type: 'timeout'; q: Question }
+  | { type: 'timeout'; q: Question; lifeLost: number }
   | { type: 'land'; platform: Platform; impact: number; hard: boolean; record: boolean; lifeLost: boolean }
   | { type: 'power'; kind: PowerKind; platform: Platform }
   | { type: 'star'; star: Star }
@@ -115,7 +128,7 @@ export type RocketEvent =
 
 export type InputResult =
   | { kind: 'pending' }
-  | { kind: 'wrong'; typed: string; expected: number }
+  | { kind: 'wrong'; typed: string; expected: number; lifeLost: number }
   | { kind: 'correct'; points: number; turbo: boolean };
 
 export interface RocketStats {
@@ -133,7 +146,8 @@ export interface RocketStats {
 
 /**
  * Temps accordé pour un calcul : court pour les calculs faciles, plus long pour
- * les tables difficiles et les divisions ; un peu plus court en altitude.
+ * les tables difficiles et les divisions ; un peu plus court en altitude. Une seconde
+ * de plus pour tout le monde, deux en Éveil ou en Tranquille, et un supplément selon la couleur.
  */
 export function timeFor(e: Expression, tier: TierId, mode: Mode, altitude: number): number {
   const big = Math.max(e.a, e.b);
@@ -151,7 +165,8 @@ export function timeFor(e: Expression, tier: TierId, mode: Mode, altitude: numbe
       break;
   }
   const height = 1 - 0.18 * Math.min(1, altitude / SUMMIT);
-  return Math.round(Math.min(11, Math.max(2, base * TIER_TIME[tier] * ROCKET_MODES[mode].timeFactor * height)) * 10) / 10;
+  const extra = (tier === 'eveil' || mode === 'tranquille' ? 2 : 1) + GRADE_TIME[gradeOf(e, tier)];
+  return Math.round(Math.min(13, Math.max(3, base * TIER_TIME[tier] * ROCKET_MODES[mode].timeFactor * height + extra)) * 10) / 10;
 }
 
 export function zoneAt(y: number): number {
@@ -307,7 +322,9 @@ export class RocketSession {
       this.stats.wrong++;
       this.combo = 0;
       this.wait = 0.7;
-      return { kind: 'wrong', typed, expected };
+      const lifeLost = this.miss(q);
+      this.checkLost([]);
+      return { kind: 'wrong', typed, expected, lifeLost };
     }
     tally[0]++;
     this.stats.correct++;
@@ -315,7 +332,7 @@ export class RocketSession {
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     // Points : rapidité et série.
     const quick = q.left / q.time;
-    const points = Math.round((20 + 30 * quick) * (1 + Math.min(10, this.combo - 1) * 0.1));
+    const points = Math.round((20 + 30 * quick) * (1 + Math.min(10, this.combo - 1) * 0.1) * GRADE_POINTS[q.grade]);
     this.score += points;
     const turbo = this.turbo;
     this.turbo = false;
@@ -330,6 +347,14 @@ export class RocketSession {
 
   // --- interne ---------------------------------------------------------------------------------
 
+  /** Calcul raté (faux ou temps écoulé) : en Défi, un demi-cœur, un cœur entier s'il était facile. */
+  private miss(q: Question): number {
+    if (this.lives === null) return 0;
+    const cost = Math.min(this.lives, MISS_COST[q.grade]);
+    this.lives -= cost;
+    return cost;
+  }
+
   private boost(turbo: boolean): void {
     const r = this.rocket;
     const v = BOOST * (turbo ? TURBO_FACTOR : 1);
@@ -341,16 +366,16 @@ export class RocketSession {
     if (!this.question) {
       this.wait -= dt;
       if (this.wait > 0) return;
+      // On tire d'abord la couleur (plus de rouge en altitude), puis un calcul de cette couleur.
       const zone = zoneAt(this.altitude);
-      // En altitude, des calculs du palier au-dessus s'invitent de temps en temps.
-      const harder = zone >= 2 && this.rng.next() < 0.3 ? NEXT_TIER[this.tier] : this.tier;
-      const expr = pickExpression(harder, this.rng);
+      const grade = pickGrade(this.tier, this.rng, Math.max(0, zone - 1) / 3);
+      const expr = pickGraded(this.tier, this.rng, grade);
       let time = timeFor(expr, this.tier, this.mode, this.altitude);
       if (this.slow > 0) {
         time = Math.round(time * 1.6 * 10) / 10;
         this.slow--;
       }
-      this.question = { expr, time, left: time };
+      this.question = { expr, grade: gradeOf(expr, this.tier), time, left: time };
       this.typed = '';
       ev.push({ type: 'question', q: this.question });
       return;
@@ -364,7 +389,8 @@ export class RocketSession {
       (this.stats.byOp[q.expr.op] ??= [0, 0])[1]++;
       this.combo = 0;
       this.wait = 0.5;
-      ev.push({ type: 'timeout', q });
+      ev.push({ type: 'timeout', q, lifeLost: this.miss(q) });
+      this.checkLost(ev);
     }
   }
 
@@ -480,7 +506,7 @@ export class RocketSession {
     }
     if (p.kind === 'planete') {
       this.phase = 'won';
-      this.score += 1000 + (this.lives ?? 0) * 300;
+      this.score += 1000 + Math.round((this.lives ?? 0) * 300);
       ev.push({ type: 'won' });
       return;
     }
@@ -502,7 +528,7 @@ export class RocketSession {
         this.score += 200;
         break;
       case 'coeur':
-        if (this.lives !== null) this.lives = Math.min(5, this.lives + 1);
+        if (this.lives !== null) this.lives = Math.min(MAX_LIVES, this.lives + 1);
         else this.score += 100;
         break;
     }

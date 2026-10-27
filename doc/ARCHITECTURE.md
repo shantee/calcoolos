@@ -209,14 +209,15 @@ Jeu en **pixel art** (1 pixel d'art = 4 pixels d'écran, Phaser en mode `pixelAr
 
 | Élément | Règle |
 |---|---|
-| Boucle | un calcul est toujours affiché ; bonne réponse = poussée (vitesse verticale 600 px/s, environ 280 px de hauteur) ; mauvaise réponse ou temps écoulé = pas de poussée (la bonne réponse est montrée) |
+| Boucle | un calcul est toujours affiché ; bonne réponse = poussée (vitesse verticale 600 px/s, environ 280 px de hauteur) ; mauvaise réponse ou temps écoulé = pas de poussée (la bonne réponse est montrée) et, en Défi, −½ cœur (−1 cœur si le calcul était vert) |
+| Couleurs | chaque calcul est vert (facile ●), orange (moyen ●●) ou rouge (difficile ●●●) : `src/core/calc-grade.ts` estime l'effort (retenue, emprunt, deux nombres à deux chiffres, table difficile ; nombre rond, faire 10, double, table de 2/5/10 aident) et le classe selon le niveau (13 − 8 rouge en Éveil, orange en Maître). Le jeu tire d'abord la couleur (Éveil 55/30/15 %, Explorateur 45/35/20, Stratège 40/35/25, Maître 35/40/25 ; jusqu'à 15 points de vert passent au rouge en altitude), puis un calcul de cette couleur. Points × 1 / 1,5 / 2 |
 | Réponse | jugée dès qu'elle a le bon nombre de chiffres ; clavier (rangée du haut sans Maj, même en AZERTY, ou pavé) ou pavé à l'écran |
-| Temps | court pour les calculs faciles (2 à 3 s pour 4 + 3), plus long pour les tables difficiles et les divisions ; × 1,5 en Tranquille, un peu plus court en altitude ; borné entre 2 et 11 s |
-| Calculs | menu du niveau (`src/core/expressions.ts`) ; au-dessus du ciel des dirigeables, 30 % viennent du niveau suivant |
+| Temps | court pour les calculs faciles, plus long pour les tables difficiles et les divisions ; × 1,5 en Tranquille, un peu plus court en altitude ; puis + 1 s (+ 2 s en Éveil ou en Tranquille) et + 0 / 1 / 2 s selon la couleur ; borné entre 3 et 13 s (4 + 3 : 5,8 s en Éveil Défi, 4,1 s en Explorateur Défi) |
+| Calculs | menu du niveau (`src/core/expressions.ts`), filtré par couleur (plus de calculs du niveau suivant depuis le 27/10/2026) |
 | Pilotage | gauche/droite en vol (accélération, glisse, vitesse plafonnée) ; posée, la fusée suit sa plateforme |
 | Monde | 5 étages jusqu'à 7 600 px : village, mer de nuages, ciel des dirigeables, espace, planète Bonbon ; plateformes plus étroites en montant, mobiles et fragiles dès les nuages ; chaque plateforme est à portée d'une seule poussée (testé sur 200 mondes) |
-| Chute | se poser plus bas sauve ; tomber de plus de 820 px sous la dernière plateforme sûre : la montgolfière de secours ramène la fusée (Défi : −1 cœur, sauf bouclier) ; atterrissage brutal (chute de plus de 520 px depuis le plus haut point du saut, soit plus de deux étages) : −1 cœur en Défi ; une plateforme fragile se reforme 4 s après sa chute |
+| Chute | se poser plus bas sauve ; tomber de plus de 820 px sous la dernière plateforme sûre : la montgolfière de secours ramène la fusée (Défi : −1 cœur, sauf bouclier) ; Défi : 8 cœurs au départ et au plus ; atterrissage brutal (chute de plus de 520 px depuis le plus haut point du saut, soit plus de deux étages) : −1 cœur en Défi ; une plateforme fragile se reforme 4 s après sa chute |
 | Bonus | bouclier (protège d'une chute), sablier (5 calculs avec plus de temps), turbo (poussée × 1,35), étoile (+200), cœur ; étoiles à attraper en vol (+25) |
-| Points | `(20 + 30 × rapidité) × série` par calcul, +50 par nouvelle plateforme, +1 000 à l'arrivée (+300 par cœur restant) |
+| Points | `(20 + 30 × rapidité) × série` par calcul, +50 par nouvelle plateforme, +1 000 à l'arrivée (+300 par cœur restant) ; × 1 / 1,5 / 2 selon la couleur du calcul |
 | Étoiles | 1 pour la planète, + 1 si ≥ 85 % de calculs justes, + 1 si ≥ 95 % sans chute |
 | Police | les nombres utilisent une police pixel dessinée pour le projet (chiffres de PixelForge et signes + − × ÷ = ?) : avec la police pixel courante, le 5 ressemblait à un S |

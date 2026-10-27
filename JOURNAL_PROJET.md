@@ -28,6 +28,35 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-27 : Claude, session 15 (Décollage ! : couleurs de calculs, demi-cœurs, plus de temps)
+
+Demande de Philippe : plus de cœurs (6 ou 8), une ou deux secondes de plus (surtout Tranquille et Éveil) ; trois
+catégories de calculs affichées en vert, orange, rouge/violet, avec un algorithme qui juge la difficulté selon le
+niveau (« 2 × 8 c'est facile, 35 − 27 plus compliqué ») ; on ne doit plus pouvoir gagner en attendant les calculs
+faciles : un calcul raté ou laissé filer coûte un demi-cœur, un cœur entier s'il était vert.
+
+**Fait**
+- `src/core/calc-grade.ts` : `effort()` (retenue, emprunt, deux nombres à deux chiffres, au-delà de 20 / 100, tables
+  pondérées 2/5/10 faciles, 7 et 8 redoutées ; nombre rond, faire 10, doubles, carrés aident ; division = produit + 1),
+  `gradeOf()` (seuils par niveau), `pickGrade()` (proportions par niveau, plus de rouge en altitude),
+  `pickGraded()` (calcul de la couleur voulue). Calibré sur 4 000 tirages par niveau ; exemples dans
+  `tests/calc-grade.test.ts` (Éveil : 8 + 2 vert, 8 + 5 orange, 13 − 8 rouge ; 35 − 27 rouge ; 7 × 8 rouge en Stratège).
+- Décollage ! : Défi à **8 cœurs** (bonus cœur plafonné à 8) ; raté = −½ ♥ (−1 ♥ si vert), affiché « −½ ♥ » ; cœurs
+  à moitié vides dans la barre (`heartIcon('demi')`), bonus actifs sur la ligne du dessous ; encadré du calcul bordé
+  de vert, d'orange ou de rouge sur fond violet, étiquette « facile ● / moyen ●● / difficile ●●● » dessous (les
+  points pour les daltoniens) ; barre de temps devenue blanche (elle clignote à la fin) pour ne pas mélanger les
+  couleurs ; points × 1 / 1,5 / 2 ; temps + 1 s, + 2 s en Éveil ou en Tranquille, + 0/1/2 s selon la couleur.
+  Écran de début : légende des couleurs, « 8 cœurs : un raté coûte ½ ♥, 1 ♥ si vert ». Les calculs du niveau
+  suivant en altitude sont remplacés par plus de rouge. Textes traduits (anglais, allemand).
+
+**Vérifié** : Vitest 127/127 (dont 6 nouveaux sur les couleurs, 3 sur le temps et les demi-cœurs), types,
+construction ; dans le Chrome des agents (Éveil, Défi, ordinateur et téléphone en allemand) : encadrés des trois
+couleurs, ratés à −1 et −½, cœurs 6,5 dessinés juste, aucune erreur.
+
+**Limites** : réglages (proportions, seuils, secondes) à juger par Philippe en jouant ; `scripts/fusee-auto.mjs`
+non relancé (Chromium ne démarre pas dans le bac à sable) ; parties complètes jouées par le pilote automatique
+de Vitest seulement.
+
 ## 2026-10-27 : Claude, session 14 (nouveaux avatars)
 
 Demande de Philippe : remplacer les avatars dessinés par code (« pas très beaux ») par sa grille pixel art de

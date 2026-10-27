@@ -4,6 +4,8 @@ import {
   GRAVITY,
   LANE,
   FLY,
+  MAX_LIVES,
+  MISS_COST,
   MAX_VX,
   RocketSession,
   SUMMIT,
@@ -70,18 +72,30 @@ describe('monde vertical', () => {
 });
 
 describe('temps de réponse', () => {
-  it('plus court pour les calculs simples, borné entre 2 et 11 s', () => {
+  it('plus court pour les calculs simples, borné entre 3 et 13 s', () => {
     const easy = timeFor(makeExpression(4, '+', 3), 'explorateur', 'defi', 0);
     const table = timeFor(makeExpression(7, '×', 8), 'explorateur', 'defi', 0);
     const two = timeFor(makeExpression(2, '×', 6), 'explorateur', 'defi', 0);
     const div = timeFor(makeExpression(56, '÷', 8), 'explorateur', 'defi', 0);
-    expect(easy).toBeLessThanOrEqual(3.5);
+    expect(easy).toBeLessThanOrEqual(4.5);
     expect(table).toBeGreaterThan(two);
     expect(div).toBeGreaterThan(table);
     expect(timeFor(makeExpression(4, '+', 3), 'eveil', 'tranquille', 0)).toBeGreaterThan(easy);
     expect(timeFor(makeExpression(7, '×', 8), 'explorateur', 'defi', SUMMIT)).toBeLessThan(table);
-    for (const t of TIERS) expect(timeFor(makeExpression(199, '+', 1), t, 'tranquille', 0)).toBeLessThanOrEqual(11);
-    expect(timeFor(makeExpression(1, '+', 1), 'maitre', 'defi', SUMMIT)).toBeGreaterThanOrEqual(2);
+    for (const t of TIERS) expect(timeFor(makeExpression(199, '+', 1), t, 'tranquille', 0)).toBeLessThanOrEqual(13);
+    expect(timeFor(makeExpression(1, '+', 1), 'maitre', 'defi', SUMMIT)).toBeGreaterThanOrEqual(3);
+  });
+
+  it('une à deux secondes de plus qu’avant : deux en Éveil ou en Tranquille', () => {
+    // Avant (27/10/2026) : 4 + 3 = 3,8 s en Éveil Défi, 3,1 s en Explorateur Défi, 4,6 s en Explorateur Tranquille.
+    expect(timeFor(makeExpression(4, '+', 3), 'eveil', 'defi', 0)).toBeGreaterThanOrEqual(5.8);
+    expect(timeFor(makeExpression(4, '+', 3), 'explorateur', 'defi', 0)).toBeGreaterThanOrEqual(4.1);
+    expect(timeFor(makeExpression(4, '+', 3), 'explorateur', 'tranquille', 0)).toBeGreaterThanOrEqual(6.6);
+  });
+
+  it('un calcul difficile laisse plus de temps qu’un facile du même genre', () => {
+    // 15 + 3 (vert) et 13 − 8 (rouge, emprunt) en Éveil.
+    expect(timeFor(makeExpression(13, '−', 8), 'eveil', 'defi', 0)).toBeGreaterThan(timeFor(makeExpression(15, '+', 3), 'eveil', 'defi', 0) + 1);
   });
 });
 
@@ -101,20 +115,40 @@ describe('partie', () => {
         }
         expect(s.phase, `graine ${seed * 37}, altitude ${Math.round(s.best)}`).toBe('won');
         expect(s.stats.falls).toBe(0);
-        expect(s.lives).toBeGreaterThanOrEqual(3);
+        expect(s.lives).toBeGreaterThanOrEqual(MAX_LIVES - 1);
       }
     });
   }
 
-  it('sans réponse, la fusée reste au sol et rien n’est perdu', () => {
-    const s = new RocketSession('explorateur', 3, 'defi');
+  it('sans réponse, la fusée reste au sol ; rien n’est perdu en Tranquille', () => {
+    const s = new RocketSession('explorateur', 3, 'tranquille');
     let timeouts = 0;
-    for (let i = 0; i < 60 * 60; i++) for (const e of s.step(1 / 60, 0)) if (e.type === 'timeout') timeouts++;
+    for (let i = 0; i < 60 * 90; i++) for (const e of s.step(1 / 60, 0)) if (e.type === 'timeout') timeouts++;
     expect(timeouts).toBeGreaterThan(5);
     expect(s.rocket.y).toBe(0);
     expect(s.phase).toBe('play');
-    expect(s.lives).toBe(3);
+    expect(s.lives).toBeNull();
     expect(s.accuracy()).toBe(0);
+  });
+
+  it('Défi : un calcul laissé filer coûte ½ cœur, 1 cœur s’il était vert ; attendre les faciles ne paie pas', () => {
+    const s = new RocketSession('eveil', 3, 'defi');
+    expect(s.lives).toBe(8);
+    let lives = 8;
+    let seen = 0;
+    while (s.phase === 'play') {
+      for (const e of s.step(1 / 60, 0)) {
+        if (e.type !== 'timeout') continue;
+        seen++;
+        expect(e.lifeLost).toBe(Math.min(lives, MISS_COST[e.q.grade]));
+        lives -= e.lifeLost;
+        expect(s.lives).toBe(lives);
+      }
+    }
+    expect(s.phase).toBe('lost');
+    expect(s.lives).toBe(0);
+    expect(seen).toBeGreaterThanOrEqual(8);
+    expect(seen).toBeLessThanOrEqual(16);
   });
 
   it('une mauvaise réponse ne donne pas de poussée et casse la série', () => {
@@ -131,6 +165,8 @@ describe('partie', () => {
     expect(r?.kind).toBe('wrong');
     expect(s.combo).toBe(0);
     expect(s.stats.wrong).toBe(1);
+    expect(r?.kind === 'wrong' && r.lifeLost).toBeGreaterThan(0);
+    expect(s.lives).toBe(MAX_LIVES - (r?.kind === 'wrong' ? r.lifeLost : 0));
   });
 
   it('tomber dans le vide coûte une vie en Défi (le bouclier protège), jamais en Tranquille', () => {
@@ -150,12 +186,12 @@ describe('partie', () => {
       expect(first).toBeDefined();
       expect(s.rocket.on).toBe(p.id);
       if (mode === 'defi') {
-        expect(s.lives).toBe(2);
+        expect(s.lives).toBe(7);
         s.shield = true;
         fallFrom(p);
-        expect(s.lives).toBe(2);
+        expect(s.lives).toBe(7);
         expect(s.shield).toBe(false);
-        fallFrom(p);
+        s.lives = 1;
         fallFrom(p);
         expect(s.phase).toBe('lost');
       } else {
@@ -167,6 +203,7 @@ describe('partie', () => {
 
   it('bonus : turbo, sablier, bouclier, cœur', () => {
     const s = new RocketSession('eveil', 9, 'defi');
+    s.lives = 5;
     const p = s.platforms[3];
     for (const kind of ['turbo', 'sablier', 'bouclier', 'coeur'] as const) {
       p.power = kind;
@@ -179,7 +216,7 @@ describe('partie', () => {
     expect(s.turbo).toBe(true);
     expect(s.slow).toBeGreaterThanOrEqual(4);
     expect(s.shield).toBe(true);
-    expect(s.lives).toBe(4);
+    expect(s.lives).toBe(6);
     while (!s.question) s.step(1 / 60, 0);
     expect(s.question.time).toBeGreaterThan(timeFor(s.question.expr, 'eveil', 'defi', s.altitude));
     answer(s);
@@ -201,12 +238,12 @@ describe('partie', () => {
     const p = s.platforms[5];
     const small = land(p.y + 300, p);
     expect(small && small.type === 'land' && small.hard).toBe(false);
-    expect(s.lives).toBe(3);
+    expect(s.lives).toBe(8);
     // Grande chute, droit au-dessus de la plateforme (rien entre les deux).
     s.platforms.filter((q) => q.y > p.y).forEach((q) => (q.gone = true));
     const big = land(p.y + 600, p);
     expect(big && big.type === 'land' && big.hard).toBe(true);
-    expect(s.lives).toBe(2);
+    expect(s.lives).toBe(7);
   });
 
   it('plateforme fragile : elle tombe peu après qu’on s’y est posé', () => {
