@@ -189,6 +189,11 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   - Mode calme (`prefers-reduced-motion` ou `?calme`) : 4 fusées, ni secousse, ni flash, ni sauts, ni confettis.
   - Corrigé au passage : « Rejouer » cliqué avant que les étoiles de l'écran de fin s'allument provoquait une erreur.
   `CAPTURES/fusee-fete-confiserie.png`.
+- **Robot, satellite et alien** (`robot-satellite.png`, `alien_spritesheet_64x32.png`) : robot 67 × 72 (`robot-0` qui
+  dort, « Z » éclaircis pour se voir sur le ciel de l'espace ; `robot-1` content quand la fusée se pose), jamais
+  retourné (ses « Z » deviendraient des « S »). Alien en vrai pixel art 32 × 24 ×2 → 64 × 48 (`alien-0/1`).
+  Satellite 121 × 101 (`sat-0`, `sat-1` balise allumée 0,3 s toutes les 1,2 s), qui tourne toujours (30 s par tour) ;
+  déplacé à gauche (x 280), il passait sous le pavé numérique. `CAPTURES/fusee-robot-satellite.png`, `fusee-alien.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

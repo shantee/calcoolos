@@ -401,8 +401,12 @@ export class RocketScene extends Phaser.Scene {
     this.sway(balloon2);
 
     // Espace : satellite, lune qui fait un clin d'œil, planète à anneaux, soucoupe, comète, astronaute.
-    const sat = add(this.sprite(1150, this.wy(5200), 'f-sat', A.satellite).setDepth(-12));
+    const blink = 'f-sat-1' in PROVIDED;
+    const sat = add(this.sprite(280, this.wy(5200), blink ? 'f-sat-0' : 'f-sat', A.satellite).setDepth(-12));
     if (!this.reducedMotion) this.tweens.add({ targets: sat, angle: 360, duration: 30000, repeat: -1 });
+    // Image fournie : la balise rouge s'allume 0,3 s toutes les 1,2 s.
+    let tick = 0;
+    if (blink) this.time.addEvent({ delay: 300, loop: true, callback: () => sat.setTexture(++tick % 4 === 0 ? 'f-sat-1' : 'f-sat-0') });
     add(this.sprite(1120, this.wy(5900) * 0.6, 'f-moon', A.moon).setDepth(-80).setScrollFactor(1, 0.6));
     add(this.sprite(120, this.wy(6400) * 0.6, 'f-planet', () => A.smallPlanet(12, [P.N, P.B, P.S, P.C], true)).setDepth(-80).setScrollFactor(1, 0.6));
     add(this.sprite(1150, this.wy(7000) * 0.6, 'f-planet2', () => A.smallPlanet(7, [P.V, P.R, P.r], false)).setDepth(-80).setScrollFactor(1, 0.6));
@@ -522,7 +526,7 @@ export class RocketScene extends Phaser.Scene {
         const kind = p.friend;
         const side = p.id % 2 ? 1 : -1;
         const look = kind === 'enfant' ? KIDS[p.id % KIDS.length] : kind;
-        friend = this.sprite(p.x, this.wy(p.y) + 4, `f-${look}-0`, () => A.friend(kind, 0)).setOrigin(0.5, 1).setDepth(4).setFlipX(side > 0);
+        friend = this.sprite(p.x, this.wy(p.y) + 4, `f-${look}-0`, () => A.friend(kind, 0)).setOrigin(0.5, 1).setDepth(4).setFlipX(side > 0 && kind !== 'robot'); // robot jamais retourné : ses « Z » deviendraient des « S »
         // Près du bord, sans trop dépasser (les images fournies sont plus grandes que les dessins).
         const dx = side * (p.w / 2 - Math.max(22, friend.displayWidth / 2 - 8));
         friend.x += dx;
