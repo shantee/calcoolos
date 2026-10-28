@@ -143,11 +143,12 @@ export function platform(look: PlatformLook, w: number, fragile: boolean, seed: 
   const rng = createRng(seed);
   switch (look) {
     case 'sol': {
-      const pc = new PixelCanvas(w, 26);
-      pc.rect(0, 2, w, 24, RAMP.terre, 0.8, 0.2);
+      // Assez haut pour descendre sous le bas de l'écran au départ (la caméra montre 130 px sous le sol).
+      const pc = new PixelCanvas(w, 40);
+      pc.rect(0, 2, w, 38, RAMP.terre, 0.8, 0.2);
       pc.rect(0, 0, w, 4, RAMP.herbe, 1, 0.5);
       for (let x = 0; x < w; x += 2) if (rng.next() < 0.5) pc.set(x, 4, P.G);
-      for (let i = 0; i < w / 6; i++) pc.set(rng.int(0, w - 1), rng.int(8, 24), rng.next() < 0.5 ? P.g : P.m);
+      for (let i = 0; i < w / 4; i++) pc.set(rng.int(0, w - 1), rng.int(8, 38), rng.next() < 0.5 ? P.g : P.m);
       return pc;
     }
     case 'terre': {

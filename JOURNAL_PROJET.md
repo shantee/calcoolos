@@ -123,6 +123,9 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
 - **Expressions qui durent** (demande de Philippe) : herbe et nuages restent surpris, et l'habitant reste joyeux, tant
   que la fusée est sur la plateforme (`rocket.on`), au lieu de revenir à la normale au bout d'une seconde.
 - Vérifié : partie gagnée automatique sans erreur, `CAPTURES/fusee-nuages*.png`, `fusee-ballons.png` ; tests 127.
+- **Publié** à 14 h 21 (`1806945`), partie gagnée en ligne sans erreur.
+- Correction signalée par Philippe : au départ, une bande de ciel sous le sol (la caméra montre 130 px sous le sol,
+  la terre n'en faisait que 104). Sol du village porté à 40 pixels d'art (160 px).
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
