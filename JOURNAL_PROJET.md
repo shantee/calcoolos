@@ -60,6 +60,9 @@ Puis **la vache et trois enfants** (`vaches.png`, `enfants.png`), chacun en deux
 - Le pilote de la petite fusée est un astronaute, celui du jeu est un chat (dessin fourni gardé tel quel).
 - La vache regarde maintenant à droite (l'ancienne regardait à gauche).
 
+**Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
+https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
+
 ## 2026-10-27 : Claude, session 16 (classements sur une seule page)
 
 Demande de Philippe : plus de menus déroulants, tous les classements de tous les jeux sur la même page ; pas de
