@@ -37,7 +37,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
   Philippe : les quatre illustrations de l'accueil** (chantier 01), **les 49 avatars des profils** (27/10/2026)
   **et, depuis le 28/10/2026, les graphismes de Décollage ! qu'il génère et fournit un à un** (d'abord la jauge
   d'altitude, `src/images/decollage/`), fournis par lui (`ART_ASSETS.md`). Méthode : découper, réduire à la taille
-  d'affichage exacte (le jeu est en pixels nets), WebP sans perte, charger dans `preload()`.
+  d'affichage exacte (le jeu est en pixels nets), WebP sans perte nommé `<clé>.webp` dans `src/images/decollage/` :
+  il remplace tout seul le dessin par code de texture `f-<clé>` (voir `PROVIDED` dans `rocket-scene.ts`).
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
   classements publics sous ce **pseudo** (simplification voulue par Philippe le 27/10/2026, plus d'autorisation ni de
   nom inventé ; « Aide-moi à trouver un pseudo » en propose des rigolos), export et suppression des données.

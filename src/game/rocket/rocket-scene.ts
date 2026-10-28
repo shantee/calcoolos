@@ -19,8 +19,6 @@ import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
-import jaugeUrl from '../../images/decollage/jauge.webp';
-import fuseeJaugeUrl from '../../images/decollage/fusee-jauge.webp';
 
 export const W = 1280;
 export const H = 720;
@@ -29,6 +27,22 @@ const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
 const tint = (hex: string): number => parseInt(hex.slice(1), 16);
+
+/**
+ * Images fournies par Philippe (src/images/decollage/, originaux dans sources-images/decollage/), déjà à leur
+ * taille d'affichage. Le nom du fichier est la clé de texture : `vache-0.webp` → `f-vache-0`. Comme `tx()` ne
+ * dessine une texture que si elle n'existe pas encore, une image fournie remplace le dessin par code du même nom.
+ */
+const PROVIDED: Record<string, string> = Object.fromEntries(
+  Object.entries(import.meta.glob<string>('../../images/decollage/*.webp', { eager: true, query: '?url', import: 'default' })).map(([path, url]) => [
+    `f-${path.split('/').pop()!.replace('.webp', '')}`,
+    url,
+  ]),
+);
+
+/** Trois enfants différents (enfant, enfant2, enfant3) ; le dessin par code de secours est le même pour tous. */
+const KIDS = ['enfant', 'enfant2', 'enfant3'];
+const lookKind = (look: string): A.FriendLook => look.replace(/\d+$/, '') as A.FriendLook;
 
 /**
  * Jauge d'altitude dessinée par Philippe (sources-images/decollage/), déjà à sa taille d'affichage.
@@ -223,12 +237,11 @@ export class RocketScene extends Phaser.Scene {
   }
 
   private sprite(x: number, y: number, key: string, make: () => PixelCanvas): Phaser.GameObjects.Image {
-    return this.add.image(x, y, this.tx(key, make)).setScale(PX);
+    return this.add.image(x, y, this.tx(key, make)).setScale(key in PROVIDED ? 1 : PX);
   }
 
   preload(): void {
-    this.load.image('f-jauge', jaugeUrl);
-    this.load.image('f-jauge-fusee', fuseeJaugeUrl);
+    for (const [key, url] of Object.entries(PROVIDED)) this.load.image(key, url);
   }
 
   create(): void {
@@ -300,7 +313,7 @@ export class RocketScene extends Phaser.Scene {
       this.time.delayedCall(600, () => cow.setTexture('f-vache-0'));
     });
     [470, 860, 930].forEach((x, i) => {
-      const kid = add(this.sprite(x, this.wy(0) + 2, 'f-enfant-0', () => A.friend('enfant', 0)).setOrigin(0.5, 1).setDepth(-1).setFlipX(i === 1));
+      const kid = add(this.sprite(x, this.wy(0) + 2, `f-${KIDS[i]}-0`, () => A.friend('enfant', 0)).setOrigin(0.5, 1).setDepth(-1).setFlipX(i === 1));
       this.dancers.push(kid);
     });
     // Le cerf-volant d'un enfant, très haut au bout de sa ficelle.
@@ -374,7 +387,7 @@ export class RocketScene extends Phaser.Scene {
     for (const d of this.dancers) {
       const key = d.texture.key;
       const base = key.replace(/-[01]$/, '');
-      if (Math.random() < 0.4) d.setTexture(key.endsWith('-0') ? this.tx(`${base}-1`, () => A.friend(base.slice(2) as A.FriendLook, 1)) : `${base}-0`);
+      if (Math.random() < 0.4) d.setTexture(key.endsWith('-0') ? this.tx(`${base}-1`, () => A.friend(lookKind(base.slice(2)), 1)) : `${base}-0`);
     }
   }
 
@@ -419,9 +432,14 @@ export class RocketScene extends Phaser.Scene {
       if (p.friend) {
         const kind = p.friend;
         const side = p.id % 2 ? 1 : -1;
-        friend = this.sprite(p.x + side * (p.w / 2 - 22), this.wy(p.y) + 4, `f-${kind}-0`, () => A.friend(kind, 0)).setOrigin(0.5, 1).setDepth(4).setFlipX(side > 0);
+        const look = kind === 'enfant' ? KIDS[p.id % KIDS.length] : kind;
+        friend = this.sprite(p.x, this.wy(p.y) + 4, `f-${look}-0`, () => A.friend(kind, 0)).setOrigin(0.5, 1).setDepth(4).setFlipX(side > 0);
+        // Près du bord, sans trop dépasser (les images fournies sont plus grandes que les dessins).
+        const dx = side * (p.w / 2 - Math.max(22, friend.displayWidth / 2 - 8));
+        friend.x += dx;
         friend.setData('kind', kind);
-        friend.setData('dx', side * (p.w / 2 - 22));
+        friend.setData('look', look);
+        friend.setData('dx', dx);
       }
       this.views.set(p.id, { p, img, extras, power, friend });
     }
@@ -888,8 +906,9 @@ export class RocketScene extends Phaser.Scene {
         if (ev.record) this.floatText(this.ship.x + 60, this.ship.y - 60, '+50', P.L, 22);
         if (v?.friend) {
           const kind = v.friend.getData('kind') as string;
-          v.friend.setTexture(this.tx(`f-${kind}-1`, () => A.friend(kind as A.FriendLook, 1)));
-          this.time.delayedCall(900, () => v.friend?.setTexture(`f-${kind}-0`));
+          const look = v.friend.getData('look') as string;
+          v.friend.setTexture(this.tx(`f-${look}-1`, () => A.friend(kind as A.FriendLook, 1)));
+          this.time.delayedCall(900, () => v.friend?.setTexture(`f-${look}-0`));
           this.say(v.friend.x, v.friend.y - 70, Phaser.Utils.Array.GetRandom(FRIEND_LINES[kind] ?? ['Salut !']));
           if (kind === 'vache') this.sfx.moo();
           else if (kind === 'oiseau') this.sfx.chirp();

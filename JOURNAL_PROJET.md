@@ -28,7 +28,7 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
-## 2026-10-28 : Claude, session 17 (Décollage ! : premiers graphismes fournis, la jauge)
+## 2026-10-28 : Claude, session 17 (Décollage ! : premiers graphismes fournis : jauge, vache, enfants)
 
 Demande de Philippe : remplacer peu à peu les graphismes dessinés par code de Décollage ! par des images PNG qu'il
 génère, une à la fois. Première : la **jauge d'altitude** et sa petite fusée (`sources-images/decollage/jauge-et-fusee.png`).
@@ -44,9 +44,21 @@ génère, une à la fois. Première : la **jauge d'altitude** et sa petite fusé
 - Vérifié : partie gagnée automatique (`fusee-auto.mjs`), captures à chaque étage (`CAPTURES/fusee-jauge-etages.png`,
   `fusee-jauge-partie.png`), aucune erreur de console ; tests 127, CSP sans violation.
 
+Puis **la vache et trois enfants** (`vaches.png`, `enfants.png`), chacun en deux poses (repos, joie) :
+- Découpe automatique (colonnes vides entre les poses), poses d'un même personnage calées sur un même cadre
+  (pieds au sol, corps centré d'après le bas de l'image) pour qu'elles ne sautent pas quand on passe de l'une à
+  l'autre ; vache 89 × 59, enfants 40 à 47 × 56 à 63.
+- **Mécanisme général** : toute image `src/images/decollage/<nom>.webp` est chargée sous la clé `f-<nom>` ; comme
+  `tx()` ne dessine une texture que si elle manque, elle **remplace d'elle-même le dessin par code** du même nom
+  (`vache-0`, `vache-1`…). `sprite()` ne grossit pas ×4 ces images. Pour la prochaine : connaître la clé de
+  texture du dessin à remplacer, découper, réduire à la taille voulue, déposer.
+- Trois enfants (`enfant`, `enfant2`, `enfant3`) : les trois du village sont différents ; sur les plateformes,
+  l'enfant dépend du numéro de la plateforme. Les habitants des plateformes sont placés selon leur largeur.
+- Vérifié : partie gagnée automatique sans erreur, `CAPTURES/fusee-vache-enfants.png` ; tests 127, CSP ok.
+
 **Limites**
 - Le pilote de la petite fusée est un astronaute, celui du jeu est un chat (dessin fourni gardé tel quel).
-- Pas encore publié en ligne.
+- La vache regarde maintenant à droite (l'ancienne regardait à gauche).
 
 ## 2026-10-27 : Claude, session 16 (classements sur une seule page)
 
