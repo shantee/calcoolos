@@ -1,7 +1,7 @@
 /**
  * « Décollage ! » : toute la logique, sans rendu.
  *
- * Une petite fusée part du village et doit monter jusqu'à la planète Bonbon.
+ * Une petite fusée part du village et doit monter jusqu'au royaume de la confiserie.
  * Des calculs apparaissent sans arrêt, chacun avec un temps limité (court pour
  * les calculs faciles). Chaque bonne réponse donne une poussée ; entre deux
  * poussées, la gravité reprend ses droits et il faut se poser sur une plateforme.
@@ -45,7 +45,7 @@ export const ZONES = [
   { name: 'La mer de nuages', top: 3000 },
   { name: 'Le ciel des dirigeables', top: 4800 },
   { name: 'L’espace', top: 6900 },
-  { name: 'La planète Bonbon', top: 7600 },
+  { name: 'Le royaume de la confiserie', top: 7600 },
 ] as const;
 export const SUMMIT = ZONES[ZONES.length - 1].top;
 
@@ -53,7 +53,8 @@ export const SUMMIT = ZONES[ZONES.length - 1].top;
  * Plateformes dessinées par Philippe (images `src/images/decollage/<nom>-0|1.webp`) : `w` = largeur
  * sur laquelle on peut se poser, `top` = distance entre le haut de l'image et le sol (pixels d'écran).
  * Herbe du village en trois tailles, nuages (le nuage à hélice bouge, le nuage fissuré tombe),
- * planches à ballons du ciel des dirigeables (la fragile a des ballons fâchés, puis éclatés : image `-casse`).
+ * planches à ballons du ciel des dirigeables (la fragile a des ballons fâchés, puis éclatés : image `-casse`),
+ * friandises du royaume de la confiserie (la fragile est un bloc de chocolat).
  */
 export const PLATFORM_ART = {
   'herbe-petite': { w: 132, top: 12 },
@@ -66,6 +67,11 @@ export const PLATFORM_ART = {
   'ballon-1': { w: 224, top: 99 },
   'ballon-2': { w: 224, top: 102 },
   'ballon-fragile': { w: 224, top: 139 },
+  'conf-grande': { w: 255, top: 3 },
+  'conf-moyenne': { w: 148, top: 3 },
+  'conf-goutte': { w: 108, top: 3 },
+  'conf-pointe': { w: 108, top: 3 },
+  'conf-choco': { w: 128, top: 6 },
 } as const;
 export type PlatformArt = keyof typeof PLATFORM_ART;
 
@@ -74,6 +80,11 @@ function pickArt(zone: number, kind: PlatformKind, r: number): PlatformArt | nul
   if (zone === 0) return r < 0.25 ? 'herbe-petite' : r < 0.7 ? 'herbe-moyenne' : 'herbe-grande';
   if (zone === 1) return kind === 'mobile' ? 'nuage-helice' : kind === 'fragile' ? 'nuage-fissure' : r < 0.4 ? 'nuage-petit' : 'nuage-grand';
   if (zone === 2) return kind === 'fragile' ? 'ballon-fragile' : r < 0.5 ? 'ballon-1' : 'ballon-2';
+  if (zone >= 4) {
+    if (kind === 'mobile') return 'conf-goutte';
+    if (kind === 'fragile') return 'conf-choco';
+    return r < 0.35 ? 'conf-grande' : r < 0.65 ? 'conf-moyenne' : r < 0.88 ? 'conf-goutte' : 'conf-pointe';
+  }
   return null;
 }
 
@@ -252,6 +263,8 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
       p.phase = rng.next() * Math.PI * 2;
       p.baseX = Math.min(LANE.x1 - p.range - w / 2, Math.max(LANE.x0 + p.range + w / 2, x));
       p.x = p.baseX;
+      // La suivante se place par rapport au centre de sa course (sinon elle peut se retrouver hors de portée).
+      x = p.baseX;
     }
     if (kind !== 'fragile' && rng.next() < 0.2) p.power = rng.pick(powers);
     else if (kind === 'normale' && zone < 4 && rng.next() < 0.45) p.friend = rng.pick(friendsByZone[Math.min(3, zone)]);
@@ -270,7 +283,7 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
     last = mk(nx, ny, 150, 'normale', zoneAt(ny));
     platforms.push(last);
   }
-  // La planète Bonbon, tout en haut : une grande surface où se poser.
+  // Le royaume de la confiserie, tout en haut : une grande surface où se poser.
   platforms.push(mk((LANE.x0 + LANE.x1) / 2, SUMMIT, LANE.x1 - LANE.x0 + 120, 'planete', ZONES.length - 1));
   return { platforms, stars };
 }

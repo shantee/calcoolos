@@ -152,6 +152,21 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   cassée) : 269 × 195 (`ballon-fragile-0`, `ballon-fragile-casse`), plateforme fragile du ciel des dirigeables (avant :
   dessin du code). Quand elle tombe : image cassée sur place, clignote lentement puis vite et disparaît (comme un
   ennemi vaincu dans les vieux jeux de combat), puis se reforme normalement. `CAPTURES/fusee-ballons-casse.png`.
+- **Royaume de la confiserie** (`royaume-confiserie.png`, planche de décors ; le dernier niveau « La planète Bonbon »
+  est renommé « Le royaume de la confiserie » partout en français) : 38 éléments extraits chacun avec son propre
+  masque (composantes connexes), réduits au plus proche (`conf-*.webp`).
+  - Plateformes du niveau : 4 friandises roses (×0,6 ; la pointue ×0,8, trop étroite sinon), bloc de chocolat pour la
+    fragile, la mobile = celle à goutte (`PLATFORM_ART`, `pickArt` pour l'étage 4 et au-delà).
+  - Sommet : château dans les nuages roses en toile de fond, 23 friandises posées sur le sol (arbres, sucettes, cannes,
+    barrières, panneau, buissons, gâteau, chocolats) ; 10 nuages roses en parallaxe ; ciel qui vire au rose
+    (`SKY`) et étoiles qui s'effacent en arrivant.
+  - Étoile à attraper : celle de la planche (face) et ses deux tranches dorées (tourne sur 4 temps) ; dans le royaume,
+    ce sont des bonbons roses. Cœur de la planche = bonus cœur.
+  - Générateur : après une plateforme mobile, la suivante se place par rapport au centre de sa course (un monde
+    devenait impossible avec les nouvelles largeurs). Tests 127.
+  - Non traduits (consigne : français seulement pour l'instant) : les anciennes clés « planète Bonbon » de `en.ts`/`de.ts`
+    ne servent plus, ces textes s'affichent en français en anglais et en allemand.
+  `CAPTURES/fusee-royaume-confiserie.png`, `fusee-confiserie-plateformes.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

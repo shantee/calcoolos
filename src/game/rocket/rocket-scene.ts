@@ -3,7 +3,7 @@
  *
  * Un calcul apparaît ; chaque bonne réponse donne une poussée à la fusée. Entre
  * deux poussées, on la pilote (flèches, Q/D, boutons à l'écran) pour se poser sur
- * une plateforme. Du village jusqu'à la planète Bonbon, en passant par la mer de
+ * une plateforme. Du village jusqu'au royaume de la confiserie, en passant par la mer de
  * nuages, le ciel des dirigeables et l'espace.
  *
  * Toute la logique est dans session.ts ; ici on montre, on anime, on fait vivre.
@@ -47,7 +47,7 @@ const lookKind = (look: string): A.FriendLook => look.replace(/\d+$/, '') as A.F
 /**
  * Jauge d'altitude dessinée par Philippe (sources-images/decollage/), déjà à sa taille d'affichage.
  * GAUGE_Y : hauteur à l'écran du bas de la fusée pour l'altitude 0 puis pour le haut de chaque étage
- * (village → bande verte, nuages et dirigeables → bande de ciel, espace → bande étoilée, Bonbon → bande rose).
+ * (village → bande verte, nuages et dirigeables → bande de ciel, espace → bande étoilée, confiserie → bande rose).
  */
 const GAUGE_X = 4;
 const GAUGE_TOP = 92;
@@ -80,7 +80,10 @@ const SKY: Array<[number, number]> = [
   [4600, 0x5d3f9e],
   [5400, 0x29366f],
   [6200, 0x14152a],
-  [7600, 0x2c1745],
+  // Royaume de la confiserie : le ciel noir de l'espace vire au rose.
+  [6900, 0x3b2160],
+  [7350, 0xa86cb8],
+  [7600, 0xf0b4d6],
 ];
 
 function skyAt(alt: number): number {
@@ -409,7 +412,8 @@ export class RocketScene extends Phaser.Scene {
 
     // La planète Bonbon, au sommet.
     add(this.sprite(W / 2, this.wy(SUMMIT), 'f-candy', () => A.platform('bonbon', 330, false, 9)).setOrigin(0.5, 0).setDepth(-2));
-    add(this.sprite(W / 2, this.wy(SUMMIT) + 2, 'f-village', () => A.candyVillage(320)).setOrigin(0.5, 1).setDepth(-3));
+    if ('f-conf-fond' in PROVIDED) this.buildCandyKingdom(add);
+    else add(this.sprite(W / 2, this.wy(SUMMIT) + 2, 'f-village', () => A.candyVillage(320)).setOrigin(0.5, 1).setDepth(-3));
     const flag = add(this.sprite(820, this.wy(SUMMIT) + 2, 'f-flag-0', () => A.flag(0)).setOrigin(0, 1).setDepth(-1));
     this.tx('f-flag-1', () => A.flag(1));
     this.time.addEvent({ delay: 400, loop: true, callback: () => flag.setTexture(flag.texture.key === 'f-flag-0' ? 'f-flag-1' : 'f-flag-0') });
@@ -419,6 +423,28 @@ export class RocketScene extends Phaser.Scene {
     });
     // Les habitants bougent un peu (2 images).
     this.time.addEvent({ delay: 650, loop: true, callback: () => this.wiggleDancers() });
+  }
+
+  /** Royaume de la confiserie (planche de Philippe) : château en toile de fond, friandises sur le sol, nuages roses. */
+  private buildCandyKingdom(add: <T extends Phaser.GameObjects.GameObject>(o: T) => T): void {
+    const ground = this.wy(SUMMIT) + 6;
+    add(this.add.image(W / 2, ground + 4, 'f-conf-fond').setOrigin(0.5, 1).setDepth(-4));
+    // [x, image, profondeur] : grands éléments sur les côtés, petits devant le château.
+    const items: Array<[number, string, number]> = [
+      [-10, 'arbre-grand', -3], [70, 'choco-carre', -2], [118, 'choco-pente', -2], [165, 'canne', -2], [230, 'sucette-grande', -3],
+      [290, 'barriere-1', -2], [365, 'buissons', -2], [440, 'arbre-double', -3], [500, 'fleur', -2], [560, 'arbre-rond', -2],
+      [690, 'buisson', -2], [745, 'sucette-jaune', -2], [800, 'arbre-rose', -3], [880, 'barriere-2', -2], [950, 'gateau', -2],
+      [1010, 'sucette', -3], [1065, 'panneau', -2], [1130, 'sucettes', -3], [1195, 'arbre-creme', -3], [1240, 'canne-petite', -2],
+      [1268, 'choco-pilier', -2], [1225, 'choco-rond', -1], [1290, 'arbre-cone', -3],
+    ];
+    for (const [x, key, depth] of items) add(this.add.image(x, ground, `f-conf-${key}`).setOrigin(0.5, 1).setDepth(depth));
+    // Nuages roses qui défilent en parallaxe en arrivant au royaume.
+    const rng = new Phaser.Math.RandomDataGenerator(['confiserie']);
+    for (let i = 0; i < 10; i++) {
+      const alt = 6750 + i * 95 + rng.between(0, 60);
+      const c = add(this.add.image(rng.between(40, W - 40), this.wy(alt) * 0.8, `f-conf-nuage-${1 + (i % 5)}`).setDepth(-70).setScrollFactor(1, 0.8).setAlpha(0.9));
+      if (!this.reducedMotion) this.tweens.add({ targets: c, x: c.x + rng.between(-120, 120), duration: rng.between(20000, 32000), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
   }
 
   private wiggleDancers(): void {
@@ -559,7 +585,8 @@ export class RocketScene extends Phaser.Scene {
     this.cameras.main.setScroll(0, Math.round(this.camY));
     const alt = -(this.camY + H * 0.6);
     this.sky.setFillStyle(skyAt(Math.max(0, alt)));
-    this.starsBg.setAlpha(Phaser.Math.Clamp((alt - 4300) / 1400, 0, 1));
+    // Les étoiles apparaissent dans l'espace et s'effacent dans le ciel rose de la confiserie.
+    this.starsBg.setAlpha(Phaser.Math.Clamp((alt - 4300) / 1400, 0, 1) * Phaser.Math.Clamp((7450 - alt) / 500, 0, 1));
     this.starsBg.tilePositionY = this.camY / (PX * 6);
   }
 
@@ -580,7 +607,7 @@ export class RocketScene extends Phaser.Scene {
     this.scoreText = fixed(this.num(170, 30, '0', 3).setOrigin(0, 0.5).setDepth(60));
     this.comboLabel = fixed(this.txt(84, 58, '', style(20, P.Y, 5)).setDepth(60));
     this.comboText = fixed(this.num(150, 70, '', 3).setOrigin(0, 0.5).setDepth(60).setTint(tint(P.Y)));
-    // Altimètre : la jauge des étages, la fusée qui grimpe, la planète Bonbon en haut.
+    // Altimètre : la jauge des étages, la fusée qui grimpe, la planète rose en haut.
     fixed(this.add.image(GAUGE_X, GAUGE_TOP, 'f-jauge').setOrigin(0).setDepth(59));
     this.altMarker = fixed(this.add.image(GAUGE_MID, GAUGE_Y[0], 'f-jauge-fusee').setOrigin(0.5, 1).setDepth(61));
     this.altText = fixed(this.num(GAUGE_MID, 604, '0m', 2));
@@ -912,11 +939,13 @@ export class RocketScene extends Phaser.Scene {
         if (v.friend.texture.key !== key && this.textures.exists(key)) v.friend.setTexture(key);
       }
     }
-    const sf = Math.floor(time / 250) % 2;
+    // Les étoiles tournent (face, tranche) ; dans le royaume de la confiserie, ce sont des bonbons roses.
+    const turn = Math.floor(time / 250) % 4;
+    const starFrame = turn % 2 === 0 ? 0 : 'f-star-2' in PROVIDED && turn === 3 ? 2 : 1;
     for (const [id, img] of this.starViews) {
       const st = s?.stars.find((x) => x.id === id);
       if (st?.taken) continue;
-      img.setTexture(`f-star-${sf}`);
+      img.setTexture(st && st.y > ZONES[3].top && 'f-bonbon-0' in PROVIDED ? `f-bonbon-${turn % 2}` : `f-star-${starFrame}`);
     }
     // Le cerf-volant tire sur sa ficelle.
     if (this.kite) {
@@ -1150,7 +1179,7 @@ export class RocketScene extends Phaser.Scene {
     this.qPanel.setVisible(false);
     this.sfx.victoryJingle();
     this.setFace('joie', 6000);
-    this.banner('Bienvenue sur la planète Bonbon !', P.p, 3200);
+    this.banner('Bienvenue au royaume de la confiserie !', P.p, 3200);
     // Feu d'artifice pixel et oursons qui sautent de joie.
     for (let i = 0; i < (this.reducedMotion ? 3 : 12); i++) {
       this.time.delayedCall(200 + i * 300, () => {
@@ -1279,7 +1308,7 @@ export class RocketScene extends Phaser.Scene {
     }
     const c = this.openOverlay(178, 150, won ? 0.5 : 0.4);
     const top = H / 2 - 300;
-    c.add(this.txt(W / 2, top + 58, won ? 'Planète Bonbon atteinte !' : `Altitude ${Math.round(s.best / 8)} m`, style(48, won ? P.p : P.Y, 8)).setOrigin(0.5));
+    c.add(this.txt(W / 2, top + 58, won ? 'Royaume de la confiserie atteint !' : `Altitude ${Math.round(s.best / 8)} m`, style(48, won ? P.p : P.Y, 8)).setOrigin(0.5));
     const stars = this.starsFor(won);
     for (let i = 0; i < 3; i++) {
       const st = this.add.image(W / 2 + (i - 1) * 80, top + 128, this.tx('f-bigstar-0', () => A.power('etoile').swap({ [P.Y]: P.h, [P.y]: P.g }))).setScale(PX * 1.3);
