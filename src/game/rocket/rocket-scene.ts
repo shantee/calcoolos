@@ -22,7 +22,7 @@ import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
 export const H = 720;
-const FONT = '"Minecraftia", monospace';
+const FONT = '"Minecraftia", "Symboles pixel", monospace';
 const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
@@ -825,10 +825,10 @@ export class RocketScene extends Phaser.Scene {
     this.refreshHud();
   }
 
-  /** Calcul raté en Défi : « -½ cœur » ou « -1 cœur » au-dessus de la fusée, défaite s'il n'en reste plus. */
+  /** Calcul raté en Défi : « -½ ♥ » ou « -1 ♥ » au-dessus de la fusée, défaite s'il n'en reste plus. */
   private loseHeart(lost: number): void {
     this.refreshHud();
-    if (lost > 0) this.floatText(this.ship.x - 70, this.ship.y - 90, lost < 1 ? '-½ cœur' : '-1 cœur', P.r, 28);
+    if (lost > 0) this.floatText(this.ship.x - 70, this.ship.y - 90, lost < 1 ? '-½ ♥' : '-1 ♥', P.r, 28);
     if (this.session?.phase === 'lost') this.time.delayedCall(700, () => this.defeat());
   }
 
@@ -912,7 +912,7 @@ export class RocketScene extends Phaser.Scene {
         if (ev.hard) {
           this.setFace('peur', 900);
           if (!this.reducedMotion) this.cameras.main.shake(220, 0.008);
-          this.floatText(this.ship.x, this.ship.y - 110, ev.lifeLost ? 'Ouille ! -1 cœur' : 'Ouille !', P.r, 30);
+          this.floatText(this.ship.x, this.ship.y - 110, ev.lifeLost ? 'Ouille ! -1 ♥' : 'Ouille !', P.r, 30);
           if (s.phase === 'lost') this.time.delayedCall(800, () => this.defeat());
         } else if (!this.reducedMotion && v) {
           this.tweens.add({ targets: v.img, y: v.img.y + 6, duration: 90, yoyo: true });
@@ -948,7 +948,7 @@ export class RocketScene extends Phaser.Scene {
         }
         this.sfx.powerUp();
         this.burst(this.ship.x, this.ship.y - 60, [P.Y, P.C, P.p, P.W], 14);
-        const label: Record<string, string> = { bouclier: 'Bouclier !', sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 cœur' : '+100' };
+        const label: Record<string, string> = { bouclier: 'Bouclier !', sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 ♥' : '+100' };
         this.floatText(this.ship.x, this.ship.y - 140, label[ev.kind], P.C, 32);
         this.setFace('joie', 900);
         this.refreshHud();
@@ -1026,7 +1026,7 @@ export class RocketScene extends Phaser.Scene {
     } });
     this.time.delayedCall(500, () => {
       this.sfx.rescue();
-      this.say(fromX, fromY - 140, shieldUsed ? 'Le bouclier te protège !' : lifeLost ? 'Je te ramène ! (-1 cœur)' : 'Je te ramène !', 1400);
+      this.say(fromX, fromY - 140, shieldUsed ? 'Le bouclier te protège !' : lifeLost ? 'Je te ramène ! (-1 ♥)' : 'Je te ramène !', 1400);
     });
     this.tweens.add({
       targets: bird,
@@ -1190,7 +1190,7 @@ export class RocketScene extends Phaser.Scene {
     this.addOverlayButton(W / 2 - 140, top + 440, 'Tranquille', false, () => this.startGame('tranquille'));
     this.addOverlayButton(W / 2 + 140, top + 440, 'Défi', true, () => this.startGame('defi'));
     c.add(this.txt(W / 2 - 140, top + 486, 'plus de temps,\nrien à perdre', { ...style(16, P.g), align: 'center' }).setOrigin(0.5));
-    c.add(this.txt(W / 2 + 140, top + 486, '8 cœurs : un raté\ncoûte ½ cœur, 1 si vert', { ...style(16, P.g), align: 'center' }).setOrigin(0.5));
+    c.add(this.txt(W / 2 + 140, top + 486, '8 cœurs : un raté\ncoûte ½ ♥, 1 ♥ si vert', { ...style(16, P.g), align: 'center' }).setOrigin(0.5));
     this.overlayFocus = 1;
     this.refreshOverlayFocus();
   }

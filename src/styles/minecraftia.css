@@ -7,3 +7,14 @@
   font-style: normal;
   font-display: block;
 }
+
+/* Symboles absents de Minecraftia (♥ ♡), pris dans EmojiFont de Satsuyako (fournie par Philippe) et
+   replacés sur leur vrai caractère par scripts/police-symboles.py. Utilisée en secours, glyphe par glyphe. */
+@font-face {
+  font-family: 'Symboles pixel';
+  src: url('../fonts/emoji/symboles.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+  unicode-range: U+2661, U+2665;
+}

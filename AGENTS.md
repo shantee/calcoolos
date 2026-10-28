@@ -262,7 +262,10 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   (`numberFont()`, RetroFont). Elle n'a pas de ligature « fi »/« fl » (« Défi » devenait « DéA ») → `noLigature()`.
 - **Minecraftia** (textes de Décollage ! depuis le 28/10/2026, `src/styles/minecraftia.css`) : une seule graisse,
   nette aux tailles multiples de 8 px (`style()` convertit les anciennes tailles). Pas de ♥, ⌫, − (U+2212) ni de
-  tirets longs : ils sortent en « _ ». Écrire « cœur », « - », et dessiner les icônes (`backspaceIcon()`).
+  tirets longs : ils sortent en « _ ». ♥ et ♡ viennent de la police de secours « Symboles pixel »
+  (`src/fonts/emoji/symboles.ttf`, fabriquée depuis EmojiFont par `scripts/police-symboles.py` : ajouter un
+  symbole = une ligne dans `SYMBOLES` + `unicode-range` du CSS). Pour le reste : « - » et icônes dessinées
+  (`backspaceIcon()`).
 - **RetroFont dans Phaser 4** : `RetroFont.Parse` renvoie directement l'entrée `{data, texture, frame}` à mettre en cache.
 - **Police à chasse fixe** : ne pas espacer les lettres d'un nombre (on lisait « 2 8 ») ; un texte par jeton.
 - **Vite** : `assetsInlineLimit: 0` est obligatoire (les petites polices passaient en `data:` et la CSP les bloquait).

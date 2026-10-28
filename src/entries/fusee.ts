@@ -10,7 +10,7 @@ import { installerPleinEcran } from '../game/plein-ecran';
 async function start(): Promise<void> {
   // Les polices doivent être prêtes avant que Phaser ne dessine du texte.
   try {
-    await document.fonts.load('32px "Minecraftia"');
+    await Promise.all([document.fonts.load('32px "Minecraftia"'), document.fonts.load('32px "Symboles pixel"', '♥')]);
   } catch {
     /* police de secours */
   }

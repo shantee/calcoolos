@@ -22,7 +22,8 @@ l'accueil** (chantier 01, 25/10/2026) **les avatars des profils** (27/10/2026) e
 | Musique de Décollage ! (chiptune en do majeur, 3 intensités) et sons de la fusée (poussée, atterrissage, tic-tac, bonus, sifflement de chute, secours, meuh, piou, youpi) | composés et joués en direct par Web Audio : `src/game/sfx.ts` | code du projet |
 | Musique du Dragon gourmand (pentatonique, 3 intensités) et sons du dragon (croc, gloup, souffle de feu, hoquet, trombone triste, chauve-souris, tonnerre, plouf) | composés et joués en direct par Web Audio : `src/game/sfx.ts` | code du projet |
 | Police Pixelify Sans (accueil ; plus utilisée dans Décollage ! depuis le 28/10/2026) | paquet npm `@fontsource/pixelify-sans` 5.3.0 (Google Fonts) | SIL Open Font License 1.1 |
-| Police Minecraftia (textes de Décollage !, 28/10/2026) | fournie par Philippe (`minecraftia.zip`), `src/fonts/minecraftia/` | Andrew Tyler (andrewtyler.net) ; **licence non précisée** dans l'archive (`readme.txt` ne donne que l'auteur) : à vérifier avant d'en dépendre durablement |
+| Police Minecraftia (textes de Décollage !, 28/10/2026) | fournie par Philippe (`minecraftia.zip`), `src/fonts/minecraftia/` | © Andrew Tyler 2014 (andrewtyler.net) ; Creative Commons Attribution - Partage dans les mêmes conditions (indiqué dans le fichier de police) : citer l'auteur |
+| Cœurs ♥ ♡ des textes de Décollage ! (police « Symboles pixel », 28/10/2026) | tirés d'EmojiFont 1.50 (fournie par Philippe, `emoji.zip`) par `scripts/police-symboles.py` → `src/fonts/emoji/symboles.ttf` | auteur indiqué : Satsuyako ; **licence non précisée** dans le fichier : à vérifier |
 | Police Bricolage Grotesque | paquet npm `@fontsource-variable/bricolage-grotesque` 5.3.0 (Google Fonts) | SIL Open Font License 1.1 |
 | Moteur Phaser 4.2.1 | npm `phaser` | MIT |
 | Graphiques Apache ECharts 6.1.0 (tableau de bord) | npm `echarts` | Apache 2.0 |

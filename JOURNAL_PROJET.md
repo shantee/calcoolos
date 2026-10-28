@@ -37,13 +37,19 @@
   `src/entries/fusee.ts` avant le lancement. Pixelify Sans n'est plus chargée dans ce jeu (l'accueil la garde).
 - `style()` : taille ×0,8 arrondie au multiple de 8 px (pixels nets ; 32 px = pixels de 4 px comme le décor), plus
   de gras (une seule graisse).
-- Symboles absents de la police (affichés « _ ») : ♥ remplacé par « cœur », − par « - » ; touche effacer du pavé
-  dessinée (`backspaceIcon()`). Écran de début : deux légendes sous les boutons mises sur deux lignes (elles se
+- Symboles absents de la police (affichés « _ ») : − remplacé par « - » ; touche effacer du pavé dessinée
+  (`backspaceIcon()`). Écran de début : deux légendes sous les boutons mises sur deux lignes (elles se
   chevauchaient). Bulles : plus coupées au bord gauche.
+- Cœurs (Philippe tenait au ♥, `emoji.zip`) : EmojiFont (Satsuyako) range ses dessins sur les lettres (« C » = cœur
+  plein, « B » = cœur vide). `scripts/police-symboles.py` (fonttools, hors dépendances du projet) en tire
+  `src/fonts/emoji/symboles.ttf` : ♥ et ♡ sur leur vrai caractère, agrandis ×2 (pixels de la même taille que ceux
+  de Minecraftia) et centrés sur les majuscules. Police « Symboles pixel » en secours de Minecraftia : les textes
+  gardent « ♥ ».
 - Vérifié : typecheck, 127 tests, build, parties gagnée et perdue (`fusee-auto.mjs`), captures relues, aucune
   erreur de console.
 
-**Limites** : licence de Minecraftia non précisée dans l'archive (voir `ART_ASSETS.md`). Non publié en ligne.
+**Limites** : Minecraftia est sous Creative Commons BY-SA (indiqué dans le fichier) : citer l'auteur. Licence
+d'EmojiFont inconnue (voir `ART_ASSETS.md`).
 
 ## 2026-10-28 : Claude, session 17 (Décollage ! : premiers graphismes fournis : jauge, vache, enfants)
 
