@@ -187,10 +187,6 @@ describe('partie', () => {
       expect(s.rocket.on).toBe(p.id);
       if (mode === 'defi') {
         expect(s.lives).toBe(7);
-        s.shield = true;
-        fallFrom(p);
-        expect(s.lives).toBe(7);
-        expect(s.shield).toBe(false);
         s.lives = 1;
         fallFrom(p);
         expect(s.phase).toBe('lost');
@@ -201,11 +197,11 @@ describe('partie', () => {
     }
   });
 
-  it('bonus : turbo, sablier, bouclier, cœur', () => {
+  it('bonus : turbo, sablier, cœur', () => {
     const s = new RocketSession('eveil', 9, 'defi');
     s.lives = 5;
     const p = s.platforms[3];
-    for (const kind of ['turbo', 'sablier', 'bouclier', 'coeur'] as const) {
+    for (const kind of ['turbo', 'sablier', 'coeur'] as const) {
       p.power = kind;
       s.rocket.x = p.x;
       s.rocket.y = p.y + 30;
@@ -215,7 +211,6 @@ describe('partie', () => {
     }
     expect(s.turbo).toBe(true);
     expect(s.slow).toBeGreaterThanOrEqual(4);
-    expect(s.shield).toBe(true);
     expect(s.lives).toBe(6);
     while (!s.question) s.step(1 / 60, 0);
     expect(s.question.time).toBeGreaterThan(timeFor(s.question.expr, 'eveil', 'defi', s.altitude));

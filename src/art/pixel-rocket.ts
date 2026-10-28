@@ -330,17 +330,22 @@ export function star(frame: 0 | 1): PixelCanvas {
   return frame === 0 ? art(['...K...', '..KYK..', 'KKYyYKK', '.KYYYK.', '.KYKYK.', 'KK...KK']) : art(['.K.', 'KYK', 'KyK', 'KYK', 'KYK', '.K.']);
 }
 
-/** Petite bulle de bouclier autour de la fusée. */
-export function bubble(): PixelCanvas {
-  const pc = new PixelCanvas(26, 32);
-  pc.shadeFn(0, 0, 25, 31, [P.S, P.C, P.W] as Ramp, (x, y) => {
-    const dx = (x + 0.5 - 13) / 13;
-    const dy = (y + 0.5 - 16) / 16;
-    const d = dx * dx + dy * dy;
-    if (d > 1 || d < 0.78) return null;
-    return dy < -0.3 && dx < -0.2 ? 1 : 0.4;
-  }, { dither: 0 });
-  return pc;
+/** Parachute rayé du chat pilote (défaite de Décollage !) : les suspentes se rejoignent en bas au centre. */
+export function parachute(): PixelCanvas {
+  return art([
+    '.....KKKKK.....',
+    '...KKRWRWRKK...',
+    '..KRWRWRWRWRK..',
+    '.KRWRWRWRWRWRK.',
+    'KKKKKKKKKKKKKKK',
+    'K......K......K',
+    '.K.....K.....K.',
+    '..K....K....K..',
+    '...K...K...K...',
+    '....K..K..K....',
+    '.....K.K.K.....',
+    '......KKK......',
+  ]);
 }
 
 // --- Habitants ----------------------------------------------------------------------------------

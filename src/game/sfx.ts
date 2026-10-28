@@ -300,6 +300,48 @@ export class Sfx {
     for (let b = 0; b < Math.floor(t / (q * 2)); b++) this.noise(0.05, { gain: 0.12, filter: 5000, q: 1, delay: b * q * 2 });
   }
 
+  /**
+   * Défaite de Décollage ! (≈ 3,6 s) : arpège doux qui descend en la mineur, puis « wah wah wah waaah » de trombone
+   * chiptune, la dernière note tenue avec un vibrato qui retombe.
+   */
+  sadEnding(): void {
+    [659, 587, 523, 494, 440, 392, 330].forEach((f, i) => {
+      this.tone(f, 0.27, { wave: 'triangle', gain: 0.12, delay: i * 0.15 });
+      this.tone(f, 0.2, { wave: 'square', gain: 0.025, delay: i * 0.15 });
+    });
+    this.tone(110, 1, { wave: 'triangle', gain: 0.14 });
+    this.tone(87.3, 1, { wave: 'triangle', gain: 0.14, delay: 0.5 });
+    const t0 = 1.15;
+    [[392, 370], [370, 349], [349, 330]].forEach(([a, b], i) => this.tone(a, 0.32, { wave: 'square', gain: 0.05, slideTo: b, delay: t0 + i * 0.38, attack: 0.04 }));
+    this.wobble(330, 1.3, t0 + 3 * 0.38);
+    this.tone(82.4, 1.4, { wave: 'triangle', gain: 0.16, delay: t0 + 3 * 0.38 });
+  }
+
+  /** Note carrée tenue avec vibrato, qui baisse un peu en s'éteignant. */
+  private wobble(freq: number, dur: number, delay: number): void {
+    if (!this.ctx || !this.master || this._muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, t0);
+    osc.frequency.linearRampToValueAtTime(freq * 0.94, t0 + dur);
+    const lfo = this.ctx.createOscillator();
+    lfo.frequency.value = 6;
+    const depth = this.ctx.createGain();
+    depth.gain.value = freq * 0.03;
+    lfo.connect(depth).connect(osc.frequency);
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.05, t0 + 0.05);
+    g.gain.setValueAtTime(0.05, t0 + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g).connect(this.master);
+    osc.start(t0);
+    lfo.start(t0);
+    osc.stop(t0 + dur + 0.02);
+    lfo.stop(t0 + dur + 0.02);
+  }
+
   /** Tir laser rétro. */
   laser(): void {
     this.tone(1400, 0.16, { wave: 'square', gain: 0.06, slideTo: 300 });

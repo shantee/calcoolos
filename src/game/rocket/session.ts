@@ -89,7 +89,7 @@ function pickArt(zone: number, kind: PlatformKind, r: number): PlatformArt | nul
 }
 
 export type PlatformKind = 'sol' | 'normale' | 'mobile' | 'fragile' | 'planete';
-export type PowerKind = 'bouclier' | 'sablier' | 'turbo' | 'etoile' | 'coeur';
+export type PowerKind = 'sablier' | 'turbo' | 'etoile' | 'coeur';
 export type Friend = 'vache' | 'enfant' | 'nuageux' | 'mouton' | 'oiseau' | 'roi' | 'robot' | 'alien' | 'astronaute' | 'ourson';
 
 export interface Platform {
@@ -162,7 +162,7 @@ export type RocketEvent =
   | { type: 'star'; star: Star }
   | { type: 'crumble'; platform: Platform }
   | { type: 'regrow'; platform: Platform }
-  | { type: 'fall'; lifeLost: boolean; shieldUsed: boolean; to: Platform }
+  | { type: 'fall'; lifeLost: boolean; to: Platform }
   | { type: 'zone'; zone: number }
   | { type: 'won' }
   | { type: 'lost' };
@@ -232,7 +232,9 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
     ['oiseau', 'roi', 'nuageux'],
     ['robot', 'alien', 'astronaute'],
   ];
-  const powers: PowerKind[] = ['bouclier', 'sablier', 'turbo', 'etoile', 'etoile', 'coeur'];
+  // Le bouclier (28/10/2026) a été remplacé par un cœur : même effet, plus simple à comprendre. Même longueur de
+  // liste, donc mêmes tirages et mêmes mondes.
+  const powers: PowerKind[] = ['coeur', 'sablier', 'turbo', 'etoile', 'etoile', 'coeur'];
   let x = (LANE.x0 + LANE.x1) / 2;
   let y = 0;
   let sinceMoving = 0;
@@ -300,7 +302,6 @@ export class RocketSession {
   lives: number | null;
   phase: 'play' | 'won' | 'lost' = 'play';
   /** Bouclier : sauve d'une chute (une fois). */
-  shield = false;
   /** Prochaine poussée renforcée. */
   turbo = false;
   /** Nombre de calculs restants avec plus de temps (sablier). */
@@ -533,11 +534,8 @@ export class RocketSession {
       this.stats.hardLandings++;
       this.combo = 0;
       if (this.lives !== null) {
-        if (this.shield) this.shield = false;
-        else {
-          this.lives--;
-          lifeLost = true;
-        }
+        this.lives--;
+        lifeLost = true;
       }
     }
     const record = p.y > (this.platform(this.safe)?.y ?? 0) && p.kind !== 'sol';
@@ -563,9 +561,6 @@ export class RocketSession {
 
   private applyPower(kind: PowerKind): void {
     switch (kind) {
-      case 'bouclier':
-        this.shield = true;
-        break;
       case 'sablier':
         this.slow = 5;
         break;
@@ -588,11 +583,7 @@ export class RocketSession {
     this.stats.falls++;
     this.combo = 0;
     let lifeLost = false;
-    let shieldUsed = false;
-    if (this.shield) {
-      this.shield = false;
-      shieldUsed = true;
-    } else if (this.lives !== null) {
+    if (this.lives !== null) {
       this.lives--;
       lifeLost = true;
     }
@@ -609,7 +600,7 @@ export class RocketSession {
     this.safe = to.id;
     this.peak = to.y;
     if (to.kind === 'fragile') to.crumbleAt = null;
-    ev.push({ type: 'fall', lifeLost, shieldUsed, to });
+    ev.push({ type: 'fall', lifeLost, to });
     this.checkLost(ev);
   }
 

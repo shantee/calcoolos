@@ -204,6 +204,17 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
 - **Lune et comète** (`lune.png`, `comete.png`) : lune 130 × 132 (`moon.webp`, décalée à x 980 pour ne pas passer
   sous le pavé), comète 300 × 51 (`comet.webp`) retournée pour filer étoile en avant vers la gauche.
   `CAPTURES/fusee-lune-comete.png`, `fusee-fin-titre.png`.
+- **Bouclier supprimé** (demande de Philippe : même effet qu'un cœur, en moins bien, et inutile en Tranquille) :
+  remplacé par un cœur dans la liste des bonus (même longueur, donc mêmes tirages et mêmes mondes) ; retirés de la
+  session (`shield`), de la scène (bulle, icône du HUD, message du secours) et des tests ; le dessin de la bulle
+  devient le parachute.
+- **Animation de défaite** (≈ 5,2 s avant l'écran de fin, `defeat()`) : alarme, la fusée tremble, clignote en rouge et
+  fume ; le chat s'éjecte dans son hublot (découpé dans `rocket-peur`, `capsule.webp`), ouvre un parachute rayé
+  (dessiné par code) et redescend en se balançant (« Ouf ! J'ai mon parachute… ») ; la fusée explose (pack gratuit
+  CraftPix fourni par Philippe, « Circle_explosion », 10 images de 256 px, `explo-0..9.webp`) avec deux explosions
+  secondaires, éclair, secousse, débris et fumée ; musique `Sfx.sadEnding()` (arpège en la mineur puis « wah wah wah
+  waaah » avec vibrato, 3,5 s). Mode calme : sans tremblement, secousse ni débris. Pavé masqué puis réaffiché.
+  `CAPTURES/fusee-defaite-explosion.png`, `fusee-defaite-parachute.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

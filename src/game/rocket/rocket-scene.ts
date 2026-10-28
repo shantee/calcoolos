@@ -145,7 +145,6 @@ export class RocketScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Container;
   private hull!: Phaser.GameObjects.Image;
   private fire!: Phaser.GameObjects.Image;
-  private bubble!: Phaser.GameObjects.Image;
   private thrustUntil = 0;
   private turboFlame = false;
   private faceUntil = 0;
@@ -175,6 +174,8 @@ export class RocketScene extends Phaser.Scene {
   private keys = new Map<string, Phaser.GameObjects.Container>();
   /** Ciel de nuit de la fête finale (détruit au départ suivant). */
   private dusk: Phaser.GameObjects.Graphics | null = null;
+  /** Hublot du chat en parachute après l'explosion (détruit au départ suivant). */
+  private pilotPod: Phaser.GameObjects.Container | null = null;
   private overlay: Phaser.GameObjects.Container | null = null;
   private overlayButtons: Array<{ c: Phaser.GameObjects.Container; run: () => void }> = [];
   private overlayFocus = 0;
@@ -558,8 +559,7 @@ export class RocketScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) for (const pw of [0, 1, 2] as const) this.tx(`f-flame-${pw}-${i}`, () => A.flame(i, pw));
     this.fire = this.add.image(0, -2, 'f-flame-0-0').setOrigin(0.5, 0).setScale(this.px('f-flame-0-0'));
     this.hull = this.add.image(0, 0, 'f-rocket-normal').setOrigin(0.5, 1).setScale(this.px('f-rocket-normal'));
-    this.bubble = this.add.image(0, -this.hull.displayHeight / 2, this.tx('f-bubble', A.bubble)).setScale(PX).setVisible(false);
-    this.ship = this.add.container(640, 0, [this.fire, this.hull, this.bubble]).setDepth(10);
+    this.ship = this.add.container(640, 0, [this.fire, this.hull]).setDepth(10);
     this.tx('f-puff-3', () => A.puff(3));
     this.tx('f-puff-5', () => A.puff(5));
     for (const c of [P.Y, P.C, P.p, P.L, P.W, P.r]) this.tx(`f-spark-${c}`, () => A.spark(c));
@@ -607,8 +607,6 @@ export class RocketScene extends Phaser.Scene {
     else if (s && flying && r.vy < -430) face = 'peur';
     else if (s?.question && s.question.left / s.question.time < 0.25) face = 'peur';
     this.hull.setTexture(`f-rocket-${face}`);
-    this.bubble.setVisible(!!s?.shield);
-    if (s?.shield) this.bubble.setAlpha(0.6 + Math.sin(time / 150) * 0.25);
   }
 
   private followCamera(dt: number): void {
@@ -762,7 +760,6 @@ export class RocketScene extends Phaser.Scene {
       y = 88;
     }
     const icons: Array<[boolean, string, A.PowerLook, string]> = [
-      [s.shield, 'bouclier', 'bouclier', ''],
       [s.turbo, 'turbo', 'turbo', ''],
       [s.slow > 0, 'sablier', 'sablier', `×${s.slow}`],
     ];
@@ -1046,7 +1043,7 @@ export class RocketScene extends Phaser.Scene {
         }
         this.sfx.powerUp();
         this.burst(this.ship.x, this.ship.y - 60, [P.Y, P.C, P.p, P.W], 14);
-        const label: Record<string, string> = { bouclier: 'Bouclier !', sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 ♥' : '+100' };
+        const label: Record<string, string> = { sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 ♥' : '+100' };
         this.floatText(this.ship.x, this.ship.y - 140, label[ev.kind], P.C, 32);
         this.setFace('joie', 900);
         this.refreshHud();
@@ -1102,7 +1099,7 @@ export class RocketScene extends Phaser.Scene {
         break;
       }
       case 'fall':
-        this.rescue(ev.lifeLost, ev.shieldUsed, ev.to);
+        this.rescue(ev.lifeLost, ev.to);
         break;
       case 'zone':
         this.sfx.fanfare();
@@ -1127,9 +1124,9 @@ export class RocketScene extends Phaser.Scene {
 
   /**
    * Chute : la fusée tombe hors de l'écran, puis l'oiseau de secours la ramène
-   * sur sa dernière plateforme (le bouclier, lui, la fait rebondir en bulle).
+   * sur sa dernière plateforme.
    */
-  private rescue(lifeLost: boolean, shieldUsed: boolean, to: Platform): void {
+  private rescue(lifeLost: boolean, to: Platform): void {
     this.rescuing = true;
     this.qPanel.setVisible(false);
     this.sfx.whistle();
@@ -1145,7 +1142,7 @@ export class RocketScene extends Phaser.Scene {
     } });
     this.time.delayedCall(500, () => {
       this.sfx.rescue();
-      this.say(fromX, fromY - 140, shieldUsed ? 'Le bouclier te protège !' : lifeLost ? 'Je te ramène ! (-1 ♥)' : 'Je te ramène !', 1400);
+      this.say(fromX, fromY - 140, lifeLost ? 'Je te ramène ! (-1 ♥)' : 'Je te ramène !', 1400);
     });
     this.tweens.add({
       targets: bird,
@@ -1459,14 +1456,133 @@ export class RocketScene extends Phaser.Scene {
     this.tweens.add({ targets: h, y: y - 80, x: h.x + Phaser.Math.Between(-20, 20), alpha: 0, duration: 1200, ease: 'Sine.easeOut', onComplete: () => h.destroy() });
   }
 
+  /**
+   * Défaite (≈ 5,2 s avant l'écran de fin) : alarme, la fusée tremble, clignote en rouge et fume ; le chat s'éjecte
+   * dans son hublot et ouvre son parachute ; la fusée explose (explosion CraftPix) en débris ; musique triste.
+   */
   private defeat(): void {
     if (this.ending) return;
     this.ending = true;
     this.setMusic(null);
     this.qPanel.setVisible(false);
-    this.sfx.defeat();
-    this.banner('Plus de cœurs… la fusée rentre au garage', P.r, 2400);
-    this.time.delayedCall(2800, () => this.showEnd(false));
+    this.showControls(false);
+    this.setFace('peur', 5000);
+    this.sfx.alarm();
+    const calm = this.reducedMotion;
+    const x = this.ship.x;
+    const y = this.ship.y - this.hull.displayHeight / 2;
+    const shake = calm ? null : this.tweens.add({ targets: this.hull, x: 3, duration: 40, yoyo: true, repeat: -1 });
+    let n = 0;
+    const trouble = this.time.addEvent({
+      delay: 110,
+      loop: true,
+      callback: () => {
+        if (++n % 2) this.hull.setTint(0xff8080);
+        else this.hull.clearTint();
+        this.smoke(x + Phaser.Math.Between(-24, 24), y + Phaser.Math.Between(-30, 20));
+      },
+    });
+    this.time.delayedCall(1100, () => this.ejectPilot(calm));
+    this.time.delayedCall(1350, () => {
+      trouble.remove();
+      shake?.remove();
+      this.hull.clearTint().setX(0);
+      this.ship.setVisible(false);
+      this.explodeRocket(x, y, calm);
+    });
+    this.time.delayedCall(1700, () => this.sfx.sadEnding());
+    this.time.delayedCall(1800, () => this.banner('Boum ! Plus de cœurs…', P.r, 2400));
+    this.time.delayedCall(5200, () => this.showEnd(false));
+  }
+
+  /** Petite fumée grise qui monte. */
+  private smoke(x: number, y: number): void {
+    const p = this.add.image(x, y, 'f-puff-3').setScale(PX).setDepth(11).setAlpha(0.8).setTint(0x8a8f9e);
+    this.tweens.add({ targets: p, y: y - Phaser.Math.Between(40, 80), x: x + Phaser.Math.Between(-20, 20), alpha: 0, scale: PX * 1.8, duration: 900, onComplete: () => p.destroy() });
+  }
+
+  /** Le chat pilote s'éjecte dans son hublot, ouvre son parachute et redescend doucement en se balançant. */
+  private ejectPilot(calm: boolean): void {
+    if (!('f-capsule' in PROVIDED)) return;
+    this.sfx.pop();
+    this.sfx.whoosh();
+    // Hublot à (49, 42) dans l'image de la fusée (72 × 98, origine en bas au centre).
+    const x = this.ship.x + 13;
+    const y = this.ship.y - 56;
+    const capsule = this.add.image(0, 0, 'f-capsule');
+    const chute = this.add.image(0, -18, this.tx('f-parachute', A.parachute)).setOrigin(0.5, 1).setScale(PX * 1.5, 0);
+    this.pilotPod?.destroy();
+    this.pilotPod = this.add.container(x, y, [chute, capsule]).setDepth(13);
+    const pod = this.pilotPod;
+    this.tweens.add({
+      targets: pod,
+      x: x + 70,
+      y: y - 200,
+      angle: calm ? 0 : 360,
+      duration: 550,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        pod.setAngle(0);
+        this.sfx.pop();
+        this.tweens.add({ targets: chute, scaleY: PX * 1.5, y: -26, duration: 300, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: capsule, scale: 2, duration: 300, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: pod, y: pod.y + 260, x: pod.x + 40, duration: 4200, ease: 'Sine.easeIn' });
+        if (!calm) {
+          pod.setAngle(-10);
+          this.tweens.add({ targets: pod, angle: 10, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+        this.time.delayedCall(900, () => pod.active && this.say(pod.x, pod.y - 140, 'Ouf ! J\'ai mon parachute…', 2200));
+      },
+    });
+  }
+
+  /** La fusée explose : grande explosion, deux plus petites, éclair, secousse, débris et fumée. */
+  private explodeRocket(x: number, y: number, calm: boolean): void {
+    this.sfx.boom(true);
+    if (!calm) {
+      this.cameras.main.shake(450, 0.014);
+      this.cameras.main.flash(220, 255, 236, 200);
+    }
+    this.explosion(x, y, 1.5);
+    this.time.delayedCall(170, () => {
+      this.explosion(x - 55, y + 25, 0.75);
+      this.sfx.boom(false);
+    });
+    this.time.delayedCall(330, () => this.explosion(x + 50, y - 30, 0.85));
+    this.burst(x, y, [P.Y, P.r, P.W], 30);
+    if (calm) return;
+    // Débris de la coque : rouge, blanc, gris, qui volent puis retombent en tournant.
+    const colors = [P.R, P.r, P.W, P.w, P.g, P.h];
+    for (let i = 0; i < 18; i++) {
+      const piece = this.add.rectangle(x, y, PX * Phaser.Math.Between(2, 3), PX * Phaser.Math.Between(2, 4), tint(colors[i % colors.length])).setDepth(12).setStrokeStyle(2, 0x1a1c2c);
+      const dx = Phaser.Math.Between(-260, 260);
+      const up = Phaser.Math.Between(120, 300);
+      this.tweens.add({ targets: piece, x: x + dx, angle: Phaser.Math.Between(-720, 720), duration: 1400 });
+      this.tweens.chain({
+        targets: piece,
+        tweens: [
+          { y: y - up, duration: 420, ease: 'Quad.easeOut' },
+          { y: y - up + 520, alpha: 0, duration: 980, ease: 'Quad.easeIn' },
+        ],
+        onComplete: () => {
+          this.tweens.killTweensOf(piece);
+          piece.destroy();
+        },
+      });
+    }
+    for (let i = 0; i < 10; i++) this.time.delayedCall(300 + i * 120, () => this.smoke(x + Phaser.Math.Between(-40, 40), y + Phaser.Math.Between(-20, 30)));
+  }
+
+  /** Une explosion animée (10 images de 256 px), ou une gerbe d'étincelles si les images manquent. */
+  private explosion(x: number, y: number, scale: number): void {
+    if (!('f-explo-0' in PROVIDED)) {
+      this.burst(x, y, [P.Y, P.r, P.R], 24);
+      return;
+    }
+    if (!this.anims.exists('explo')) this.anims.create({ key: 'explo', frames: Array.from({ length: 10 }, (_, i) => ({ key: `f-explo-${i}` })), frameRate: 16 });
+    const s = this.add.sprite(x, y, 'f-explo-0').setScale(scale).setDepth(12);
+    s.play('explo');
+    s.once('animationcomplete', () => s.destroy());
   }
 
   private records(): Record<string, number> {
@@ -1637,6 +1753,9 @@ export class RocketScene extends Phaser.Scene {
     this.rescuing = false;
     this.dusk?.destroy();
     this.dusk = null;
+    this.pilotPod?.destroy();
+    this.pilotPod = null;
+    this.ship.setVisible(true);
     this.showControls(true);
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new RocketSession(this.tier.id, this.seed, mode);
