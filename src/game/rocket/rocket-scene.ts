@@ -22,7 +22,7 @@ import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
 export const H = 720;
-const FONT = '"Pixelify Sans", monospace';
+const FONT = '"Minecraftia", monospace';
 const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
@@ -61,8 +61,14 @@ const GRADE_LOOK: Record<Grade, { fill: string; edge: string; text: string; labe
   difficile: { fill: P.V, edge: P.R, text: P.p, label: 'difficile ●●●' },
 };
 
+/**
+ * Minecraftia est plus grande que Pixelify Sans à taille égale (les tailles du code datent de Pixelify) :
+ * on la réduit d'un cinquième, puis on arrondit au multiple de 8 px pour que ses pixels restent nets
+ * (32 px : un pixel de police = 4 px, comme le pixel art).
+ */
 function style(size: number, color: string, stroke = 0): Phaser.Types.GameObjects.Text.TextStyle {
-  return { fontFamily: FONT, fontSize: `${size}px`, fontStyle: '700', color, stroke: P.K, strokeThickness: stroke };
+  const px = Math.max(16, Math.round((size * 0.8) / 8) * 8);
+  return { fontFamily: FONT, fontSize: `${px}px`, color, stroke: P.K, strokeThickness: stroke };
 }
 
 /** Couleur du ciel selon l'altitude : bleu du matin, coucher violet, nuit de l'espace. */
@@ -181,8 +187,8 @@ export class RocketScene extends Phaser.Scene {
   }
 
   /**
-   * Texte en Pixelify Sans. La police n'a pas de ligature « fi » / « fl » : on glisse
-   * un séparateur invisible (sinon « Défi » s'affiche « DéA »).
+   * Texte en Minecraftia. On glisse un séparateur invisible entre « f » et « i »/« l » : avec
+   * Pixelify Sans, la ligature manquante affichait « Défi » en « DéA » (gardé par sécurité).
    */
   private txt(x: number, y: number, text: string, st: Phaser.Types.GameObjects.Text.TextStyle): Phaser.GameObjects.Text {
     return this.add.text(x, y, noLigature(text), st);
@@ -576,7 +582,7 @@ export class RocketScene extends Phaser.Scene {
       const y = 400 + row * 66;
       const c = this.add.container(x, y).setScrollFactor(0).setDepth(60);
       const bg = this.add.image(0, 0, 'f-key').setScale(PX);
-      const t = label === '⌫' ? this.txt(0, -4, label, style(32, P.W, 0)).setOrigin(0.5) : this.num(0, -2, label, 3);
+      const t = label === '⌫' ? this.add.image(0, -2, this.tx('f-backspace', A.backspaceIcon)).setScale(PX) : this.num(0, -2, label, 3);
       c.add([bg, t]);
       c.setSize(64, 56).setInteractive({ useHandCursor: true });
       c.on('pointerdown', () => {
@@ -609,14 +615,12 @@ export class RocketScene extends Phaser.Scene {
   private flashKey(label: string): void {
     const c = this.keys.get(label);
     if (!c) return;
-    const txt = c.list[1] as Phaser.GameObjects.Text | Phaser.GameObjects.BitmapText;
+    const mark = c.list[1] as Phaser.GameObjects.BitmapText | Phaser.GameObjects.Image;
     (c.list[0] as Phaser.GameObjects.Image).setTexture('f-key-on');
-    if (txt instanceof Phaser.GameObjects.BitmapText) txt.setTint(tint(P.N));
-    else txt.setColor(P.K);
+    mark.setTint(tint(P.N));
     this.time.delayedCall(110, () => {
       (c.list[0] as Phaser.GameObjects.Image).setTexture('f-key');
-      if (txt instanceof Phaser.GameObjects.BitmapText) txt.clearTint();
-      else txt.setColor(P.W);
+      mark.clearTint();
     });
   }
 
@@ -719,7 +723,7 @@ export class RocketScene extends Phaser.Scene {
 
   private say(x: number, y: number, text: string, ms = 1100): void {
     const t = this.txt(x, y, text, { ...style(18, P.K), backgroundColor: P.X, padding: { x: 8, y: 4 } }).setOrigin(0.5).setDepth(40);
-    t.x = Phaser.Math.Clamp(t.x, 120, W - 290);
+    t.x = Phaser.Math.Clamp(t.x, Math.max(120, t.width / 2 + 8), W - 290);
     if (!this.reducedMotion) this.tweens.add({ targets: t, y: y - 10, duration: 200, ease: 'Back.easeOut' });
     this.tweens.add({ targets: t, alpha: 0, delay: ms, duration: 250, onComplete: () => t.destroy() });
   }
@@ -821,10 +825,10 @@ export class RocketScene extends Phaser.Scene {
     this.refreshHud();
   }
 
-  /** Calcul raté en Défi : « −½ ♥ » ou « −1 ♥ » au-dessus de la fusée, défaite s'il n'en reste plus. */
+  /** Calcul raté en Défi : « -½ cœur » ou « -1 cœur » au-dessus de la fusée, défaite s'il n'en reste plus. */
   private loseHeart(lost: number): void {
     this.refreshHud();
-    if (lost > 0) this.floatText(this.ship.x - 70, this.ship.y - 90, lost < 1 ? '−½ ♥' : '−1 ♥', P.r, 28);
+    if (lost > 0) this.floatText(this.ship.x - 70, this.ship.y - 90, lost < 1 ? '-½ cœur' : '-1 cœur', P.r, 28);
     if (this.session?.phase === 'lost') this.time.delayedCall(700, () => this.defeat());
   }
 
@@ -908,7 +912,7 @@ export class RocketScene extends Phaser.Scene {
         if (ev.hard) {
           this.setFace('peur', 900);
           if (!this.reducedMotion) this.cameras.main.shake(220, 0.008);
-          this.floatText(this.ship.x, this.ship.y - 110, ev.lifeLost ? 'Ouille ! −1 ♥' : 'Ouille !', P.r, 30);
+          this.floatText(this.ship.x, this.ship.y - 110, ev.lifeLost ? 'Ouille ! -1 cœur' : 'Ouille !', P.r, 30);
           if (s.phase === 'lost') this.time.delayedCall(800, () => this.defeat());
         } else if (!this.reducedMotion && v) {
           this.tweens.add({ targets: v.img, y: v.img.y + 6, duration: 90, yoyo: true });
@@ -944,7 +948,7 @@ export class RocketScene extends Phaser.Scene {
         }
         this.sfx.powerUp();
         this.burst(this.ship.x, this.ship.y - 60, [P.Y, P.C, P.p, P.W], 14);
-        const label: Record<string, string> = { bouclier: 'Bouclier !', sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 ♥' : '+100' };
+        const label: Record<string, string> = { bouclier: 'Bouclier !', sablier: 'Plus de temps !', turbo: 'Turbo prêt !', etoile: '+200', coeur: s.lives !== null ? '+1 cœur' : '+100' };
         this.floatText(this.ship.x, this.ship.y - 140, label[ev.kind], P.C, 32);
         this.setFace('joie', 900);
         this.refreshHud();
@@ -1022,7 +1026,7 @@ export class RocketScene extends Phaser.Scene {
     } });
     this.time.delayedCall(500, () => {
       this.sfx.rescue();
-      this.say(fromX, fromY - 140, shieldUsed ? 'Le bouclier te protège !' : lifeLost ? 'Je te ramène ! (−1 ♥)' : 'Je te ramène !', 1400);
+      this.say(fromX, fromY - 140, shieldUsed ? 'Le bouclier te protège !' : lifeLost ? 'Je te ramène ! (-1 cœur)' : 'Je te ramène !', 1400);
     });
     this.tweens.add({
       targets: bird,
@@ -1185,8 +1189,8 @@ export class RocketScene extends Phaser.Scene {
     }
     this.addOverlayButton(W / 2 - 140, top + 440, 'Tranquille', false, () => this.startGame('tranquille'));
     this.addOverlayButton(W / 2 + 140, top + 440, 'Défi', true, () => this.startGame('defi'));
-    c.add(this.txt(W / 2 - 140, top + 486, 'plus de temps, rien à perdre', style(16, P.g)).setOrigin(0.5));
-    c.add(this.txt(W / 2 + 140, top + 486, '8 cœurs : un raté coûte ½ ♥, 1 ♥ si vert', style(16, P.g)).setOrigin(0.5));
+    c.add(this.txt(W / 2 - 140, top + 486, 'plus de temps,\nrien à perdre', { ...style(16, P.g), align: 'center' }).setOrigin(0.5));
+    c.add(this.txt(W / 2 + 140, top + 486, '8 cœurs : un raté\ncoûte ½ cœur, 1 si vert', { ...style(16, P.g), align: 'center' }).setOrigin(0.5));
     this.overlayFocus = 1;
     this.refreshOverlayFocus();
   }

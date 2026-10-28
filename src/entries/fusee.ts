@@ -1,7 +1,6 @@
 import '../i18n/page';
 import '../i18n/phaser';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/700.css';
+import '../styles/minecraftia.css';
 import '../styles/game.css';
 import Phaser from 'phaser';
 import { RocketScene, W, H } from '../game/rocket/rocket-scene';
@@ -11,7 +10,7 @@ import { installerPleinEcran } from '../game/plein-ecran';
 async function start(): Promise<void> {
   // Les polices doivent être prêtes avant que Phaser ne dessine du texte.
   try {
-    await Promise.all([document.fonts.load('700 32px "Pixelify Sans"'), document.fonts.load('400 24px "Pixelify Sans"')]);
+    await document.fonts.load('32px "Minecraftia"');
   } catch {
     /* police de secours */
   }

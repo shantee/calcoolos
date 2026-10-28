@@ -28,6 +28,23 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-28 : Claude, Décollage ! en police Minecraftia
+
+**Demande** : remplacer la police des textes de Décollage ! (Pixelify Sans) par Minecraftia, fournie par Philippe.
+
+**Fait**
+- `src/fonts/minecraftia/` (TTF + `readme.txt` de l'auteur), `src/styles/minecraftia.css`, chargée par
+  `src/entries/fusee.ts` avant le lancement. Pixelify Sans n'est plus chargée dans ce jeu (l'accueil la garde).
+- `style()` : taille ×0,8 arrondie au multiple de 8 px (pixels nets ; 32 px = pixels de 4 px comme le décor), plus
+  de gras (une seule graisse).
+- Symboles absents de la police (affichés « _ ») : ♥ remplacé par « cœur », − par « - » ; touche effacer du pavé
+  dessinée (`backspaceIcon()`). Écran de début : deux légendes sous les boutons mises sur deux lignes (elles se
+  chevauchaient). Bulles : plus coupées au bord gauche.
+- Vérifié : typecheck, 127 tests, build, parties gagnée et perdue (`fusee-auto.mjs`), captures relues, aucune
+  erreur de console.
+
+**Limites** : licence de Minecraftia non précisée dans l'archive (voir `ART_ASSETS.md`). Non publié en ligne.
+
 ## 2026-10-28 : Claude, session 17 (Décollage ! : premiers graphismes fournis : jauge, vache, enfants)
 
 Demande de Philippe : remplacer peu à peu les graphismes dessinés par code de Décollage ! par des images PNG qu'il

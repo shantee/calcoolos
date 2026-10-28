@@ -856,6 +856,13 @@ export function arrow(dir: -1 | 1, pressed: boolean): PixelCanvas {
   return pc;
 }
 
+/** Touche « effacer » du pavé : flèche-étiquette blanche barrée d'une croix (12×7). */
+export function backspaceIcon(): PixelCanvas {
+  const pc = new PixelCanvas(12, 7);
+  pc.pattern(0, 0, ['...WWWWWWWWW', '..WWWNWWWNWW', '.WWWWWNWNWWW', 'WWWWWWWNWWWW', '.WWWWWNWNWWW', '..WWWNWWWNWW', '...WWWWWWWWW'], { W: P.W, N: P.N });
+  return pc;
+}
+
 export type HeartFill = 'plein' | 'demi' | 'vide';
 
 /** Cœur des vies ; « demi » : moitié gauche rouge, moitié droite vide. */

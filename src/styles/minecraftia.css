@@ -1,0 +1,9 @@
+/* Minecraftia (Andrew Tyler, voir src/fonts/minecraftia/readme.txt) : police des textes de Décollage !.
+   Une seule graisse ; ses pixels tombent juste aux tailles multiples de 8 px. */
+@font-face {
+  font-family: 'Minecraftia';
+  src: url('../fonts/minecraftia/Minecraftia-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
