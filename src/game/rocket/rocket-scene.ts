@@ -1002,7 +1002,20 @@ export class RocketScene extends Phaser.Scene {
           const objs = [v.img, ...v.extras, ...(v.friend ? [v.friend] : [])] as Phaser.GameObjects.Image[];
           for (const o of objs) if (o.getData('y0') === undefined) o.setData('y0', o.y);
           const pouf = 'f-nuage-pouf' in PROVIDED && ev.platform.art?.startsWith('nuage');
-          this.tweens.add({ targets: pouf ? objs.slice(1) : objs, y: '+=260', alpha: 0, angle: 12, duration: 900, ease: 'Quad.easeIn' });
+          const casse = `f-${ev.platform.art}-casse`;
+          if (casse in PROVIDED) {
+            // Les ballons éclatent : la plateforme cassée reste en place, clignote de plus en plus vite et disparaît.
+            v.img.setTexture(casse);
+            this.tweens.chain({
+              targets: v.img,
+              tweens: [
+                { alpha: 0.15, duration: 120, yoyo: true, repeat: 2, delay: 450 },
+                { alpha: 0.15, duration: 50, yoyo: true, repeat: 5 },
+                { alpha: 0, duration: 150 },
+              ],
+            });
+          }
+          this.tweens.add({ targets: pouf || casse in PROVIDED ? objs.slice(1) : objs, y: '+=260', alpha: 0, angle: 12, duration: 900, ease: 'Quad.easeIn' });
           if (pouf) {
             // Le nuage fissuré éclate : « POUF ! »
             v.img.setAlpha(0);
@@ -1020,6 +1033,7 @@ export class RocketScene extends Phaser.Scene {
           const objs = [v.img, ...v.extras, ...(v.friend ? [v.friend] : [])] as Phaser.GameObjects.Image[];
           this.tweens.killTweensOf(objs);
           for (const o of objs) o.setAngle(0).setY(o.getData('y0') as number);
+          if (`f-${v.p.art}-0` in PROVIDED) v.img.setTexture(`f-${v.p.art}-0`);
           this.tweens.add({ targets: objs, alpha: { from: 0, to: 1 }, duration: 500 });
           this.burst(v.img.x, v.img.y + 10, [P.W, P.C, P.Y], 8);
         }

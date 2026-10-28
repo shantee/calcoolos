@@ -53,7 +53,7 @@ export const SUMMIT = ZONES[ZONES.length - 1].top;
  * Plateformes dessinées par Philippe (images `src/images/decollage/<nom>-0|1.webp`) : `w` = largeur
  * sur laquelle on peut se poser, `top` = distance entre le haut de l'image et le sol (pixels d'écran).
  * Herbe du village en trois tailles, nuages (le nuage à hélice bouge, le nuage fissuré tombe),
- * planches à ballons du ciel des dirigeables.
+ * planches à ballons du ciel des dirigeables (la fragile a des ballons fâchés, puis éclatés : image `-casse`).
  */
 export const PLATFORM_ART = {
   'herbe-petite': { w: 132, top: 12 },
@@ -65,6 +65,7 @@ export const PLATFORM_ART = {
   'nuage-fissure': { w: 164, top: 8 },
   'ballon-1': { w: 224, top: 99 },
   'ballon-2': { w: 224, top: 102 },
+  'ballon-fragile': { w: 224, top: 139 },
 } as const;
 export type PlatformArt = keyof typeof PLATFORM_ART;
 
@@ -72,7 +73,7 @@ export type PlatformArt = keyof typeof PLATFORM_ART;
 function pickArt(zone: number, kind: PlatformKind, r: number): PlatformArt | null {
   if (zone === 0) return r < 0.25 ? 'herbe-petite' : r < 0.7 ? 'herbe-moyenne' : 'herbe-grande';
   if (zone === 1) return kind === 'mobile' ? 'nuage-helice' : kind === 'fragile' ? 'nuage-fissure' : r < 0.4 ? 'nuage-petit' : 'nuage-grand';
-  if (zone === 2 && kind !== 'fragile') return r < 0.5 ? 'ballon-1' : 'ballon-2';
+  if (zone === 2) return kind === 'fragile' ? 'ballon-fragile' : r < 0.5 ? 'ballon-1' : 'ballon-2';
   return null;
 }
 

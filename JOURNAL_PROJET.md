@@ -148,6 +148,10 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   Habitant animé : images 0-1 en boucle au repos (il broute, 650 ms), 2-3 tant que la fusée est sur son nuage (il danse,
   220 ms) ; règle générale pour tout habitant qui a une image `-2`. Le mouton du décor (nuage à 1900 m) broute à sa
   taille d'origine ; nuageux et mouton du décor posés sur leur nuage (origine en bas). `CAPTURES/fusee-mouton-danse.png`.
+- **Planche à ballons fragile** (`Plateforme-flottante-dangereuse.png` : ballons fâchés, puis éclatés « POUF » et bûche
+  cassée) : 269 × 195 (`ballon-fragile-0`, `ballon-fragile-casse`), plateforme fragile du ciel des dirigeables (avant :
+  dessin du code). Quand elle tombe : image cassée sur place, clignote lentement puis vite et disparaît (comme un
+  ennemi vaincu dans les vieux jeux de combat), puis se reforme normalement. `CAPTURES/fusee-ballons-casse.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
