@@ -352,8 +352,10 @@ export class RocketScene extends Phaser.Scene {
     add(this.sprite(70, this.wy(2600) - 28, 'f-nuageux-0', () => A.friend('nuageux', 0)).setDepth(-4));
 
     // Ciel des dirigeables : château du roi des nuages, dirigeable, cerfs-volants.
-    add(this.sprite(1140, this.wy(3900), 'f-castle', A.castle).setDepth(-6).setOrigin(0.5, 1));
-    add(this.sprite(1150, this.wy(3900) - 132, 'f-roi-0', () => A.friend('roi', 0)).setDepth(-5).setOrigin(0.5, 1));
+    const castle = add(this.sprite(1140, this.wy(3900), 'f-castle', A.castle).setDepth(-6).setOrigin(0.5, 1));
+    // Le roi se tient sur le rempart du milieu (à 68 % de la hauteur du château fourni, 82 % de celui du code).
+    const wall = 'f-castle' in PROVIDED ? 0.68 : 0.82;
+    add(this.sprite(1140, this.wy(3900) - castle.displayHeight * wall, 'f-roi-0', () => A.friend('roi', 0)).setDepth(-5).setOrigin(0.5, 1));
     const zep = add(this.sprite(-200, this.wy(3450), 'f-zeppelin', A.zeppelin).setDepth(-12));
     this.tweens.add({ targets: zep, x: W + 220, duration: 40000, repeat: -1 });
     const balloon2 = add(this.sprite(110, this.wy(4300), 'f-balloon', A.hotAirBalloon).setDepth(-12));

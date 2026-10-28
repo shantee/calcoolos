@@ -126,6 +126,8 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
 - **Publié** à 14 h 21 (`1806945`), partie gagnée en ligne sans erreur.
 - Correction signalée par Philippe : au départ, une bande de ciel sous le sol (la caméra montre 130 px sous le sol,
   la terre n'en faisait que 104). Sol du village porté à 40 pixels d'art (160 px).
+- **Château du roi des nuages** (`chateau-roi-nuage.png`) : réduit à 230 × 112 (`castle.webp`), le roi reposé sur
+  le rempart du milieu ; `CAPTURES/fusee-chateau.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
