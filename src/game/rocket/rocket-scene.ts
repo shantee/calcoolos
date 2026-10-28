@@ -344,7 +344,21 @@ export class RocketScene extends Phaser.Scene {
 
     // Mer de nuages : nuages de fond, moutons, arc-en-ciel.
     const rng = new Phaser.Math.RandomDataGenerator(['nuages']);
-    for (let i = 0; i < 26; i++) {
+    if ('f-ciel-1' in PROVIDED) {
+      // Nuages de Philippe sur deux plans de parallaxe : lointains (petits, pâles, lents) et moyens (plus vite).
+      const layers = [
+        { n: 24, key: 'f-ciel-loin-', f: 0.55, depth: -72, alpha: 0.8, from: 300 },
+        { n: 12, key: 'f-ciel-', f: 0.8, depth: -70, alpha: 0.9, from: 900 },
+      ];
+      for (const l of layers) {
+        for (let i = 0; i < l.n; i++) {
+          const alt = l.from + ((4600 - l.from) * (i + rng.frac())) / l.n;
+          const c = add(this.add.image(rng.between(-60, W + 60), this.wy(alt) * l.f, `${l.key}${1 + (i % 4)}`));
+          c.setDepth(l.depth).setScrollFactor(1, l.f).setAlpha(alt > 3800 ? l.alpha * 0.55 : l.alpha).setFlipX(rng.frac() < 0.5);
+          if (!this.reducedMotion) this.tweens.add({ targets: c, x: c.x + rng.between(-140, 140) * l.f, duration: rng.between(24000, 40000), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        }
+      }
+    } else for (let i = 0; i < 26; i++) {
       const alt = rng.between(1100, 4600);
       const w = rng.between(40, 90);
       const c = add(this.sprite(rng.between(-100, W + 100), this.wy(alt) * 0.8, `f-cloud-${i}`, () => A.cloud(w, Math.round(w / 3), i)).setDepth(-70).setScrollFactor(1, 0.8).setAlpha(alt > 3800 ? 0.5 : 0.85));
