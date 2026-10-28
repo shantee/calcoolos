@@ -131,6 +131,9 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
 - **Oiseau** (`oiseau.png`, repos et surpris) : 56 × 45, pieds alignés (`oiseau-0/1.webp`), habitant des nuages et du
   ciel des dirigeables ; la volée qui traverse le ciel du village garde le petit oiseau du code (`f-oiseau-vol`).
   `CAPTURES/fusee-oiseau.png`.
+- **Montagnes du fond** (`fond-montagne.png`) : réduites à 1320 px de large (au plus proche, plus net), bas prolongé
+  de 160 px (`hills.webp`). Parallaxe : défilement vertical à 0,75 (0,9 avant), pied posé sur le sol au départ ;
+  la bande prolongée évite de voir le ciel sous les montagnes en montant. `CAPTURES/fusee-montagnes*.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

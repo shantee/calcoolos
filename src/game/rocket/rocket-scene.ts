@@ -305,7 +305,12 @@ export class RocketScene extends Phaser.Scene {
       return o;
     };
     // Collines lointaines et sol du village (toute la largeur).
-    add(this.sprite(W / 2, this.wy(0) - 6, 'f-hills', () => A.hills(330, 70)).setOrigin(0.5, 1).setDepth(-60).setScrollFactor(1, 0.9));
+    if ('f-hills' in PROVIDED) {
+      // Montagnes de Philippe en parallaxe : elles défilent moins vite que le sol. Au départ, leur pied (160 px au-dessus
+      // du bas de l'image, prolongé dessous pour ne pas laisser voir le ciel en montant) est posé sur le sol.
+      const f = 0.75;
+      add(this.add.image(W / 2, this.wy(0) + (H - 130) * (1 - f) + 160, 'f-hills').setOrigin(0.5, 1).setDepth(-60).setScrollFactor(1, f));
+    } else add(this.sprite(W / 2, this.wy(0) - 6, 'f-hills', () => A.hills(330, 70)).setOrigin(0.5, 1).setDepth(-60).setScrollFactor(1, 0.9));
     add(this.sprite(W / 2, this.wy(0), 'f-ground', () => A.platform('sol', 330, false, 1)).setOrigin(0.5, 0).setDepth(-2));
     // Village : maisons, arbres, moulin, tour de lancement, vache, enfants.
     [[70, P.R, 1], [215, P.B, 2], [1080, P.G, 3], [1215, P.V, 4]].forEach(([x, roof, s]) => {
