@@ -141,6 +141,9 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   deux versions : `ciel-<n>` (50 %) et `ciel-loin-<n>` (25 %, éclaircie, moins contrastée, teintée de bleu pâle). Deux
   plans de parallaxe de 300 à 4600 m : 24 lointains (défilement 0,55, plus pâles) et 12 moyens (0,8), qui remplacent
   les 26 nuages du code. `CAPTURES/fusee-nuages-fond.png`.
+- **Accueil réordonné** (demande de Philippe) : Décollage !, Pluie de météores, Cubes de siège, Le Dragon gourmand,
+  dans les vignettes, les repères et les vitrines (numéros 01 à 04, « Choisis ton jeu » mène à Décollage !, image
+  chargée en priorité = la première vitrine). `CAPTURES/accueil-ordre-jeux.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

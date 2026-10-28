@@ -54,26 +54,26 @@
               <p class="niveau-detail" id="niveau-detail" aria-live="polite">Choisis le niveau qui te correspond : tu pourras en changer à tout moment.</p>
             </fieldset>
 
-            <a class="explorer" href="#jeu-cubes">Choisis ton jeu <span class="fleche" aria-hidden="true">↓</span></a>
+            <a class="explorer" href="#jeu-fusee">Choisis ton jeu <span class="fleche" aria-hidden="true">↓</span></a>
           </div>
         </div>
 
         <nav class="mosaique" aria-label="Les quatre jeux">
-          <a class="vignette" href="#jeu-cubes" style="--i: 0">
-            <img src="/src/images/accueil/cubes-de-siege-480.webp" width="480" height="360" alt="" />
-            <span>Cubes de siège</span>
+          <a class="vignette" href="#jeu-fusee" style="--i: 0">
+            <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
+            <span>Décollage !</span>
           </a>
           <a class="vignette" href="#jeu-meteores" style="--i: 1">
             <img src="/src/images/accueil/pluie-de-meteores-480.webp" width="480" height="360" alt="" />
             <span>Pluie de météores</span>
           </a>
-          <a class="vignette" href="#jeu-dragon" style="--i: 2">
+          <a class="vignette" href="#jeu-cubes" style="--i: 2">
+            <img src="/src/images/accueil/cubes-de-siege-480.webp" width="480" height="360" alt="" />
+            <span>Cubes de siège</span>
+          </a>
+          <a class="vignette" href="#jeu-dragon" style="--i: 3">
             <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
             <span>Le Dragon gourmand</span>
-          </a>
-          <a class="vignette" href="#jeu-fusee" style="--i: 3">
-            <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
-            <span>Décollage !</span>
           </a>
         </nav>
       </section>
@@ -122,44 +122,43 @@
 
       <!-- Repère de progression (grands écrans) : le jeu en cours de lecture est mis en avant. -->
       <nav class="reperes" aria-label="Aller à un jeu">
-        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
-        <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
-        <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
         <a href="#jeu-fusee" data-repere="jeu-fusee"><span class="visuel-masque">Décollage !</span></a>
+        <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
+        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
+        <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
       </nav>
 
       <div class="jeux" id="jeux">
-        <section class="vitrine" id="jeu-cubes" data-univers="cubes" aria-labelledby="cubes-titre">
+        <section class="vitrine" id="jeu-fusee" data-univers="fusee" aria-labelledby="fusee-titre">
           <figure class="vitrine-image">
             <img
-              src="/src/images/accueil/cubes-de-siege-800.webp"
-              srcset="/src/images/accueil/cubes-de-siege-480.webp 480w, /src/images/accueil/cubes-de-siege-800.webp 800w, /src/images/accueil/cubes-de-siege-1448.webp 1448w"
+              src="/src/images/accueil/decollage-800.webp"
+              srcset="/src/images/accueil/decollage-480.webp 480w, /src/images/accueil/decollage-800.webp 800w, /src/images/accueil/decollage-1448.webp 1448w"
               sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
               width="1448"
               height="1086"
               fetchpriority="high"
-              alt="Un chat réfléchit devant un plateau de cubes numérotés, près d’un phare ; sur un rocher, un monstre rouge brandit une pancarte « 29 »."
+              alt="Une petite fusée décolle d’une île flottante sous un panneau « 2 × 4 = ? », au-dessus d’un village avec un moulin et une vache."
             />
             <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/cubes-de-siege.html" tabindex="-1" aria-hidden="true">
+            <a class="lancer" data-jeu href="jeu/decollage.html" tabindex="-1" aria-hidden="true">
               <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
             </a>
           </figure>
           <div class="vitrine-texte">
             <p class="numero"><span>01</span> / 04</p>
-            <p class="surtitre">L’Atelier des Cubes</p>
-            <h2 id="cubes-titre">Cubes de siège</h2>
+            <p class="surtitre">Du village jusqu’aux étoiles</p>
+            <h2 id="fusee-titre">Décollage !</h2>
             <p class="pitch">
-              Un monstre approche du phare avec un nombre sur sa pancarte.
-              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
-              Moins tu utilises de cubes, plus ton tir est fort.
+              Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
+              Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’à la planète Bonbon !
             </p>
             <p class="exemple" aria-hidden="true">
-              <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
+              <span class="pixel pixel-nombre">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
             </p>
             <div class="actions">
-              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Cubes de siège</span></a>
-              <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
+              <a class="jouer" data-jeu href="jeu/decollage.html">Jouer<span class="visuel-masque"> à Décollage !</span></a>
+              <p class="commandes">Chiffres, puis flèches (ou Q et D)</p>
             </div>
           </div>
         </section>
@@ -200,6 +199,42 @@
           </div>
         </section>
 
+        <section class="vitrine" id="jeu-cubes" data-univers="cubes" aria-labelledby="cubes-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/cubes-de-siege-800.webp"
+              srcset="/src/images/accueil/cubes-de-siege-480.webp 480w, /src/images/accueil/cubes-de-siege-800.webp 800w, /src/images/accueil/cubes-de-siege-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un chat réfléchit devant un plateau de cubes numérotés, près d’un phare ; sur un rocher, un monstre rouge brandit une pancarte « 29 »."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/cubes-de-siege.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>03</span> / 04</p>
+            <p class="surtitre">L’Atelier des Cubes</p>
+            <h2 id="cubes-titre">Cubes de siège</h2>
+            <p class="pitch">
+              Un monstre approche du phare avec un nombre sur sa pancarte.
+              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
+              Moins tu utilises de cubes, plus ton tir est fort.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Cubes de siège</span></a>
+              <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
+            </div>
+          </div>
+        </section>
+
         <section class="vitrine" id="jeu-dragon" data-univers="dragon" aria-labelledby="dragon-titre">
           <figure class="vitrine-image">
             <img
@@ -218,7 +253,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>03</span> / 04</p>
+            <p class="numero"><span>04</span> / 04</p>
             <p class="surtitre">Dans le ciel du soir</p>
             <h2 id="dragon-titre">Le Dragon gourmand</h2>
             <p class="pitch">
@@ -232,41 +267,6 @@
             <div class="actions">
               <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer<span class="visuel-masque"> au Dragon gourmand</span></a>
               <p class="commandes">Souris, doigt ou flèches</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="vitrine" id="jeu-fusee" data-univers="fusee" aria-labelledby="fusee-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/decollage-800.webp"
-              srcset="/src/images/accueil/decollage-480.webp 480w, /src/images/accueil/decollage-800.webp 800w, /src/images/accueil/decollage-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Une petite fusée décolle d’une île flottante sous un panneau « 2 × 4 = ? », au-dessus d’un village avec un moulin et une vache."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/decollage.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="numero"><span>04</span> / 04</p>
-            <p class="surtitre">Du village jusqu’aux étoiles</p>
-            <h2 id="fusee-titre">Décollage !</h2>
-            <p class="pitch">
-              Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
-              Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’à la planète Bonbon !
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="pixel pixel-nombre">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/decollage.html">Jouer<span class="visuel-masque"> à Décollage !</span></a>
-              <p class="commandes">Chiffres, puis flèches (ou Q et D)</p>
             </div>
           </div>
         </section>
