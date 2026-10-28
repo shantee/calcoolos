@@ -103,6 +103,8 @@ Puis **les plateformes d'herbe du village** (`plateforme-herbe.png` : 3 tailles,
 - Scène : le sol est sous les touffes d'herbe (`top`), la fusée s'y pose pile ; quand elle se pose, la plateforme
   ouvre de grands yeux 1,2 s (version avec visage).
 - Vérifié : partie gagnée automatique sans erreur, `CAPTURES/fusee-plateformes-herbe*.png` ; tests 127, CSP ok.
+- **Publié** par l'autre session Claude (version `5198749`, avec sa police Minecraftia et ses cœurs) ; vérifié en ligne
+  par moi : 6 images d'herbe servies, partie gagnée sans erreur. Coordination entre sessions : voir AGENTS.md § 9.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
