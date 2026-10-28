@@ -375,8 +375,8 @@ export class RocketScene extends Phaser.Scene {
     add(this.sprite(1110, this.wy(2500) * 0.85, 'f-rainbow', () => A.rainbow(70)).setDepth(-75).setScrollFactor(1, 0.85).setAlpha(0.8));
     const sheep = add(this.sprite(1160, this.wy(1900), 'f-cloudside', () => A.cloud(40, 14, 77)).setDepth(-5));
     if ('f-mouton-0' in PROVIDED) {
-      // Le mouton de Philippe broute sur son nuage, à sa taille d'origine (il est fourni ×2 pour les plateformes).
-      const m = add(this.add.image(sheep.x, sheep.y - 14, 'f-mouton-0').setOrigin(0.5, 1).setScale(0.5).setDepth(-4));
+      // Le mouton de Philippe broute sur son nuage, plus petit que celui des plateformes.
+      const m = add(this.add.image(sheep.x, sheep.y - 14, 'f-mouton-0').setOrigin(0.5, 1).setScale(0.7).setDepth(-4));
       this.time.addEvent({ delay: 650, loop: true, callback: () => m.setTexture(m.texture.key === 'f-mouton-0' ? 'f-mouton-1' : 'f-mouton-0') });
     } else add(this.sprite(sheep.x, sheep.y - 30, 'f-mouton-0', () => A.friend('mouton', 0)).setDepth(-4));
     add(this.sprite(70, this.wy(2600), 'f-cloudside2', () => A.cloud(36, 12, 78)).setDepth(-5));
@@ -407,7 +407,7 @@ export class RocketScene extends Phaser.Scene {
     // Image fournie : la balise rouge s'allume 0,3 s toutes les 1,2 s.
     let tick = 0;
     if (blink) this.time.addEvent({ delay: 300, loop: true, callback: () => sat.setTexture(++tick % 4 === 0 ? 'f-sat-1' : 'f-sat-0') });
-    add(this.sprite(1120, this.wy(5900) * 0.6, 'f-moon', A.moon).setDepth(-80).setScrollFactor(1, 0.6));
+    add(this.sprite(980, this.wy(5900) * 0.6, 'f-moon', A.moon).setDepth(-80).setScrollFactor(1, 0.6));
     add(this.sprite(120, this.wy(6400) * 0.6, 'f-planet', () => A.smallPlanet(12, [P.N, P.B, P.S, P.C], true)).setDepth(-80).setScrollFactor(1, 0.6));
     add(this.sprite(1150, this.wy(7000) * 0.6, 'f-planet2', () => A.smallPlanet(7, [P.V, P.R, P.r], false)).setDepth(-80).setScrollFactor(1, 0.6));
     const ufo = add(this.sprite(-120, this.wy(5650), 'f-ufo-0', () => A.ufo(0)).setDepth(-11));
@@ -490,8 +490,9 @@ export class RocketScene extends Phaser.Scene {
   private comet(): void {
     if (this.paused || !this.session || this.session.altitude < 4500) return;
     const y = this.cameras.main.scrollY + Phaser.Math.Between(80, 300);
-    const c = this.sprite(W + 60, y, 'f-comet', A.comet).setDepth(-50).setAngle(-12);
-    this.tweens.add({ targets: c, x: -200, y: y + 160, duration: 2600, onComplete: () => c.destroy() });
+    // Comète fournie : la tête (étoile) est à droite, on la retourne pour qu'elle file vers la gauche.
+    const c = this.sprite(W + 160, y, 'f-comet', A.comet).setDepth(-50).setAngle(-6).setFlipX('f-comet' in PROVIDED);
+    this.tweens.add({ targets: c, x: -200, y: y + 160, duration: 2800, onComplete: () => c.destroy() });
   }
 
   /** Plateformes, bonus, habitants et étoiles du monde de la partie. */
@@ -1570,7 +1571,9 @@ export class RocketScene extends Phaser.Scene {
     }
     const c = this.openOverlay(178, 150, won ? 0.5 : 0.4);
     const top = H / 2 - 300;
-    c.add(this.txt(W / 2, top + 58, won ? 'Royaume de la confiserie atteint !' : `Altitude ${Math.round(s.best / 8)} m`, style(48, won ? P.p : P.Y, 8)).setOrigin(0.5));
+    const title = this.txt(W / 2, top + 58, won ? 'Royaume de la confiserie atteint !' : `Altitude ${Math.round(s.best / 8)} m`, style(48, won ? P.p : P.Y, 8)).setOrigin(0.5);
+    // Le titre ne doit jamais dépasser du cadre (178 × 4 = 712 px de large).
+    c.add(title.setScale(Math.min(1, 640 / title.width)));
     const stars = this.starsFor(won);
     for (let i = 0; i < 3; i++) {
       const st = this.add.image(W / 2 + (i - 1) * 80, top + 128, this.tx('f-bigstar-0', () => A.power('etoile').swap({ [P.Y]: P.h, [P.y]: P.g }))).setScale(PX * 1.3);

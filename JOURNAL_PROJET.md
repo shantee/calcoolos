@@ -198,6 +198,12 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   84 × 94 (`cosmonaute.webp`), décor de l'espace vers 6150 : dérive lentement de gauche à droite (x 260 → 520, il
   passait sous le pavé), flotte et pivote doucement. L'astronaute posé sur les plateformes reste dessiné par code
   (il lui faut une pose debout et une pose contente). `CAPTURES/fusee-cosmonaute.png`.
+- Retours de Philippe : titre « Royaume de la confiserie atteint ! » qui dépassait du cadre de l'écran de fin →
+  réduit automatiquement pour tenir en 640 px (cadre de 712 px). Mouton des plateformes trop gros → 85 × 77 (70 %,
+  avant 122 × 110 ; mouton du décor gardé à la même taille, échelle 0,7).
+- **Lune et comète** (`lune.png`, `comete.png`) : lune 130 × 132 (`moon.webp`, décalée à x 980 pour ne pas passer
+  sous le pavé), comète 300 × 51 (`comet.webp`) retournée pour filer étoile en avant vers la gauche.
+  `CAPTURES/fusee-lune-comete.png`, `fusee-fin-titre.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
