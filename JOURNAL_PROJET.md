@@ -106,6 +106,24 @@ Puis **les plateformes d'herbe du village** (`plateforme-herbe.png` : 3 tailles,
 - **Publié** par l'autre session Claude (version `5198749`, avec sa police Minecraftia et ses cœurs) ; vérifié en ligne
   par moi : 6 images d'herbe servies, partie gagnée sans erreur. Coordination entre sessions : voir AGENTS.md § 9.
 
+Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.png`, `plateforme-ballon.png`,
+`creature-nuage.png`) :
+- Nuages réduits à la taille d'affichage (Lanczos, ~37 %) : la grille de la planche n'est pas régulière et un
+  rééchantillonnage à 1 pixel par pixel cassait les yeux. Grand (240 × 63) et petit nuage (171 × 60), normal et
+  surpris ; le petit n'avait pas de version surprise : bouche ouverte du grand greffée. Nuage à hélice (215 × 64) :
+  hélice de la planche coupée, remplacée par une **hélice du code redessinée** (15 × 6 ×4, 4 images qui tournent,
+  sous toutes les plateformes mobiles). Nuage fissuré = plateforme fragile ; quand il tombe, il éclate en « POUF ».
+- Planches à ballons (2 coloris, 236 × 147 et 230 × 150, réduites à 25 %) : plateformes du ciel des dirigeables
+  (sauf les fragiles, toujours dessinées par le code).
+- Nuageux (2 poses, 77 × 54) : endormi, puis réveillé et joyeux quand la fusée se pose.
+- `session.ts` : `GRASS_SIZES`/`size` remplacés par `PLATFORM_ART` (largeur utile et hauteur du sol de chaque image)
+  et le champ `art`, choisi par `pickArt` selon l'étage et le type. Hors du village, le choix ne consomme pas de
+  tirage aléatoire : la suite aléatoire et donc les mondes restent identiques (un tirage en plus avait changé les
+  mondes et fait tomber le test de portée dans l'espace).
+- **Expressions qui durent** (demande de Philippe) : herbe et nuages restent surpris, et l'habitant reste joyeux, tant
+  que la fusée est sur la plateforme (`rocket.on`), au lieu de revenir à la normale au bout d'une seconde.
+- Vérifié : partie gagnée automatique sans erreur, `CAPTURES/fusee-nuages*.png`, `fusee-ballons.png` ; tests 127.
+
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
 

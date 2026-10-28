@@ -228,8 +228,15 @@ function cracks(pc: PixelCanvas, rng: ReturnType<typeof createRng>): void {
 }
 
 /** Hélice sous une plateforme mobile (2 images). */
-export function propeller(frame: 0 | 1): PixelCanvas {
-  return frame === 0 ? art(['..KK..', '.KhhK.', 'KWWWWK', '..KK..']) : art(['..KK..', '.KhhK.', '..KK..', '..KK..'], {});
+export function propeller(frame: number): PixelCanvas {
+  // Hélice vue de face qui tourne : pales à plat, de biais, de chant, de biais.
+  const blades = [
+    ['.KKKKKKgKKKKKK.', 'KSCCCCKhKCCCCSK', '.KKKKKKKKKKKKK.'],
+    ['..w.KKKgKKK.w..', '.w..KSKhKSK..w.', '..w.KKKKKKK.w..'],
+    ['.w....KgK....w.', 'w.....KhK.....w', '.w....KKK....w.'],
+    ['..w.KKKgKKK.w..', '.w..KCKhKCK..w.', '..w.KKKKKKK.w..'],
+  ][frame % 4];
+  return art(['......KKK......', '......KgK......', '......KgK......', ...blades]);
 }
 
 /** Deux ballons qui tiennent une planche du ciel des dirigeables. */

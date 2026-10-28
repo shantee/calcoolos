@@ -39,6 +39,8 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
   d'altitude, `src/images/decollage/`), fournis par lui (`ART_ASSETS.md`). Méthode : découper, réduire à la taille
   d'affichage exacte (le jeu est en pixels nets), WebP sans perte nommé `<clé>.webp` dans `src/images/decollage/` :
   il remplace tout seul le dessin par code de texture `f-<clé>` (voir `PROVIDED` dans `rocket-scene.ts`).
+  Plateformes dessinées : `<nom>-0.webp` (et `-1` = visage surpris, gardé tant que la fusée est dessus), largeur
+  utile et hauteur du sol dans `PLATFORM_ART` (`session.ts`).
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
   classements publics sous ce **pseudo** (simplification voulue par Philippe le 27/10/2026, plus d'autorisation ni de
   nom inventé ; « Aide-moi à trouver un pseudo » en propose des rigolos), export et suppression des données.

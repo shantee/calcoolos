@@ -13,7 +13,7 @@ import * as A from '../../art/pixel-rocket';
 import { P, PX } from '../../art/pixel-rocket';
 import type { PixelCanvas } from '../../art/pixelforge';
 import { Sfx } from '../sfx';
-import { RocketSession, GRASS_SIZES, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
+import { RocketSession, PLATFORM_ART, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
 import type { Grade } from '../../core/calc-grade';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
@@ -426,18 +426,20 @@ export class RocketScene extends Phaser.Scene {
       const look = A.platformLook(p.zone, p.kind);
       const wArt = Math.round(p.w / PX);
       let img: Phaser.GameObjects.Image;
-      if (p.size && `f-herbe-${p.size}-0` in PROVIDED) {
-        // Plateforme d'herbe dessinée par Philippe : le sol est sous les touffes d'herbe.
-        img = this.add.image(p.x, this.wy(p.y), `f-herbe-${p.size}-0`).setDepth(0);
-        img.setOrigin(0.5, GRASS_SIZES[p.size].top / img.height);
+      const art = p.art && `f-${p.art}-0` in PROVIDED ? p.art : null;
+      if (art) {
+        // Plateforme dessinée par Philippe : le sol est à `top` pixels sous le haut de l'image.
+        img = this.add.image(p.x, this.wy(p.y), `f-${art}-0`).setDepth(0);
+        img.setOrigin(0.5, PLATFORM_ART[art].top / img.height);
       } else img = this.sprite(p.x, this.wy(p.y), `f-plat-${look}-${wArt}-${p.kind === 'fragile' ? 1 : 0}-${p.id}`, () => A.platform(look, wArt, p.kind === 'fragile', p.id)).setOrigin(0.5, 0).setDepth(0);
       const extras: Phaser.GameObjects.GameObject[] = [];
       if (p.kind === 'mobile') {
-        const prop = this.sprite(p.x, this.wy(p.y) + img.displayHeight, 'f-prop-0', () => A.propeller(0)).setOrigin(0.5, 0).setDepth(0);
-        this.tx('f-prop-1', () => A.propeller(1));
+        const bottom = img.y + img.displayHeight * (1 - img.originY) - (art ? 6 : 0);
+        const prop = this.sprite(p.x, bottom, 'f-prop-0', () => A.propeller(0)).setOrigin(0.5, 0).setDepth(-1);
+        for (let i = 1; i < 4; i++) this.tx(`f-prop-${i}`, () => A.propeller(i));
         extras.push(prop);
       }
-      if (look === 'planche') extras.push(this.sprite(p.x, this.wy(p.y) - 2, 'f-balloons', A.balloons).setOrigin(0.5, 1).setDepth(-1).setAlpha(0.95));
+      if (look === 'planche' && !art) extras.push(this.sprite(p.x, this.wy(p.y) - 2, 'f-balloons', A.balloons).setOrigin(0.5, 1).setDepth(-1).setAlpha(0.95));
       let power: Phaser.GameObjects.Image | null = null;
       if (p.power) {
         const kind = p.power;
@@ -856,18 +858,28 @@ export class RocketScene extends Phaser.Scene {
 
   private animateWorld(time: number): void {
     const s = this.session;
-    const frame = Math.floor(time / 120) % 2;
+    const frame = Math.floor(time / 70) % 4;
     for (const v of this.views.values()) {
       const p = v.p;
       if (p.gone) continue;
       v.img.x = p.x;
+      // Les plateformes qui ont un visage gardent l'air surpris tant que la fusée est dessus.
+      if (p.art && `f-${p.art}-1` in PROVIDED) {
+        const key = `f-${p.art}-${s?.rocket.on === p.id ? 1 : 0}`;
+        if (v.img.texture.key !== key) v.img.setTexture(key);
+      }
       for (const e of v.extras) {
         const img = e as Phaser.GameObjects.Image;
         img.x = p.x;
         if (img.texture.key.startsWith('f-prop')) img.setTexture(`f-prop-${frame}`);
       }
       if (v.power) v.power.x = p.x;
-      if (v.friend) v.friend.x = p.x + (v.friend.getData('dx') as number);
+      if (v.friend) {
+        v.friend.x = p.x + (v.friend.getData('dx') as number);
+        // L'habitant reste réveillé (joyeux) tant que la fusée est sur sa plateforme.
+        const key = `f-${v.friend.getData('look') as string}-${s?.rocket.on === p.id ? 1 : 0}`;
+        if (v.friend.texture.key !== key && this.textures.exists(key)) v.friend.setTexture(key);
+      }
     }
     const sf = Math.floor(time / 250) % 2;
     for (const [id, img] of this.starViews) {
@@ -917,18 +929,11 @@ export class RocketScene extends Phaser.Scene {
         } else if (!this.reducedMotion && v) {
           this.tweens.add({ targets: v.img, y: v.img.y + 6, duration: 90, yoyo: true });
         }
-        // Les plateformes d'herbe ouvrent de grands yeux quand la fusée se pose.
-        const size = ev.platform.size;
-        if (v && size && v.img.texture.key === `f-herbe-${size}-0`) {
-          v.img.setTexture(`f-herbe-${size}-1`);
-          this.time.delayedCall(1200, () => v.img.active && v.img.setTexture(`f-herbe-${size}-0`));
-        }
         if (ev.record) this.floatText(this.ship.x + 60, this.ship.y - 60, '+50', P.L, 22);
         if (v?.friend) {
           const kind = v.friend.getData('kind') as string;
           const look = v.friend.getData('look') as string;
           v.friend.setTexture(this.tx(`f-${look}-1`, () => A.friend(kind as A.FriendLook, 1)));
-          this.time.delayedCall(900, () => v.friend?.setTexture(`f-${look}-0`));
           this.say(v.friend.x, v.friend.y - 70, Phaser.Utils.Array.GetRandom(FRIEND_LINES[kind] ?? ['Salut !']));
           if (kind === 'vache') this.sfx.moo();
           else if (kind === 'oiseau') this.sfx.chirp();
@@ -965,7 +970,14 @@ export class RocketScene extends Phaser.Scene {
         if (v) {
           const objs = [v.img, ...v.extras, ...(v.friend ? [v.friend] : [])] as Phaser.GameObjects.Image[];
           for (const o of objs) if (o.getData('y0') === undefined) o.setData('y0', o.y);
-          this.tweens.add({ targets: objs, y: '+=260', alpha: 0, angle: 12, duration: 900, ease: 'Quad.easeIn' });
+          const pouf = 'f-nuage-pouf' in PROVIDED && ev.platform.art?.startsWith('nuage');
+          this.tweens.add({ targets: pouf ? objs.slice(1) : objs, y: '+=260', alpha: 0, angle: 12, duration: 900, ease: 'Quad.easeIn' });
+          if (pouf) {
+            // Le nuage fissuré éclate : « POUF ! »
+            v.img.setAlpha(0);
+            const img = this.add.image(v.img.x, v.img.y, 'f-nuage-pouf').setDepth(6);
+            this.tweens.add({ targets: img, y: img.y - 30, alpha: 0, duration: 900, delay: 300, onComplete: () => img.destroy() });
+          }
           for (let i = 0; i < 6; i++) this.puff(v.img.x + Phaser.Math.Between(-v.img.displayWidth / 2, v.img.displayWidth / 2), v.img.y + 10);
         }
         break;

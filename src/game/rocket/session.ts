@@ -50,15 +50,31 @@ export const ZONES = [
 export const SUMMIT = ZONES[ZONES.length - 1].top;
 
 /**
- * Plateformes d'herbe du village (dessins de Philippe) : trois tailles, largeur = image ×4 ;
- * `top` = hauteur des touffes d'herbe au-dessus du sol (pixels d'écran).
+ * Plateformes dessinées par Philippe (images `src/images/decollage/<nom>-0|1.webp`) : `w` = largeur
+ * sur laquelle on peut se poser, `top` = distance entre le haut de l'image et le sol (pixels d'écran).
+ * Herbe du village en trois tailles, nuages (le nuage à hélice bouge, le nuage fissuré tombe),
+ * planches à ballons du ciel des dirigeables.
  */
-export const GRASS_SIZES = {
-  petite: { w: 132, top: 12 },
-  moyenne: { w: 256, top: 12 },
-  grande: { w: 348, top: 16 },
+export const PLATFORM_ART = {
+  'herbe-petite': { w: 132, top: 12 },
+  'herbe-moyenne': { w: 256, top: 12 },
+  'herbe-grande': { w: 348, top: 16 },
+  'nuage-petit': { w: 164, top: 8 },
+  'nuage-grand': { w: 232, top: 8 },
+  'nuage-helice': { w: 208, top: 8 },
+  'nuage-fissure': { w: 164, top: 8 },
+  'ballon-1': { w: 224, top: 99 },
+  'ballon-2': { w: 224, top: 102 },
 } as const;
-export type GrassSize = keyof typeof GRASS_SIZES;
+export type PlatformArt = keyof typeof PLATFORM_ART;
+
+/** Image dessinée pour une plateforme normale, mobile ou fragile de la zone donnée (sinon null). */
+function pickArt(zone: number, kind: PlatformKind, r: number): PlatformArt | null {
+  if (zone === 0) return r < 0.25 ? 'herbe-petite' : r < 0.7 ? 'herbe-moyenne' : 'herbe-grande';
+  if (zone === 1) return kind === 'mobile' ? 'nuage-helice' : kind === 'fragile' ? 'nuage-fissure' : r < 0.4 ? 'nuage-petit' : 'nuage-grand';
+  if (zone === 2 && kind !== 'fragile') return r < 0.5 ? 'ballon-1' : 'ballon-2';
+  return null;
+}
 
 export type PlatformKind = 'sol' | 'normale' | 'mobile' | 'fragile' | 'planete';
 export type PowerKind = 'bouclier' | 'sablier' | 'turbo' | 'etoile' | 'coeur';
@@ -82,8 +98,8 @@ export interface Platform {
   gone: boolean;
   power: PowerKind | null;
   friend: Friend | null;
-  /** Village : taille de la plateforme d'herbe (sinon null). */
-  size: GrassSize | null;
+  /** Image dessinée par Philippe (sinon dessin du code). */
+  art: PlatformArt | null;
 }
 
 /** Petites étoiles à attraper en vol. */
@@ -194,7 +210,7 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
   const stars: Star[] = [];
   let id = 1;
   const mk = (x: number, y: number, w: number, kind: PlatformKind, zone: number): Platform => ({
-    id: id++, x, y, w, kind, zone, baseX: x, range: 0, speed: 0, phase: 0, crumbleAt: null, regrowAt: null, gone: false, power: null, friend: null, size: null,
+    id: id++, x, y, w, kind, zone, baseX: x, range: 0, speed: 0, phase: 0, crumbleAt: null, regrowAt: null, gone: false, power: null, friend: null, art: null,
   });
   // Le pas de tir.
   platforms.push(mk((LANE.x0 + LANE.x1) / 2, 0, LANE.x1 - LANE.x0 + 120, 'sol', 0));
@@ -217,21 +233,18 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
     // Décalage horizontal : de plus en plus audacieux en montant.
     const shift = rng.int(110, 250 + Math.round(t * 130)) * (rng.next() < 0.5 ? -1 : 1);
     let w = Math.round(230 - t * 110 + rng.int(-15, 15));
-    // Village : petite (1 sur 4), moyenne ou grande plateforme d'herbe.
-    let size: GrassSize | null = null;
-    if (zone === 0) {
-      const r = rng.next();
-      size = r < 0.25 ? 'petite' : r < 0.7 ? 'moyenne' : 'grande';
-      w = GRASS_SIZES[size].w;
-    }
-    x = Math.min(LANE.x1 - w / 2, Math.max(LANE.x0 + w / 2, x + shift));
+    // Tirage du dessin : au village comme avant, ailleurs sans toucher à la suite aléatoire (mêmes mondes).
+    const r = zone === 0 ? rng.next() : (y * 0.618) % 1;
     let kind: PlatformKind = 'normale';
     const roll = rng.next();
     if (zone >= 1 && roll < 0.12 + t * 0.2 && sinceMoving > 1) kind = 'mobile';
     else if (zone >= 1 && roll > 0.9 - t * 0.12) kind = 'fragile';
     sinceMoving = kind === 'mobile' ? 0 : sinceMoving + 1;
+    const art = pickArt(zone, kind, r);
+    if (art) w = PLATFORM_ART[art].w;
+    x = Math.min(LANE.x1 - w / 2, Math.max(LANE.x0 + w / 2, x + shift));
     const p = mk(x, y, w, kind, zone);
-    p.size = size;
+    p.art = art;
     if (kind === 'mobile') {
       p.range = rng.int(60, 120);
       p.speed = 0.9 + rng.next() * 0.8;
