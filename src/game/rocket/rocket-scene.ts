@@ -366,9 +366,13 @@ export class RocketScene extends Phaser.Scene {
     }
     add(this.sprite(1110, this.wy(2500) * 0.85, 'f-rainbow', () => A.rainbow(70)).setDepth(-75).setScrollFactor(1, 0.85).setAlpha(0.8));
     const sheep = add(this.sprite(1160, this.wy(1900), 'f-cloudside', () => A.cloud(40, 14, 77)).setDepth(-5));
-    add(this.sprite(sheep.x, sheep.y - 30, 'f-mouton-0', () => A.friend('mouton', 0)).setDepth(-4));
+    if ('f-mouton-0' in PROVIDED) {
+      // Le mouton de Philippe broute sur son nuage, à sa taille d'origine (il est fourni ×2 pour les plateformes).
+      const m = add(this.add.image(sheep.x, sheep.y - 14, 'f-mouton-0').setOrigin(0.5, 1).setScale(0.5).setDepth(-4));
+      this.time.addEvent({ delay: 650, loop: true, callback: () => m.setTexture(m.texture.key === 'f-mouton-0' ? 'f-mouton-1' : 'f-mouton-0') });
+    } else add(this.sprite(sheep.x, sheep.y - 30, 'f-mouton-0', () => A.friend('mouton', 0)).setDepth(-4));
     add(this.sprite(70, this.wy(2600), 'f-cloudside2', () => A.cloud(36, 12, 78)).setDepth(-5));
-    add(this.sprite(70, this.wy(2600) - 28, 'f-nuageux-0', () => A.friend('nuageux', 0)).setDepth(-4));
+    add(this.sprite(70, this.wy(2600) - 12, 'f-nuageux-0', () => A.friend('nuageux', 0)).setOrigin(0.5, 1).setDepth(-4));
 
     // Ciel des dirigeables : château du roi des nuages, dirigeable, cerfs-volants.
     const castle = add(this.sprite(1140, this.wy(3900), 'f-castle', A.castle).setDepth(-6).setOrigin(0.5, 1));
@@ -899,8 +903,12 @@ export class RocketScene extends Phaser.Scene {
       if (v.power) v.power.x = p.x;
       if (v.friend) {
         v.friend.x = p.x + (v.friend.getData('dx') as number);
-        // L'habitant reste réveillé (joyeux) tant que la fusée est sur sa plateforme.
-        const key = `f-${v.friend.getData('look') as string}-${s?.rocket.on === p.id ? 1 : 0}`;
+        // L'habitant reste réveillé (joyeux) tant que la fusée est sur sa plateforme. Avec 4 images (mouton) :
+        // images 0-1 au repos (il broute), 2-3 quand la fusée est là (il danse).
+        const look = v.friend.getData('look') as string;
+        const on = s?.rocket.on === p.id;
+        const n = `f-${look}-2` in PROVIDED ? (on ? 2 : 0) + (Math.floor(time / (on ? 220 : 650)) % 2) : on ? 1 : 0;
+        const key = `f-${look}-${n}`;
         if (v.friend.texture.key !== key && this.textures.exists(key)) v.friend.setTexture(key);
       }
     }
