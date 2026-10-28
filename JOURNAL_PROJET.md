@@ -167,6 +167,11 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   - Non traduits (consigne : français seulement pour l'instant) : les anciennes clés « planète Bonbon » de `en.ts`/`de.ts`
     ne servent plus, ces textes s'affichent en français en anglais et en allemand.
   `CAPTURES/fusee-royaume-confiserie.png`, `fusee-confiserie-plateformes.png`.
+- **Montgolfière et dirigeable** (`mongolfier.png`, `dirigeable.png`) : montgolfière 105 × 167 (`balloon.webp`), bercée
+  par le vent (balancement ±3°), dans le décor du village et du ciel des dirigeables (décalées pour ne plus passer
+  sous la jauge) et pour le sauvetage (corde accrochée à la nacelle). Dirigeable 243 × 143 (`zeppelin.webp`) vers la
+  droite, et une version lointaine plus petite et pâle (`zeppelin-loin.webp`), retournée, qui part vers la gauche en
+  parallaxe. `CAPTURES/fusee-dirigeables.png`, `fusee-montgolfiere-secours.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

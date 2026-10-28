@@ -342,8 +342,9 @@ export class RocketScene extends Phaser.Scene {
       const b = add(this.sprite(80 + i * 34, this.wy(900 + (i % 2) * 22), 'f-oiseau-vol', () => A.friend('oiseau', 0)).setDepth(-10).setFlipX(true));
       this.tweens.add({ targets: b, x: b.x + 1300, duration: 26000, repeat: -1, delay: i * 120 });
     }
-    const balloon = add(this.sprite(90, this.wy(1150), 'f-balloon', A.hotAirBalloon).setDepth(-10));
+    const balloon = add(this.sprite(210, this.wy(1150), 'f-balloon', A.hotAirBalloon).setDepth(-10));
     if (!this.reducedMotion) this.tweens.add({ targets: balloon, y: balloon.y - 40, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.sway(balloon);
 
     // Mer de nuages : nuages de fond, moutons, arc-en-ciel.
     const rng = new Phaser.Math.RandomDataGenerator(['nuages']);
@@ -386,8 +387,14 @@ export class RocketScene extends Phaser.Scene {
     if ('f-roi-0' in PROVIDED) king.setScale(0.5);
     const zep = add(this.sprite(-200, this.wy(3450), 'f-zeppelin', A.zeppelin).setDepth(-12));
     this.tweens.add({ targets: zep, x: W + 220, duration: 40000, repeat: -1 });
-    const balloon2 = add(this.sprite(110, this.wy(4300), 'f-balloon', A.hotAirBalloon).setDepth(-12));
+    if ('f-zeppelin-loin' in PROVIDED) {
+      // Le même dirigeable, plus loin (plus petit, plus pâle, en parallaxe), retourné : il part dans l'autre sens.
+      const far = add(this.add.image(W + 120, this.wy(4150) * 0.8, 'f-zeppelin-loin').setFlipX(true).setDepth(-14).setScrollFactor(1, 0.8));
+      this.tweens.add({ targets: far, x: -120, duration: 60000, repeat: -1, delay: 8000 });
+    }
+    const balloon2 = add(this.sprite(220, this.wy(4300), 'f-balloon', A.hotAirBalloon).setDepth(-12));
     if (!this.reducedMotion) this.tweens.add({ targets: balloon2, y: balloon2.y - 30, duration: 2800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.sway(balloon2);
 
     // Espace : satellite, lune qui fait un clin d'œil, planète à anneaux, soucoupe, comète, astronaute.
     const sat = add(this.sprite(1150, this.wy(5200), 'f-sat', A.satellite).setDepth(-12));
@@ -445,6 +452,13 @@ export class RocketScene extends Phaser.Scene {
       const c = add(this.add.image(rng.between(40, W - 40), this.wy(alt) * 0.8, `f-conf-nuage-${1 + (i % 5)}`).setDepth(-70).setScrollFactor(1, 0.8).setAlpha(0.9));
       if (!this.reducedMotion) this.tweens.add({ targets: c, x: c.x + rng.between(-120, 120), duration: rng.between(20000, 32000), yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
+  }
+
+  /** Montgolfière bercée par le vent : elle se balance doucement sous son ballon. */
+  private sway(balloon: Phaser.GameObjects.Image): void {
+    if (this.reducedMotion || !('f-balloon' in PROVIDED)) return;
+    balloon.setAngle(-3);
+    this.tweens.add({ targets: balloon, angle: 3, duration: 2300, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: Phaser.Math.Between(0, 900) });
   }
 
   private wiggleDancers(): void {
@@ -1108,7 +1122,7 @@ export class RocketScene extends Phaser.Scene {
     const bird = this.sprite(fromX, fromY - 400, 'f-balloon', A.hotAirBalloon).setDepth(11);
     const rope = this.add.graphics().setDepth(10.5);
     const flap = this.time.addEvent({ delay: 16, loop: true, callback: () => {
-      rope.clear().lineStyle(4, 0x1a1c2c, 1).lineBetween(bird.x, bird.y + 50, this.ship.x, this.ship.y - 88);
+      rope.clear().lineStyle(4, 0x1a1c2c, 1).lineBetween(bird.x, bird.y + bird.displayHeight * 0.45, this.ship.x, this.ship.y - 88);
     } });
     this.time.delayedCall(500, () => {
       this.sfx.rescue();
