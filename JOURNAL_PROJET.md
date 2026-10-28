@@ -172,6 +172,23 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   sous la jauge) et pour le sauvetage (corde accrochée à la nacelle). Dirigeable 243 × 143 (`zeppelin.webp`) vers la
   droite, et une version lointaine plus petite et pâle (`zeppelin-loin.webp`), retournée, qui part vers la gauche en
   parallaxe. `CAPTURES/fusee-dirigeables.png`, `fusee-montgolfiere-secours.png`.
+- **Fête d'arrivée au royaume de la confiserie** (demande de Philippe, effort « high ») : ≈ 5,8 s avant l'écran de fin
+  (`celebrate()` dans `rocket-scene.ts`).
+  - Musique `Sfx.candyParty()` : chiptune originale à 176 bpm, 4 mesures (do, la m, fa, sol) et accord final sur le
+    16e temps ; mélodie carrée avec écho, arpèges en doubles croches, basse en octaves, grosse caisse à chaque temps,
+    roulement avant la fin, cymbale. Rendu hors ligne vérifié : 5,6 s, crête 0,44, pas de saturation.
+  - Le ciel s'assombrit derrière le château (dégradé nuit, profondeur −6) ; pavé et flèches masqués, réaffichés au
+    départ suivant.
+  - 18 fusées partent de derrière le château avec traînée dorée et éclatent en rythme (une par temps, bouquet sur les
+    temps 12-13, grand cœur sur l'accord final avec secousse et flash) : anneau, double anneau, cœur, saule doré,
+    friandises (étoiles, bonbons, cœurs fournis) ; halo, éclair blanc, crépitement. Sifflement calé pour que la
+    détonation tombe sur l'éclatement (`firework(delay, vol)`).
+  - Oursons : sauts en rythme, étirement, écrasement à l'atterrissage, saltos alternés, tous ensemble sur l'accord
+    final, petits cœurs qui s'envolent ; remis en place ensuite.
+  - Canons à confettis dans les coins, pluie de confettis pendant le bouquet, étoiles qui scintillent.
+  - Mode calme (`prefers-reduced-motion` ou `?calme`) : 4 fusées, ni secousse, ni flash, ni sauts, ni confettis.
+  - Corrigé au passage : « Rejouer » cliqué avant que les étoiles de l'écran de fin s'allument provoquait une erreur.
+  `CAPTURES/fusee-fete-confiserie.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

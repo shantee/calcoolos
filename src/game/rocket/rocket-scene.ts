@@ -27,6 +27,8 @@ const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
 const tint = (hex: string): number => parseInt(hex.slice(1), 16);
+/** Formes des gerbes du feu d'artifice final. */
+type FireworkShape = 'anneau' | 'double' | 'coeur' | 'saule' | 'friandises' | 'grand-coeur';
 
 /**
  * Images fournies par Philippe (src/images/decollage/, originaux dans sources-images/decollage/), déjà à leur
@@ -171,6 +173,8 @@ export class RocketScene extends Phaser.Scene {
   private soundText!: Phaser.GameObjects.Text;
   private arrows: Phaser.GameObjects.Image[] = [];
   private keys = new Map<string, Phaser.GameObjects.Container>();
+  /** Ciel de nuit de la fête finale (détruit au départ suivant). */
+  private dusk: Phaser.GameObjects.Graphics | null = null;
   private overlay: Phaser.GameObjects.Container | null = null;
   private overlayButtons: Array<{ c: Phaser.GameObjects.Container; run: () => void }> = [];
   private overlayFocus = 0;
@@ -1187,27 +1191,257 @@ export class RocketScene extends Phaser.Scene {
     this.setMusic(this.musicLevel);
   }
 
+  /**
+   * Arrivée au royaume de la confiserie (≈ 5,8 s, puis l'écran de fin) : musique de fête, fusées tirées de
+   * derrière le château en rythme (une gerbe par temps, bouquet final, grand cœur sur l'accord final),
+   * oursons qui dansent, canons à confettis et paillettes.
+   */
   private celebrate(): void {
     this.ending = true;
     this.setMusic(null);
     this.qPanel.setVisible(false);
-    this.sfx.victoryJingle();
-    this.setFace('joie', 6000);
-    this.banner('Bienvenue au royaume de la confiserie !', P.p, 3200);
-    // Feu d'artifice pixel et oursons qui sautent de joie.
-    for (let i = 0; i < (this.reducedMotion ? 3 : 12); i++) {
-      this.time.delayedCall(200 + i * 300, () => {
-        const x = Phaser.Math.Between(150, 1000);
-        const y = this.cameras.main.scrollY + Phaser.Math.Between(120, 320);
-        this.burst(x, y, [[P.p, P.Y, P.W], [P.C, P.L, P.W], [P.M, P.r, P.Y]][i % 3], 22);
-        this.sfx.firework(0);
+    this.sfx.candyParty();
+    this.setFace('joie', 7000);
+    this.banner('Bienvenue au royaume de la confiserie !', P.p, 3400);
+    const beat = Sfx.PARTY_BEAT * 1000;
+    const calm = this.reducedMotion;
+    const cam = this.cameras.main;
+    const top = cam.scrollY;
+    if (!calm) cam.flash(350, 255, 200, 225);
+    this.showControls(false);
+    // La nuit tombe derrière le château pour faire briller le feu d'artifice.
+    this.dusk?.destroy();
+    this.dusk = this.add.graphics().setScrollFactor(0).setDepth(-6).setAlpha(0);
+    this.dusk.fillGradientStyle(0x1a1c2c, 0x1a1c2c, 0x5d275d, 0x5d275d, 0.92, 0.92, 0.6, 0.6).fillRect(0, 0, W, H);
+    this.tweens.add({ targets: this.dusk, alpha: 1, duration: calm ? 300 : 700, ease: 'Sine.easeOut' });
+    // [temps de l'explosion (en temps de musique), x, y à l'écran, forme].
+    const shots: Array<[number, number, number, FireworkShape]> = calm
+      ? [[3, 360, 150, 'anneau'], [7, 920, 130, 'coeur'], [11, 520, 110, 'saule'], [15, 640, 160, 'grand-coeur']]
+      : [
+          [2, 330, 170, 'anneau'], [3, 950, 140, 'coeur'], [4, 520, 90, 'friandises'], [5, 1100, 220, 'saule'],
+          [6, 200, 120, 'double'], [7, 770, 80, 'anneau'], [8, 420, 210, 'coeur'], [9, 1000, 100, 'friandises'],
+          [10, 640, 130, 'saule'], [11, 260, 230, 'double'],
+          [12, 180, 110, 'anneau'], [12, 1090, 130, 'anneau'], [12.5, 470, 190, 'coeur'], [13, 820, 170, 'coeur'],
+          [13, 640, 70, 'friandises'], [13.5, 340, 90, 'saule'], [13.5, 960, 230, 'double'],
+          [15, 640, 150, 'grand-coeur'],
+        ];
+    const rise = 620;
+    shots.forEach(([b, x, y, shape], i) => {
+      const at = b * beat;
+      this.time.delayedCall(Math.max(0, at - rise), () => this.launchFirework(x, top + y, shape, i, Math.min(rise, at)));
+      // Le sifflement finit pile sur la détonation (0,22 s après le début du son).
+      const together = shots.filter((s) => s[0] === b).length;
+      if (shots.findIndex((s) => s[0] === b) === i) this.time.delayedCall(Math.max(0, at - 220), () => this.sfx.firework(0, shape === 'grand-coeur' ? 1 : together > 1 ? 0.8 : 0.55));
+    });
+    this.danceBears(beat, calm);
+    if (!calm) {
+      // Canons à confettis dans les coins du bas, puis pluie de confettis pendant le bouquet final.
+      for (let i = 0; i < 34; i++) {
+        this.confetti(Phaser.Math.Between(-10, 30), top + H - 30, Phaser.Math.Between(200, 620), top + Phaser.Math.Between(40, 300), i * 12, 650);
+        this.confetti(W - Phaser.Math.Between(-10, 30), top + H - 30, -Phaser.Math.Between(200, 620), top + Phaser.Math.Between(40, 300), i * 12, 650);
+      }
+      for (let i = 0; i < 46; i++) this.confetti(Phaser.Math.Between(0, W), top - 20, Phaser.Math.Between(-80, 80), top - 20, 12 * beat + i * 25, 1);
+      // Étoiles qui scintillent dans le ciel de nuit, derrière le château.
+      for (let i = 0; i < 30; i++) {
+        const s = this.add.image(Phaser.Math.Between(40, W - 40), top + Phaser.Math.Between(20, 400), this.tx(`f-sparkb-${P.W}`, () => A.spark(P.W, true))).setScale(0).setDepth(-5);
+        this.tweens.add({ targets: s, scale: PX * 0.9, angle: 90, duration: 220, yoyo: true, delay: 300 + i * 170, onComplete: () => s.destroy() });
+      }
+    }
+    this.time.delayedCall(15 * beat + 700, () => this.showEnd(true));
+  }
+
+  /** Pavé numérique et flèches : masqués pendant la fête finale, réaffichés au départ. */
+  private showControls(on: boolean): void {
+    for (const o of [...this.keys.values(), ...this.arrows]) {
+      this.tweens.killTweensOf(o);
+      if (on) o.setVisible(true).setAlpha(1);
+      else this.tweens.add({ targets: o, alpha: 0, duration: 300, onComplete: () => o.setVisible(false) });
+    }
+  }
+
+  /** Une fusée part de derrière le château (traînée dorée) et éclate en (x, y). */
+  private launchFirework(x: number, y: number, shape: FireworkShape, i: number, rise: number): void {
+    const head = this.add.image(Phaser.Math.Between(500, 780), this.wy(SUMMIT) - 120, this.tx(`f-sparkb-${P.y}`, () => A.spark(P.y, true))).setScale(PX * 0.6).setDepth(-5);
+    const trail = this.time.addEvent({
+      delay: 28,
+      loop: true,
+      callback: () => {
+        const t = this.add.image(head.x + Phaser.Math.Between(-3, 3), head.y + 6, this.tx(`f-spark-${P.Y}`, () => A.spark(P.Y))).setScale(PX * 0.8).setDepth(-5);
+        this.tweens.add({ targets: t, alpha: 0, scale: PX * 0.3, y: t.y + 18, duration: 380, onComplete: () => t.destroy() });
+      },
+    });
+    this.tweens.add({
+      targets: head,
+      x,
+      y,
+      duration: Math.max(1, rise),
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        trail.remove();
+        head.destroy();
+        this.explode(x, y, shape, i);
+      },
+    });
+  }
+
+  private explode(x: number, y: number, shape: FireworkShape, i: number): void {
+    const big = shape === 'grand-coeur';
+    const pairs: Array<[string, string]> = [[P.p, P.W], [P.C, P.y], [P.Y, P.r], [P.L, P.W], [P.v, P.p], [P.M, P.Y]];
+    const [c1, c2] = shape === 'coeur' || big ? [P.p, P.M] : shape === 'saule' ? [P.Y, P.y] : pairs[i % pairs.length];
+    // Éclair blanc et halo coloré.
+    const halo = this.add.circle(x, y, big ? 44 : 26, tint(c1), 0.5).setDepth(11).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: halo, scale: big ? 5.5 : 3.4, alpha: 0, duration: 450, ease: 'Cubic.easeOut', onComplete: () => halo.destroy() });
+    const flash = this.add.circle(x, y, big ? 22 : 12, 0xffffff).setDepth(12);
+    this.tweens.add({ targets: flash, scale: 2.4, alpha: 0, duration: 170, onComplete: () => flash.destroy() });
+    const ring = (n: number, r: number): Array<[number, number]> =>
+      Array.from({ length: n }, (_, k) => {
+        const a = (k / n) * Math.PI * 2 + Math.random() * 0.1;
+        return [Math.cos(a) * r, Math.sin(a) * r];
+      });
+    // Cœur : courbe paramétrique classique (16 sin³t, 13 cos t − 5 cos 2t − 2 cos 3t − cos 4t).
+    const heart = (n: number, k: number): Array<[number, number]> =>
+      Array.from({ length: n }, (_, j) => {
+        const t = (j / n) * Math.PI * 2;
+        return [16 * Math.sin(t) ** 3 * k, -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * k];
+      });
+    const sparks = (pts: Array<[number, number]>, colors: string[], fall: number, life: number, bigEvery = 2): void =>
+      pts.forEach(([dx, dy], k) => this.fireSpark(x, y, dx, dy, colors[k % colors.length], k % bigEvery === 0, fall, life));
+    switch (shape) {
+      case 'anneau':
+        sparks(ring(26, 105), [c1, c1, c2], 40, 650);
+        break;
+      case 'double':
+        sparks(ring(24, 115), [c1], 40, 650);
+        sparks(ring(14, 55), [c2], 30, 600, 3);
+        break;
+      case 'coeur':
+        sparks(heart(30, 5.5), [c1, c2], 25, 700);
+        sparks(ring(8, 22), [P.W], 20, 400, 9);
+        break;
+      case 'saule':
+        sparks(ring(28, 95), [c1, c2], 110, 1100);
+        break;
+      case 'friandises':
+        sparks(ring(18, 85), [c1, c2], 40, 650);
+        this.candyBurst(x, y, 7);
+        break;
+      case 'grand-coeur':
+        sparks(heart(52, 9.5), [P.M, P.W, P.R], 35, 900);
+        sparks(ring(34, 200), [P.Y, P.C, P.L], 70, 900);
+        sparks(heart(20, 4), [P.W], 20, 600, 1);
+        this.candyBurst(x, y, 12);
+        if (!this.reducedMotion) {
+          this.cameras.main.shake(320, 0.006);
+          this.cameras.main.flash(260, 255, 236, 246);
+        }
+        break;
+    }
+    // Crépitement : petites étincelles blanches qui s'allument après l'éclatement.
+    for (let k = 0; k < (big ? 18 : 7); k++) {
+      const r = (big ? 170 : 90) * Math.sqrt(Math.random());
+      const a = Math.random() * Math.PI * 2;
+      const g = this.add.image(x + Math.cos(a) * r, y + Math.sin(a) * r + 20, this.tx(`f-spark-${P.W}`, () => A.spark(P.W))).setScale(PX).setDepth(12).setAlpha(0);
+      this.tweens.add({ targets: g, alpha: 1, duration: 60, yoyo: true, repeat: 1, delay: 450 + Math.random() * 500, onComplete: () => g.destroy() });
+    }
+  }
+
+  /** Une étincelle : jaillit jusqu'à (dx, dy) puis retombe en s'éteignant. */
+  private fireSpark(x: number, y: number, dx: number, dy: number, c: string, big: boolean, fall: number, life: number): void {
+    const key = big ? `f-sparkb-${c}` : `f-spark-${c}`;
+    const s = this.add.image(x, y, this.tx(key, () => A.spark(c, big))).setScale(PX * (big ? 0.6 : 1)).setDepth(12);
+    this.tweens.chain({
+      targets: s,
+      tweens: [
+        { x: x + dx, y: y + dy, duration: 480 + Math.random() * 120, ease: 'Cubic.easeOut' },
+        { y: y + dy + fall, alpha: 0, scale: s.scale * 0.5, duration: life + Math.random() * 200, ease: 'Sine.easeIn' },
+      ],
+      onComplete: () => s.destroy(),
+    });
+  }
+
+  /** Friandises (étoiles, bonbons, cœurs) projetées en tournoyant, qui retombent. */
+  private candyBurst(x: number, y: number, n: number): void {
+    const keys = ['f-star-0', 'f-bonbon-0', 'f-pow-coeur'].filter((k) => k in PROVIDED);
+    if (!keys.length) return;
+    for (let k = 0; k < n; k++) {
+      const a = (k / n) * Math.PI * 2 + Math.random() * 0.4;
+      const d = Phaser.Math.Between(70, 150);
+      const c = this.add.image(x, y, keys[k % keys.length]).setScale(0.4).setDepth(12);
+      this.tweens.add({ targets: c, x: x + Math.cos(a) * d * 1.3, angle: Phaser.Math.Between(-540, 540), scale: 1, duration: 1300, ease: 'Sine.easeOut' });
+      this.tweens.chain({
+        targets: c,
+        tweens: [
+          { y: y + Math.sin(a) * d - 40, duration: 450, ease: 'Quad.easeOut' },
+          { y: y + Math.sin(a) * d + 160, alpha: 0, duration: 850, ease: 'Quad.easeIn' },
+        ],
+        onComplete: () => {
+          this.tweens.killTweensOf(c);
+          c.destroy();
+        },
       });
     }
-    for (const d of this.dancers) {
-      if (!d.texture.key.includes('ourson')) continue;
-      if (!this.reducedMotion) this.tweens.add({ targets: d, y: d.y - 40, duration: 260, yoyo: true, repeat: 8, delay: Phaser.Math.Between(0, 300), ease: 'Quad.easeOut' });
-    }
-    this.time.delayedCall(4600, () => this.showEnd(true));
+  }
+
+  /** Confetti : part de (x, y), monte jusqu'à peakY, dérive de dx et retombe en voletant. */
+  private confetti(x: number, y: number, dx: number, peakY: number, delay: number, up: number): void {
+    const colors = [P.p, P.Y, P.C, P.L, P.v, P.W, P.M, P.r];
+    const color = tint(colors[Phaser.Math.Between(0, colors.length - 1)]);
+    const piece = this.add.rectangle(x, y, PX * 2, PX * 3, color).setDepth(13).setAngle(Phaser.Math.Between(0, 359)).setVisible(false);
+    const fall = Phaser.Math.Between(1700, 2600);
+    const total = up + fall;
+    this.time.delayedCall(delay, () => piece.setVisible(true));
+    this.tweens.chain({
+      targets: piece,
+      tweens: [
+        { y: peakY, duration: up, ease: 'Quad.easeOut', delay },
+        { y: this.cameras.main.scrollY + H + 30, duration: fall, ease: 'Sine.easeIn' },
+      ],
+    });
+    this.tweens.add({ targets: piece, x: x + dx, duration: total, delay, ease: 'Sine.easeOut' });
+    this.tweens.add({ targets: piece, angle: piece.angle + Phaser.Math.Between(-720, 720), duration: total, delay });
+    this.tweens.add({ targets: piece, scaleX: 0.15, duration: Phaser.Math.Between(140, 260), yoyo: true, repeat: 7, delay });
+    this.time.delayedCall(delay + total + 50, () => {
+      this.tweens.killTweensOf(piece);
+      piece.destroy();
+    });
+  }
+
+  /** Les oursons dansent en rythme : sauts, étirement, écrasement à l'atterrissage, saltos ; tous ensemble sur l'accord final. */
+  private danceBears(beat: number, calm: boolean): void {
+    const bears = this.dancers.filter((d) => d.texture.key.includes('ourson'));
+    bears.forEach((d, i) => {
+      const s0 = d.scaleX;
+      const x0 = d.x;
+      const foot = d.y;
+      // Pivot au centre pendant la danse (pour les saltos), remis aux pieds après.
+      d.setOrigin(0.5, 0.5).setY(foot - d.displayHeight / 2);
+      const y0 = d.y;
+      for (let k = 0; k <= 15; k++) {
+        this.time.delayedCall(k * beat, () => {
+          d.setTexture(this.tx(`f-ourson-${k % 2}`, () => A.friend('ourson', (k % 2) as 0 | 1)));
+          if (k % 2 === 0 && i === k % bears.length) this.floatHeart(d.x, y0 - 30);
+          if (calm) return;
+          const flip = k === 15 || (k % 4 === 3 && (i + (k >> 2)) % 2 === 0);
+          const air = beat * (k === 15 ? 1.4 : 0.84);
+          this.tweens.add({ targets: d, y: y0 - (k === 15 ? 90 : flip ? 70 : 28), duration: air / 2, yoyo: true, ease: 'Quad.easeOut' });
+          this.tweens.add({ targets: d, x: x0 + (k % 2 ? 10 : -10), duration: air, ease: 'Sine.easeInOut' });
+          if (flip) this.tweens.add({ targets: d, angle: i % 2 ? -360 : 360, duration: air, ease: 'Cubic.easeInOut', onComplete: () => d.setAngle(0) });
+          else this.tweens.add({ targets: d, scaleX: s0 * 0.88, scaleY: s0 * 1.15, duration: beat * 0.2, yoyo: true });
+          this.time.delayedCall(air, () => this.tweens.add({ targets: d, scaleX: s0 * 1.22, scaleY: s0 * 0.8, duration: beat * 0.08, yoyo: true }));
+        });
+      }
+      this.time.delayedCall(16 * beat + 250, () => {
+        this.tweens.killTweensOf(d);
+        d.setOrigin(0.5, 1).setPosition(x0, foot).setAngle(0).setScale(s0);
+      });
+    });
+  }
+
+  /** Petit cœur qui s'envole au-dessus d'un ourson. */
+  private floatHeart(x: number, y: number): void {
+    const key = 'f-pow-coeur' in PROVIDED ? 'f-pow-coeur' : this.tx(`f-sparkb-${P.p}`, () => A.spark(P.p, true));
+    const h = this.add.image(x + Phaser.Math.Between(-10, 10), y, key).setScale(key === 'f-pow-coeur' ? 0.5 : PX).setDepth(11);
+    this.tweens.add({ targets: h, y: y - 80, x: h.x + Phaser.Math.Between(-20, 20), alpha: 0, duration: 1200, ease: 'Sine.easeOut', onComplete: () => h.destroy() });
   }
 
   private defeat(): void {
@@ -1329,6 +1563,7 @@ export class RocketScene extends Phaser.Scene {
       c.add(st);
       if (i < stars) {
         this.time.delayedCall(350 + i * 380, () => {
+          if (!st.active) return; // « Rejouer » cliqué avant la fin de l'animation.
           st.setTexture(this.tx('f-bigstar-1', () => A.power('etoile')));
           this.sfx.star(i);
           this.burst(st.x, st.y, [P.Y, P.W], 10);
@@ -1383,6 +1618,9 @@ export class RocketScene extends Phaser.Scene {
     this.tweens.resumeAll();
     this.ending = false;
     this.rescuing = false;
+    this.dusk?.destroy();
+    this.dusk = null;
+    this.showControls(true);
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new RocketSession(this.tier.id, this.seed, mode);
     this.newWorld();

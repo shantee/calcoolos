@@ -214,12 +214,67 @@ export class Sfx {
     });
   }
 
-  /** Fusée de feu d'artifice : sifflement, détonation, crépitement. */
-  firework(delay = 0): void {
-    this.tone(900, 0.25, { wave: 'sine', gain: 0.05, slideTo: 2200, delay });
-    this.noise(0.3, { gain: 0.45, filter: 900, q: 0.5, delay: delay + 0.22 });
-    this.tone(160, 0.25, { wave: 'sine', gain: 0.25, slideTo: 60, delay: delay + 0.22 });
-    for (let i = 0; i < 7; i++) this.noise(0.03, { gain: 0.18, filter: 4000 + i * 400, q: 3, delay: delay + 0.45 + i * 0.06 + Math.random() * 0.05 });
+  /** Fusée de feu d'artifice : sifflement, détonation (0,22 s après), crépitement. */
+  firework(delay = 0, vol = 1): void {
+    this.tone(900, 0.25, { wave: 'sine', gain: 0.05 * vol, slideTo: 2200, delay });
+    this.noise(0.3, { gain: 0.45 * vol, filter: 900, q: 0.5, delay: delay + 0.22 });
+    this.tone(160, 0.25, { wave: 'sine', gain: 0.25 * vol, slideTo: 60, delay: delay + 0.22 });
+    for (let i = 0; i < 7; i++) this.noise(0.03, { gain: 0.18 * vol, filter: 4000 + i * 400, q: 3, delay: delay + 0.45 + i * 0.06 + Math.random() * 0.05 });
+  }
+
+  /** Durée d'un temps de la fête du royaume de la confiserie (176 bpm), en secondes. */
+  static readonly PARTY_BEAT = 60 / 176;
+
+  /**
+   * Fête au royaume de la confiserie (Décollage !) : 4 mesures chiptune kawaii, mélodie originale.
+   * Do – La m – Fa – Sol puis accord final sur le 16e temps (≈ 5,7 s) ; grosse caisse à chaque temps,
+   * arpèges très rapides, basse qui rebondit, écho sur la mélodie et roulement de caisse claire avant la fin.
+   */
+  candyParty(): void {
+    const b = Sfx.PARTY_BEAT;
+    const e = b / 2;
+    const s = b / 4;
+    const n = (semi: number): number => 523.25 * 2 ** (semi / 12);
+    // Petit glissando « youhou » d'ouverture.
+    this.tone(n(0), 0.22, { wave: 'square', gain: 0.04, slideTo: n(24) });
+    // Mélodie en croches : [demi-tons depuis do5, durée en croches].
+    const melody: Array<[number, number]> = [
+      [7, 1], [4, 1], [7, 1], [12, 1], [16, 1], [14, 1], [12, 1], [7, 1],
+      [9, 1], [12, 1], [16, 2], [14, 1], [12, 1], [9, 2],
+      [5, 1], [9, 1], [12, 1], [17, 1], [16, 1], [12, 1], [14, 1], [12, 1],
+      [11, 1], [14, 1], [19, 1], [17, 1], [16, 1], [14, 1], [24, 2],
+    ];
+    let t = 0;
+    melody.forEach(([semi, d], i) => {
+      const last = i === melody.length - 1;
+      const dur = last ? 0.9 : e * d * 0.85;
+      this.tone(n(semi), dur, { wave: 'square', gain: 0.055, delay: t });
+      this.tone(n(semi), dur, { wave: 'square', gain: 0.02, delay: t + s * 1.5 });
+      if (last) this.tone(n(semi - 12), dur, { wave: 'triangle', gain: 0.08, delay: t });
+      t += e * d;
+    });
+    // Accords par mesure : arpège (doubles croches), fondamentale de basse.
+    const chords: Array<[number[], number]> = [[[0, 4, 7, 12], 0], [[-3, 0, 4, 9], -3], [[-7, -3, 0, 5], -7], [[-5, -1, 2, 7], -5]];
+    for (let beat = 0; beat < 15; beat++) {
+      const [notes, root] = chords[Math.floor(beat / 4)];
+      for (let k = 0; k < 4; k++) this.tone(n(notes[(beat * 4 + k) % 4] + 12), s * 0.8, { wave: 'square', gain: 0.018, delay: beat * b + k * s });
+      // Basse en octaves qui rebondit.
+      this.tone(n(root - 24), e * 0.8, { wave: 'triangle', gain: 0.16, delay: beat * b });
+      this.tone(n(root - 12), e * 0.7, { wave: 'triangle', gain: 0.12, delay: beat * b + e });
+      // Grosse caisse à chaque temps, caisse claire sur 2 et 4, charleston à contretemps.
+      this.tone(150, 0.12, { wave: 'sine', gain: 0.35, slideTo: 45, delay: beat * b });
+      if (beat % 2 === 1) this.noise(0.1, { gain: 0.22, filter: 2200, q: 0.7, delay: beat * b });
+      this.noise(0.03, { gain: 0.08, filter: 8000, q: 1, type: 'highpass', delay: beat * b + e });
+    }
+    // Roulement de caisse claire qui monte avant l'accord final.
+    for (let k = 0; k < 8; k++) this.noise(0.05, { gain: 0.08 + k * 0.025, filter: 2000 + k * 200, q: 0.8, delay: 13 * b + k * s });
+    // Accord final : arpège éclair jusqu'au do7, accord tenu, cymbale.
+    const end = 15 * b;
+    [0, 4, 7, 12, 16, 19, 24].forEach((semi, k) => this.tone(n(semi + 12), 0.5, { wave: 'square', gain: 0.025, delay: end + k * 0.03 }));
+    [0, 4, 7, 12].forEach((semi) => this.tone(n(semi), 1, { wave: 'triangle', gain: 0.06, delay: end }));
+    this.tone(n(-24), 0.9, { wave: 'triangle', gain: 0.18, delay: end });
+    this.tone(150, 0.2, { wave: 'sine', gain: 0.4, slideTo: 40, delay: end });
+    this.noise(1.1, { gain: 0.16, filter: 6000, q: 0.5, type: 'highpass', delay: end });
   }
 
   /**
