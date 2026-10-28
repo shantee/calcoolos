@@ -329,9 +329,9 @@ export class RocketScene extends Phaser.Scene {
     });
     // Le cerf-volant d'un enfant, très haut au bout de sa ficelle.
     this.kite = add(this.sprite(1120, this.wy(520), 'f-kite', A.kite).setDepth(-6));
-    // Oiseaux, montgolfière.
+    // Volée d'oiseaux (petit dessin du code ; l'oiseau posé sur les nuages est celui de Philippe), montgolfière.
     for (let i = 0; i < 4; i++) {
-      const b = add(this.sprite(80 + i * 34, this.wy(900 + (i % 2) * 22), 'f-oiseau-0', () => A.friend('oiseau', 0)).setDepth(-10).setFlipX(true));
+      const b = add(this.sprite(80 + i * 34, this.wy(900 + (i % 2) * 22), 'f-oiseau-vol', () => A.friend('oiseau', 0)).setDepth(-10).setFlipX(true));
       this.tweens.add({ targets: b, x: b.x + 1300, duration: 26000, repeat: -1, delay: i * 120 });
     }
     const balloon = add(this.sprite(90, this.wy(1150), 'f-balloon', A.hotAirBalloon).setDepth(-10));

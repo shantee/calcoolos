@@ -128,6 +128,9 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   la terre n'en faisait que 104). Sol du village porté à 40 pixels d'art (160 px).
 - **Château du roi des nuages** (`chateau-roi-nuage.png`) : réduit à 230 × 112 (`castle.webp`), le roi reposé sur
   le rempart du milieu ; `CAPTURES/fusee-chateau.png`.
+- **Oiseau** (`oiseau.png`, repos et surpris) : 56 × 45, pieds alignés (`oiseau-0/1.webp`), habitant des nuages et du
+  ciel des dirigeables ; la volée qui traverse le ciel du village garde le petit oiseau du code (`f-oiseau-vol`).
+  `CAPTURES/fusee-oiseau.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
