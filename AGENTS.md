@@ -311,6 +311,14 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   quitte la page avant ne laisse aucune trace. Limite de 5 inscriptions par heure : ne pas relancer en boucle
   `verifier-en-ligne.mjs`, qui crée (puis supprime) un compte.
 
+- **Plusieurs sessions en parallèle (normal, voulu par Philippe)** : deux agents peuvent travailler en même temps sur
+  le dépôt (souvent sur le même fichier, ex. `rocket-scene.ts`). Avant chaque commit, `git status` et `git diff` :
+  n'indexer **que ses propres morceaux** (`git add -p`, ou `git hash-object -w` + `git update-index --cacheinfo`),
+  jamais `git add` d'un fichier entier qui contient le travail de l'autre ; vérifier que le commit compile seul
+  (`git archive HEAD` dans le scratchpad + `tsc`). Ne jamais annuler, remiser (`stash`) ni commiter le travail de
+  l'autre. `deploy/publier.sh` refuse tant qu'il reste des changements non commités : attendre que l'autre ait
+  commité (ou lui écrire : `ListAgents` puis `SendMessage`), sa publication emportera aussi nos commits.
+
 ## 10. Méthode de travail qui a bien marché
 
 1. Logique pure + tests (dont un pilote automatique qui gagne) avant la scène.
