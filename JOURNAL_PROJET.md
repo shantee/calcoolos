@@ -28,6 +28,37 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-28 : Claude, page Classements refaite
+
+**Demande** : les classements étaient trop serrés (quatre colonnes par ligne) ; Philippe voulait deux colonnes (ou
+une), la date et l'heure de chaque score, un visuel et une sorte de logo par jeu (il ajoutera plus tard une
+mascotte), des informations au survol ; « propre, beau et intéressant ».
+
+**Fait**
+- **API** (`Api::leaderboards`) : pour chaque joueur affiché, en plus du score, la date de la première partie qui a
+  atteint ce record, ses étoiles, gagnée ou perdue, sa précision, sa durée, et le nombre de parties classées dans ce
+  tableau. Toujours rien du compte (pas d'e-mail, pas d'identifiant). Test d'API mis à jour (133 vérifications).
+- **Page** (`src/entries/classements.ts`, styles en fin de `plateforme.css`) :
+  - une **bannière par jeu** : l'illustration de l'accueil en fond, voilée à gauche ; un **médaillon** découpé dans
+    cette illustration (fusée, météore, monstre au panneau « 29 », tête du dragon) en guise de logo ; titre (en
+    pixels pour Décollage !), surtitre de l'accueil, « Ta meilleure place » si un profil de la famille est sur un
+    podium, bouton « Jouer » ;
+  - **mascotte** : déposer `src/images/mascottes/<jeu>.webp` (`fusee`, `meteores`, `cubes`, `dragon`) suffit, elle
+    s'affiche entre le titre et « Jouer » (aucune pour l'instant) ;
+  - onglets **Défi / Tranquille** (choix commun aux quatre jeux, retenu sur l'appareil), puis les quatre niveaux en
+    **deux colonnes** (une seule sur téléphone), avec crans de difficulté, âge, et « ton niveau » encadré ;
+  - chaque ligne : médaille ou rang, avatar, pseudo, **date et heure en petit** (« aujourd'hui à 14 h 32 », « hier à
+    … », « 21 oct. à … »), score ; or, argent, bronze colorés ; **infobulle** au survol (ou au toucher, ou au
+    clavier) : date complète, étoiles, gagnée/perdue, % de bonnes réponses, durée, nombre de parties ;
+  - sommaire des jeux collant en haut de l'écran (une ligne qui défile sur téléphone) ; « Dans la famille » replié.
+- Textes de dates et durées dans `src/platform/classement-format.ts`, testés (`tests/classement-format.test.ts`).
+- Vérifié avec une base de démonstration (14 joueurs inventés, base jetable hors du dépôt) : ordinateur, téléphone
+  (toucher), invité avec score local, famille connectée ; `plateforme-e2e.mjs` 21/21 (sélecteur mis à jour),
+  130 tests, typecheck, build, CSP. Captures `CAPTURES/classements-*.png`.
+
+**Limites** : la requête SQL a été testée sur SQLite ; sur MariaDB (production), vérifiée seulement en ligne après
+publication. Les nouveaux textes ne sont pas traduits (règle du 27/10/2026).
+
 ## 2026-10-28 : Claude, Décollage ! en police Minecraftia
 
 **Demande** : remplacer la police des textes de Décollage ! (Pixelify Sans) par Minecraftia, fournie par Philippe.

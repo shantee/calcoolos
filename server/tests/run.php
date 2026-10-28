@@ -213,7 +213,8 @@ $row = array_values(array_filter($b['public'], static fn (array $x): bool => $x[
 assert_true($row !== null, 'Lina au classement public sous son pseudo, sans autorisation à donner');
 assert_true($row['score'] === 8000, 'seul le meilleur score VÉRIFIÉ compte (pas 39000)');
 assert_true(!str_contains($r->body(), '@'), 'jamais l\'e-mail au classement public');
-assert_true(array_keys($row) === ['rang', 'nom', 'avatar', 'score'], 'aucune autre donnée exposée');
+assert_true(array_keys($row) === ['rang', 'nom', 'avatar', 'score', 'parties', 'date', 'gagne', 'etoiles', 'duree', 'precision'], 'seulement le jeu exposé, rien du compte');
+assert_true($row['parties'] === 2 && preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/', $row['date']) === 1, 'date du record et nombre de parties vérifiées');
 assert_true($board($r, 'cubes', 'maitre', 'tranquille')['public'] === [], 'classement vide sans partie');
 $r = $alice->get('/classements');
 $b = $board($r, 'dragon', 'explorateur', 'defi');

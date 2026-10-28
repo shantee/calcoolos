@@ -1088,27 +1088,86 @@ table.tableau {
   }
 }
 
-/* --- Classements : tous les jeux sur une page (jeu → Défi puis Tranquille → un tableau par niveau) --- */
+/* --- Classements : une bannière par jeu, onglets Défi / Tranquille, quatre niveaux en deux colonnes --- */
+.jeu-classements,
+.sommaire-jeux a {
+  --accent: var(--safran);
+  --halo: rgb(255 201 74 / 0.3);
+  --vignette: url('../images/accueil/cubes-de-siege-800.webp');
+  --cadrage: 98% 64%;
+}
+
+.jeu-classements[data-univers='fusee'],
+.sommaire-jeux a[data-univers='fusee'] {
+  --accent: #7fd6ff;
+  --halo: rgb(90 190 255 / 0.32);
+  --vignette: url('../images/accueil/decollage-800.webp');
+  --cadrage: 50% 50%;
+}
+
+.jeu-classements[data-univers='meteores'],
+.sommaire-jeux a[data-univers='meteores'] {
+  --accent: #c8a6ff;
+  --halo: rgb(160 110 255 / 0.32);
+  --vignette: url('../images/accueil/pluie-de-meteores-800.webp');
+  --cadrage: 65% 7%;
+}
+
+.jeu-classements[data-univers='dragon'],
+.sommaire-jeux a[data-univers='dragon'] {
+  --accent: #ffa36b;
+  --halo: rgb(255 120 80 / 0.3);
+  --vignette: url('../images/accueil/dragon-gourmand-800.webp');
+  --cadrage: 44% 36%;
+}
+
+/* Sommaire : reste en haut de l'écran pendant qu'on fait défiler les jeux. */
 .sommaire-jeux {
+  position: sticky;
+  top: 8px;
+  z-index: 6;
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  width: fit-content;
+  max-width: 100%;
   margin: -8px 0 24px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgb(12 22 38 / 0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 18px -8px rgb(0 0 0 / 0.6);
 }
 
 .sommaire-jeux a {
-  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
   border-radius: 999px;
-  border: 2px solid rgb(246 236 216 / 0.3);
+  border: 2px solid rgb(246 236 216 / 0.22);
   color: var(--creme);
   font-weight: 700;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .sommaire-jeux a:hover,
 .sommaire-jeux a:focus-visible {
-  border-color: var(--safran);
-  color: var(--safran);
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+/* Emblème : un médaillon découpé dans l'illustration du jeu. */
+.embleme {
+  display: block;
+  flex: none;
+  width: 28px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid var(--encre);
+  background: var(--vignette) var(--cadrage) / 320% auto no-repeat var(--encre);
 }
 
 .invite-classements,
@@ -1124,36 +1183,216 @@ table.tableau {
   margin-left: 6px;
 }
 
-.famille-classements ul {
+.famille-classements summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.famille-classements summary::-webkit-details-marker {
+  display: none;
+}
+
+.famille-classements summary::before {
+  content: '▸';
+  color: var(--safran);
+  transition: transform 0.15s;
+}
+
+.famille-classements[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.famille-classements summary h2 {
   margin: 0;
+}
+
+.famille-classements ul {
+  columns: 2 420px;
+  column-gap: 28px;
+  margin: 14px 0 0;
   padding-left: 1.1em;
   line-height: 1.7;
   color: var(--texte);
 }
 
+.famille-classements li {
+  break-inside: avoid;
+}
+
 .jeu-classements {
-  margin-bottom: 36px;
-  scroll-margin-top: 16px;
+  margin-bottom: 56px;
+  scroll-margin-top: 76px;
 }
 
-.jeu-classements > h2 {
-  margin: 0 0 12px;
-  font-size: 1.7rem;
-}
-
-.classements-ligne {
+/* Bannière : l'illustration de l'accueil en fond, voilée à gauche pour que le titre se lise. */
+.banniere {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 14px;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px 22px;
+  min-height: 190px;
+  padding: 22px 26px;
+  border: 4px solid var(--encre);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow:
+    0 8px 0 var(--encre),
+    0 34px 70px -30px var(--halo);
+}
+
+.banniere-fond {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgb(10 14 30 / 0.94) 0%, rgb(10 14 30 / 0.72) 42%, rgb(10 14 30 / 0.2) 100%),
+    var(--vignette) center 40% / cover no-repeat var(--encre);
+  transition: transform 0.8s ease;
+}
+
+
+.banniere:hover .banniere-fond {
+  transform: scale(1.04);
+}
+
+.banniere .embleme {
+  width: 112px;
+  border-width: 4px;
+  box-shadow:
+    0 0 0 4px var(--accent),
+    0 10px 26px -6px rgb(0 0 0 / 0.7);
+}
+
+.banniere-texte {
+  min-width: 0;
+}
+
+.banniere h2 {
+  margin: 2px 0 6px;
+  font-size: clamp(2rem, 5vw, 3.1rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: var(--creme);
+  text-shadow:
+    0 4px 0 var(--encre),
+    0 0 30px var(--halo);
+}
+
+/* Décollage ! est un jeu en pixels : son titre aussi. */
+.jeu-classements[data-univers='fusee'] .banniere h2 {
+  font-family: 'Pixelify Sans', 'Bricolage Grotesque Variable', sans-serif;
+  font-variant-ligatures: none;
+  letter-spacing: 0.02em;
+}
+
+.banniere .resume {
+  margin: 0;
+  color: var(--texte);
+  font-weight: 600;
+}
+
+.ma-place {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgb(255 201 74 / 0.18);
+  border: 2px solid rgb(255 201 74 / 0.55);
+  color: var(--safran);
+}
+
+.banniere .mascotte {
+  align-self: end;
+  width: 150px;
+  height: 170px;
+  margin-bottom: -22px;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 8px 12px rgb(0 0 0 / 0.5));
+}
+
+.banniere .mascotte.place-libre {
+  display: none;
+}
+
+.banniere .jouer {
+  min-height: 52px;
+  padding: 10px 28px;
+  font-size: 1.25rem;
+}
+
+/* Onglets Défi / Tranquille. */
+.onglets-mode {
+  display: flex;
+  gap: 10px;
+  margin: 22px 0 14px;
+}
+
+.onglets-mode button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 8px 18px;
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  background: rgb(14 34 54 / 0.7);
+  color: var(--brume);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    transform 0.15s;
+}
+
+.onglets-mode b {
+  font-size: 1.1rem;
+}
+
+.onglets-mode small {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+
+.onglets-mode button:hover {
+  color: var(--creme);
+  transform: translateY(-1px);
+}
+
+.onglets-mode button[aria-selected='true'] {
+  background: var(--accent);
+  color: var(--encre);
+  box-shadow: 0 4px 0 var(--encre);
+}
+
+.onglets-mode button:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+.niveaux {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   align-items: start;
-  margin-bottom: 14px;
+}
+
+.niveaux[hidden] {
+  display: none;
 }
 
 .classement {
   background: rgb(14 34 54 / 0.92);
   border: 3px solid var(--encre);
   border-radius: 18px;
-  padding: 12px 14px;
+  padding: 12px 14px 14px;
   box-shadow: 0 5px 0 var(--encre);
   min-width: 0;
 }
@@ -1163,14 +1402,89 @@ table.tableau {
   box-shadow: none;
 }
 
+.classement.mon-niveau {
+  box-shadow:
+    0 5px 0 var(--encre),
+    inset 0 0 0 2px var(--accent);
+}
+
+.classement header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin-bottom: 8px;
+}
+
 .classement h3 {
-  margin: 0 0 8px;
-  font-size: 1.05rem;
+  margin: 0;
+  font-size: 1.2rem;
+  color: var(--creme);
+}
+
+.classement .public {
+  color: var(--brume);
+  font-size: 0.85rem;
+}
+
+/* Quatre crans : la difficulté du niveau d'un coup d'œil. */
+.crans {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+}
+
+.crans i {
+  width: 5px;
+  border-radius: 2px;
+  background: rgb(246 236 216 / 0.2);
+}
+
+.crans i:nth-child(1) {
+  height: 6px;
+}
+
+.crans i:nth-child(2) {
+  height: 9px;
+}
+
+.crans i:nth-child(3) {
+  height: 12px;
+}
+
+.crans i:nth-child(4) {
+  height: 16px;
+}
+
+.crans i.plein {
+  background: var(--accent);
+}
+
+.etiquette {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--encre);
+  font-size: 0.72rem;
+  font-weight: 800;
+  vertical-align: 2px;
+}
+
+.classement header .etiquette {
+  margin-left: auto;
+}
+
+.personne {
+  margin: 4px 0 2px;
   color: var(--brume);
 }
 
-.classement.vide p {
-  margin: 0;
+.personne a {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .podium {
@@ -1180,38 +1494,98 @@ table.tableau {
 }
 
 .podium li {
+  position: relative;
   display: grid;
-  grid-template-columns: 2.2em 28px 1fr auto;
+  grid-template-columns: 2.4em 40px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: 12px;
+  outline: none;
+}
+
+.podium li + li {
+  margin-top: 3px;
+}
+
+.podium li[tabindex] {
+  cursor: help;
+}
+
+.podium li[tabindex]:hover,
+.podium li[tabindex]:focus-visible {
+  background: rgb(246 236 216 / 0.08);
+}
+
+.podium li[tabindex]:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--creme);
+}
+
+/* Les trois premières places ont leur couleur. */
+.podium li.podium-1 {
+  background: linear-gradient(90deg, rgb(255 201 74 / 0.26), rgb(255 201 74 / 0.04));
+}
+
+.podium li.podium-2 {
+  background: linear-gradient(90deg, rgb(200 214 230 / 0.2), rgb(200 214 230 / 0.03));
+}
+
+.podium li.podium-3 {
+  background: linear-gradient(90deg, rgb(222 140 84 / 0.22), rgb(222 140 84 / 0.03));
 }
 
 .podium .avatar {
-  width: 28px;
-  height: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
 }
 
 .podium .rang {
   text-align: center;
+  font-size: 1.05rem;
   font-variant-numeric: tabular-nums;
   color: var(--brume);
+}
+
+.podium li.podium-1 .rang,
+.podium li.podium-2 .rang,
+.podium li.podium-3 .rang {
+  font-size: 1.5rem;
+}
+
+.podium .qui {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .podium .nom {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 700;
+}
+
+.podium .quand {
+  font-size: 0.78rem;
+  color: var(--brume);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .podium .score {
+  font-size: 1.25rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 
+.podium li.podium-1 .score {
+  color: var(--safran);
+}
+
 /* Les joueurs de la famille ressortent ; le joueur actif encore plus. */
-.podium li.famille {
+.podium li.famille:not([class*='podium-']) {
   background: rgb(255 201 74 / 0.14);
 }
 
@@ -1220,13 +1594,190 @@ table.tableau {
 }
 
 .podium li.invite {
-  margin-top: 4px;
+  margin-top: 6px;
   border: 2px dashed rgb(246 236 216 / 0.35);
+}
+
+.podium li.invite .rang {
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
 .podium li.ellipse {
   display: block;
-  padding: 0 6px;
+  padding: 0 0 0 1.2em;
   color: var(--brume);
   line-height: 1;
+}
+
+/* Infobulle d'un record : au survol, ou au toucher / clavier (la ligne prend le focus). */
+.bulle {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 58px;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  background: #0a1626;
+  box-shadow: 0 12px 28px -8px rgb(0 0 0 / 0.75);
+  color: var(--texte);
+  font-size: 0.88rem;
+  line-height: 1.35;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.15s,
+    transform 0.15s,
+    visibility 0.15s;
+  pointer-events: none;
+}
+
+.bulle::before {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 18px;
+  width: 12px;
+  height: 12px;
+  background: #0a1626;
+  border-left: 3px solid var(--encre);
+  border-top: 3px solid var(--encre);
+  transform: rotate(45deg);
+}
+
+.bulle b {
+  color: var(--creme);
+  font-size: 0.95rem;
+}
+
+.bulle-date {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.bulle-faits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+
+.bulle .etoiles {
+  color: var(--safran);
+  letter-spacing: 1px;
+}
+
+.bulle-parties {
+  color: var(--brume);
+  font-size: 0.82rem;
+}
+
+.podium li:hover,
+.podium li:focus,
+.podium li:focus-within {
+  z-index: 21;
+}
+
+.podium li:hover .bulle,
+.podium li:focus .bulle {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+@media (max-width: 899px) {
+  .banniere {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .banniere .embleme {
+    width: 84px;
+  }
+
+  .banniere .mascotte {
+    position: absolute;
+    right: 12px;
+    bottom: 0;
+    width: 110px;
+    height: 124px;
+    margin: 0;
+    z-index: -1;
+    opacity: 0.9;
+  }
+
+  .banniere .jouer {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .niveaux {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .banniere {
+    padding: 18px 16px;
+    gap: 12px 14px;
+  }
+
+  .banniere .embleme {
+    width: 64px;
+  }
+
+  /* Une seule ligne qui défile de côté : le sommaire collant ne doit pas manger l'écran. */
+  .sommaire-jeux {
+    top: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-radius: 18px;
+  }
+
+  .sommaire-jeux a {
+    padding-right: 10px;
+    font-size: 0.9rem;
+  }
+
+  .jeu-classements {
+    scroll-margin-top: 60px;
+  }
+
+  .onglets-mode button {
+    flex: 1;
+    padding: 8px 12px;
+  }
+
+  .podium li {
+    grid-template-columns: 2em 36px minmax(0, 1fr) auto;
+    gap: 8px;
+  }
+
+  .podium .avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .bulle {
+    left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banniere-fond,
+  .bulle,
+  .onglets-mode button {
+    transition: none;
+  }
+
+  .banniere:hover .banniere-fond {
+    transform: none;
+  }
 }

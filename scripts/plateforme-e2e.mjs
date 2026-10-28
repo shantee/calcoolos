@@ -181,8 +181,8 @@ await shot('8-progres-lina', true);
 await page.goto(`${base}/classements.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.jeu-classements');
 await page.waitForTimeout(500);
-const board = await page.textContent('#jeu-dragon');
-check(/Explorateur · Tranquille[\s\S]*Lina/.test(board) && (await page.locator('#jeu-dragon li.famille').count()) > 0, 'Lina au classement public sous son pseudo, marquée « famille », sans menu à choisir');
+const board = await page.textContent('#niveaux-dragon-tranquille .classement[data-niveau="explorateur"]');
+check(/Lina/.test(board) && (await page.locator('#jeu-dragon li.famille').count()) > 0, 'Lina au classement public sous son pseudo, marquée « famille », sans menu à choisir');
 await shot('9-classements', true);
 
 // --- 5. Une autre famille ne voit rien ------------------------------------------------------------

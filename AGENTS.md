@@ -152,6 +152,7 @@ index.html                 accueil : ouverture (logo, table de lancement « Qui 
 src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
 src/images/decollage/      graphismes de Décollage ! fournis par Philippe (jauge…), originaux dans sources-images/decollage/
 src/images/avatars/        49 avatars WebP 128 × 128 découpés dans sources-images/avatars/grille-avatars.png
+src/images/mascottes/      (à venir) mascottes des bannières de la page Classements : fusee, meteores, cubes, dragon .webp
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
 src/core/                  logique pure partagée : rng (mulberry32), puzzle (somme minimale, sac à dos),
@@ -224,7 +225,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Résultats** : forme vérifiée (sinon 422) puis vraisemblance (sinon gardé « non vérifié », hors classements) ;
   débit limité. Hors ligne : file d'attente renvoyée depuis l'accueil.
 - **Classements** par jeu × niveau × mode : tous les profils, sous leur pseudo, scores vérifiés seulement ;
-  classement familial privé. Les colonnes `profils.classement_public` et `nom_public` restent en base mais ne
+  classement familial privé. Page refaite le 28/10/2026 : bannière par jeu (illustration de l'accueil, médaillon),
+  onglets Défi / Tranquille, niveaux en deux colonnes, date du record et infobulle de détails ; une mascotte
+  s'ajoute en déposant `src/images/mascottes/<jeu>.webp`. Les colonnes `profils.classement_public` et `nom_public` restent en base mais ne
   servent plus (27/10/2026). Pseudos proposés : `src/platform/pseudos.ts`.
 - **Sécurité** : session PHP créée seulement à la connexion (cookie HttpOnly, SameSite=Lax, Secure en prod) ; CSRF par
   en-tête `X-Calcoolos` + JSON obligatoire + jeton de session + vérification de l'origine ; limites d'essais ; IP

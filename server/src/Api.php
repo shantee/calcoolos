@@ -706,12 +706,18 @@ final class Api
         }
         $id = $this->session->active() ? $this->session->get('compte') : null;
         $mine = is_int($id) ? $id : -1;
-        $q = $this->db->query('SELECT r.jeu, r.niveau, r.mode, p.compte_id, p.pseudo AS nom, p.avatar, MAX(r.score) AS score
-            FROM resultats r JOIN profils p ON p.id = r.profil_id
-            WHERE r.verifie = 1
-            GROUP BY r.jeu, r.niveau, r.mode, p.id, p.compte_id, p.pseudo, p.avatar
-            ORDER BY r.jeu, r.niveau, r.mode, score DESC, p.id ASC');
+        // Meilleur score de chaque profil, son nombre de parties, et la première partie qui l'a atteint.
+        $q = $this->db->query('SELECT b.jeu, b.niveau, b.mode, b.score, b.parties, p.compte_id, p.pseudo AS nom, p.avatar,
+                (SELECT r2.id FROM resultats r2
+                    WHERE r2.profil_id = b.profil_id AND r2.jeu = b.jeu AND r2.niveau = b.niveau AND r2.mode = b.mode
+                        AND r2.verifie = 1 AND r2.score = b.score
+                    ORDER BY r2.joue_le ASC, r2.id ASC LIMIT 1) AS meilleure
+            FROM (SELECT profil_id, jeu, niveau, mode, MAX(score) AS score, COUNT(*) AS parties
+                FROM resultats WHERE verifie = 1 GROUP BY profil_id, jeu, niveau, mode) b
+            JOIN profils p ON p.id = b.profil_id
+            ORDER BY b.jeu, b.niveau, b.mode, b.score DESC, p.id ASC');
         $rank = [];
+        $best = [];
         foreach ($q->fetchAll() as $row) {
             $key = "{$row['jeu']}/{$row['niveau']}/{$row['mode']}";
             if (!isset($boards[$key])) {
@@ -722,11 +728,31 @@ final class Api
             if ($rang > self::TOP && !$own) {
                 continue;
             }
-            $entry = ['rang' => $rang, 'nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
+            $entry = ['rang' => $rang, 'nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score'],
+                'parties' => (int) $row['parties']];
             if ($own) {
                 $entry['famille'] = true;
             }
             $boards[$key]['public'][] = $entry;
+            $best[(int) $row['meilleure']][] = [$key, array_key_last($boards[$key]['public'])];
+        }
+        // Détails de la partie record (date, étoiles…) pour les seuls joueurs affichés.
+        if ($best) {
+            $ids = array_keys($best);
+            $q = $this->db->prepare('SELECT id, joue_le, gagne, etoiles, duree, precision_pct FROM resultats WHERE id IN ('
+                . implode(', ', array_fill(0, count($ids), '?')) . ')');
+            $q->execute($ids);
+            foreach ($q->fetchAll() as $x) {
+                foreach ($best[(int) $x['id']] as [$key, $i]) {
+                    $boards[$key]['public'][$i] += [
+                        'date' => str_replace(' ', 'T', (string) $x['joue_le']) . 'Z',
+                        'gagne' => (bool) $x['gagne'],
+                        'etoiles' => (int) $x['etoiles'],
+                        'duree' => (int) $x['duree'],
+                        'precision' => ((int) $x['precision_pct']) / 100,
+                    ];
+                }
+            }
         }
         if (is_int($id)) {
             // Toutes les parties de la famille comptent ici, vérifiées ou non : c'est entre soi.
