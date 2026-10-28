@@ -71,6 +71,16 @@ Puis **la fusée et son chat pilote** (planche 4 × 4 `fusee-pilote-decolle.png`
 - Vérifié : parties gagnée et perdue automatiques sans erreur, captures `fusee-nouvelle-fusee*.png` ; tests 127, CSP ok.
 - **Publié** à 10 h 59 (`calcoolos-20261028-105937-b9a91b0`) et partie gagnée en ligne sans erreur.
 
+Puis **les plateformes d'herbe du village** (`plateforme-herbe.png` : 3 tailles, chacune simple et avec un visage étonné) :
+- Planche dessinée sur une grille d'environ 8 px : ramenée à 1 pixel par pixel (33 × 23, 64 × 29, 87 × 33) puis
+  ×4 comme tout le décor (`herbe-<taille>-0/1.webp`), plus net qu'un redimensionnement lissé.
+- `session.ts` : dans le village (étage 0), chaque plateforme est petite (1 sur 4), moyenne (45 %) ou grande (30 %),
+  `GRASS_SIZES` (132, 256, 348 px) ; champ `size` des plateformes. Les mondes changent donc (tirage en plus) ; le
+  test « chaque plateforme à portée d'une poussée » (200 mondes) passe toujours.
+- Scène : le sol est sous les touffes d'herbe (`top`), la fusée s'y pose pile ; quand elle se pose, la plateforme
+  ouvre de grands yeux 1,2 s (version avec visage).
+- Vérifié : partie gagnée automatique sans erreur, `CAPTURES/fusee-plateformes-herbe*.png` ; tests 127, CSP ok.
+
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
 

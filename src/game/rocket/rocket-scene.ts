@@ -13,7 +13,7 @@ import * as A from '../../art/pixel-rocket';
 import { P, PX } from '../../art/pixel-rocket';
 import type { PixelCanvas } from '../../art/pixelforge';
 import { Sfx } from '../sfx';
-import { RocketSession, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
+import { RocketSession, GRASS_SIZES, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
 import type { Grade } from '../../core/calc-grade';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
@@ -419,7 +419,12 @@ export class RocketScene extends Phaser.Scene {
       if (p.kind === 'sol' || p.kind === 'planete') continue;
       const look = A.platformLook(p.zone, p.kind);
       const wArt = Math.round(p.w / PX);
-      const img = this.sprite(p.x, this.wy(p.y), `f-plat-${look}-${wArt}-${p.kind === 'fragile' ? 1 : 0}-${p.id}`, () => A.platform(look, wArt, p.kind === 'fragile', p.id)).setOrigin(0.5, 0).setDepth(0);
+      let img: Phaser.GameObjects.Image;
+      if (p.size && `f-herbe-${p.size}-0` in PROVIDED) {
+        // Plateforme d'herbe dessinée par Philippe : le sol est sous les touffes d'herbe.
+        img = this.add.image(p.x, this.wy(p.y), `f-herbe-${p.size}-0`).setDepth(0);
+        img.setOrigin(0.5, GRASS_SIZES[p.size].top / img.height);
+      } else img = this.sprite(p.x, this.wy(p.y), `f-plat-${look}-${wArt}-${p.kind === 'fragile' ? 1 : 0}-${p.id}`, () => A.platform(look, wArt, p.kind === 'fragile', p.id)).setOrigin(0.5, 0).setDepth(0);
       const extras: Phaser.GameObjects.GameObject[] = [];
       if (p.kind === 'mobile') {
         const prop = this.sprite(p.x, this.wy(p.y) + img.displayHeight, 'f-prop-0', () => A.propeller(0)).setOrigin(0.5, 0).setDepth(0);
@@ -907,6 +912,12 @@ export class RocketScene extends Phaser.Scene {
           if (s.phase === 'lost') this.time.delayedCall(800, () => this.defeat());
         } else if (!this.reducedMotion && v) {
           this.tweens.add({ targets: v.img, y: v.img.y + 6, duration: 90, yoyo: true });
+        }
+        // Les plateformes d'herbe ouvrent de grands yeux quand la fusée se pose.
+        const size = ev.platform.size;
+        if (v && size && v.img.texture.key === `f-herbe-${size}-0`) {
+          v.img.setTexture(`f-herbe-${size}-1`);
+          this.time.delayedCall(1200, () => v.img.active && v.img.setTexture(`f-herbe-${size}-0`));
         }
         if (ev.record) this.floatText(this.ship.x + 60, this.ship.y - 60, '+50', P.L, 22);
         if (v?.friend) {

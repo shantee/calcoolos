@@ -49,6 +49,17 @@ export const ZONES = [
 ] as const;
 export const SUMMIT = ZONES[ZONES.length - 1].top;
 
+/**
+ * Plateformes d'herbe du village (dessins de Philippe) : trois tailles, largeur = image ×4 ;
+ * `top` = hauteur des touffes d'herbe au-dessus du sol (pixels d'écran).
+ */
+export const GRASS_SIZES = {
+  petite: { w: 132, top: 12 },
+  moyenne: { w: 256, top: 12 },
+  grande: { w: 348, top: 16 },
+} as const;
+export type GrassSize = keyof typeof GRASS_SIZES;
+
 export type PlatformKind = 'sol' | 'normale' | 'mobile' | 'fragile' | 'planete';
 export type PowerKind = 'bouclier' | 'sablier' | 'turbo' | 'etoile' | 'coeur';
 export type Friend = 'vache' | 'enfant' | 'nuageux' | 'mouton' | 'oiseau' | 'roi' | 'robot' | 'alien' | 'astronaute' | 'ourson';
@@ -71,6 +82,8 @@ export interface Platform {
   gone: boolean;
   power: PowerKind | null;
   friend: Friend | null;
+  /** Village : taille de la plateforme d'herbe (sinon null). */
+  size: GrassSize | null;
 }
 
 /** Petites étoiles à attraper en vol. */
@@ -181,7 +194,7 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
   const stars: Star[] = [];
   let id = 1;
   const mk = (x: number, y: number, w: number, kind: PlatformKind, zone: number): Platform => ({
-    id: id++, x, y, w, kind, zone, baseX: x, range: 0, speed: 0, phase: 0, crumbleAt: null, regrowAt: null, gone: false, power: null, friend: null,
+    id: id++, x, y, w, kind, zone, baseX: x, range: 0, speed: 0, phase: 0, crumbleAt: null, regrowAt: null, gone: false, power: null, friend: null, size: null,
   });
   // Le pas de tir.
   platforms.push(mk((LANE.x0 + LANE.x1) / 2, 0, LANE.x1 - LANE.x0 + 120, 'sol', 0));
@@ -203,7 +216,14 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
     if (y > SUMMIT - 230) break;
     // Décalage horizontal : de plus en plus audacieux en montant.
     const shift = rng.int(110, 250 + Math.round(t * 130)) * (rng.next() < 0.5 ? -1 : 1);
-    const w = Math.round(230 - t * 110 + rng.int(-15, 15));
+    let w = Math.round(230 - t * 110 + rng.int(-15, 15));
+    // Village : petite (1 sur 4), moyenne ou grande plateforme d'herbe.
+    let size: GrassSize | null = null;
+    if (zone === 0) {
+      const r = rng.next();
+      size = r < 0.25 ? 'petite' : r < 0.7 ? 'moyenne' : 'grande';
+      w = GRASS_SIZES[size].w;
+    }
     x = Math.min(LANE.x1 - w / 2, Math.max(LANE.x0 + w / 2, x + shift));
     let kind: PlatformKind = 'normale';
     const roll = rng.next();
@@ -211,6 +231,7 @@ export function buildWorld(seed: number): { platforms: Platform[]; stars: Star[]
     else if (zone >= 1 && roll > 0.9 - t * 0.12) kind = 'fragile';
     sinceMoving = kind === 'mobile' ? 0 : sinceMoving + 1;
     const p = mk(x, y, w, kind, zone);
+    p.size = size;
     if (kind === 'mobile') {
       p.range = rng.int(60, 120);
       p.speed = 0.9 + rng.next() * 0.8;
