@@ -194,6 +194,10 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
   retourné (ses « Z » deviendraient des « S »). Alien en vrai pixel art 32 × 24 ×2 → 64 × 48 (`alien-0/1`).
   Satellite 121 × 101 (`sat-0`, `sat-1` balise allumée 0,3 s toutes les 1,2 s), qui tourne toujours (30 s par tour) ;
   déplacé à gauche (x 280), il passait sous le pavé numérique. `CAPTURES/fusee-robot-satellite.png`, `fusee-alien.png`.
+- **Cosmonaute en apesanteur** (`Astronaute pixel art en apesanteur.png`, gardé sous `astronaute-apesanteur.png`) :
+  84 × 94 (`cosmonaute.webp`), décor de l'espace vers 6150 : dérive lentement de gauche à droite (x 260 → 520, il
+  passait sous le pavé), flotte et pivote doucement. L'astronaute posé sur les plateformes reste dessiné par code
+  (il lui faut une pose debout et une pose contente). `CAPTURES/fusee-cosmonaute.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.

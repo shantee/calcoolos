@@ -414,8 +414,18 @@ export class RocketScene extends Phaser.Scene {
     this.tx('f-ufo-1', () => A.ufo(1));
     this.tweens.add({ targets: ufo, x: W + 120, duration: 16000, repeat: -1, repeatDelay: 6000, onRepeat: () => ufo.setY(this.wy(5650 + Phaser.Math.Between(-150, 150))) });
     this.time.addEvent({ delay: 300, loop: true, callback: () => ufo.setTexture(ufo.texture.key === 'f-ufo-0' ? 'f-ufo-1' : 'f-ufo-0') });
-    const astro = add(this.sprite(1170, this.wy(6150), 'f-astronaute-0', () => A.friend('astronaute', 0)).setDepth(-11));
-    if (!this.reducedMotion) this.tweens.add({ targets: astro, angle: { from: -20, to: 20 }, y: astro.y - 20, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    if ('f-cosmonaute' in PROVIDED) {
+      // Cosmonaute en apesanteur (image fournie) : il dérive lentement à gauche, loin du pavé numérique.
+      const astro = add(this.add.image(260, this.wy(6150), 'f-cosmonaute').setDepth(-11));
+      if (!this.reducedMotion) {
+        this.tweens.add({ targets: astro, x: 520, duration: 14000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: astro, y: astro.y - 30, duration: 3100, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.tweens.add({ targets: astro, angle: { from: -25, to: 25 }, duration: 5200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      }
+    } else {
+      const astro = add(this.sprite(1170, this.wy(6150), 'f-astronaute-0', () => A.friend('astronaute', 0)).setDepth(-11));
+      if (!this.reducedMotion) this.tweens.add({ targets: astro, angle: { from: -20, to: 20 }, y: astro.y - 20, duration: 2600, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     const duck = add(this.sprite(90, this.wy(6650), 'f-duck', A.duck).setDepth(-11).setInteractive({ useHandCursor: true }));
     duck.on('pointerdown', () => {
       this.sfx.unlock();
