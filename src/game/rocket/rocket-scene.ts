@@ -360,7 +360,9 @@ export class RocketScene extends Phaser.Scene {
     const castle = add(this.sprite(1140, this.wy(3900), 'f-castle', A.castle).setDepth(-6).setOrigin(0.5, 1));
     // Le roi se tient sur le rempart du milieu (à 68 % de la hauteur du château fourni, 82 % de celui du code).
     const wall = 'f-castle' in PROVIDED ? 0.68 : 0.82;
-    add(this.sprite(1140, this.wy(3900) - castle.displayHeight * wall, 'f-roi-0', () => A.friend('roi', 0)).setDepth(-5).setOrigin(0.5, 1));
+    const king = add(this.sprite(1140, this.wy(3900) - castle.displayHeight * wall, 'f-roi-0', () => A.friend('roi', 0)).setDepth(-5).setOrigin(0.5, 1));
+    // Le roi de Philippe est fourni ×2 (habitant des plateformes) : à sa taille d'origine sur son château.
+    if ('f-roi-0' in PROVIDED) king.setScale(0.5);
     const zep = add(this.sprite(-200, this.wy(3450), 'f-zeppelin', A.zeppelin).setDepth(-12));
     this.tweens.add({ targets: zep, x: W + 220, duration: 40000, repeat: -1 });
     const balloon2 = add(this.sprite(110, this.wy(4300), 'f-balloon', A.hotAirBalloon).setDepth(-12));
@@ -941,7 +943,7 @@ export class RocketScene extends Phaser.Scene {
           const kind = v.friend.getData('kind') as string;
           const look = v.friend.getData('look') as string;
           v.friend.setTexture(this.tx(`f-${look}-1`, () => A.friend(kind as A.FriendLook, 1)));
-          this.say(v.friend.x, v.friend.y - 70, Phaser.Utils.Array.GetRandom(FRIEND_LINES[kind] ?? ['Salut !']));
+          this.say(v.friend.x, v.friend.y - Math.max(70, v.friend.displayHeight + 12), Phaser.Utils.Array.GetRandom(FRIEND_LINES[kind] ?? ['Salut !']));
           if (kind === 'vache') this.sfx.moo();
           else if (kind === 'oiseau') this.sfx.chirp();
           else if (kind === 'robot' || kind === 'alien') this.sfx.robotBeep();

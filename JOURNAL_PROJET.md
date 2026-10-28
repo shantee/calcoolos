@@ -134,6 +134,9 @@ Puis **les nuages, les planches à ballons et le nuageux** (`plateforme-nuage.pn
 - **Montagnes du fond** (`fond-montagne.png`) : réduites à 1320 px de large (au plus proche, plus net), bas prolongé
   de 160 px (`hills.webp`). Parallaxe : défilement vertical à 0,75 (0,9 avant), pied posé sur le sol au départ ;
   la bande prolongée évite de voir le ciel sous les montagnes en montant. `CAPTURES/fusee-montagnes*.png`.
+- **Roi des nuages** (`roi_des_nuages.png`, vrai pixel art 64 × 64, repos et surpris) : ×2 (`roi-0/1.webp`,
+  120 × 110) comme habitant des planches à ballons, ×1 (`setScale(0.5)`) sur le rempart de son château. La bulle
+  des habitants se place au-dessus de leur tête selon leur taille (elle cachait la couronne). `CAPTURES/fusee-roi.png`.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
