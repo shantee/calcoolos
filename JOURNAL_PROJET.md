@@ -60,6 +60,16 @@ Puis **la vache et trois enfants** (`vaches.png`, `enfants.png`), chacun en deux
 - Le pilote de la petite fusée est un astronaute, celui du jeu est un chat (dessin fourni gardé tel quel).
 - La vache regarde maintenant à droite (l'ancienne regardait à gauche).
 
+Puis **la fusée et son chat pilote** (planche 4 × 4 `fusee-pilote-decolle.png`, vrai pixel art 128 px par case) :
+- Coque découpée (34 × 47) pour les 4 têtes du jeu : normal = case 1 (au repos), joie = case 10, peur = case 14
+  (bouche grande ouverte), ouf = case 7 (au décollage) ; flammes (sous la tuyère) des cases 9 à 11 pour les 3 images
+  de flamme. Veilleuse = flamme écrasée à 40 %, turbo = flamme allongée de 40 % et passée au bleu (comme avant).
+- **Harmonisation des couleurs** : chaque image est rapprochée à 50 % de la palette du jeu (Sweetie 16, `P`), et la
+  coque reçoit le contour encre `#1a1c2c` d'un pixel comme tous les sprites du jeu ; affichage ×2 (pixels nets,
+  coque 72 × 98, proche de l'ancienne 60 × 88). Les images de décollage avec débris (cases 6-7) ne servent pas.
+- `px(key)` : ×1 pour une image fournie, ×4 pour un dessin ; le bouclier se centre sur la nouvelle coque.
+- Vérifié : parties gagnée et perdue automatiques sans erreur, captures `fusee-nouvelle-fusee*.png` ; tests 127, CSP ok.
+
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
 

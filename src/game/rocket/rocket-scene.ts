@@ -237,7 +237,12 @@ export class RocketScene extends Phaser.Scene {
   }
 
   private sprite(x: number, y: number, key: string, make: () => PixelCanvas): Phaser.GameObjects.Image {
-    return this.add.image(x, y, this.tx(key, make)).setScale(key in PROVIDED ? 1 : PX);
+    return this.add.image(x, y, this.tx(key, make)).setScale(this.px(key));
+  }
+
+  /** Grossissement d'une texture : ×4 pour un dessin par code, ×1 pour une image fournie (déjà à sa taille). */
+  private px(key: string): number {
+    return key in PROVIDED ? 1 : PX;
   }
 
   preload(): void {
@@ -452,9 +457,9 @@ export class RocketScene extends Phaser.Scene {
   private buildShip(): void {
     (['normal', 'joie', 'peur', 'ouf'] as A.PilotFace[]).forEach((f) => this.tx(`f-rocket-${f}`, () => A.rocket(f)));
     for (let i = 0; i < 3; i++) for (const pw of [0, 1, 2] as const) this.tx(`f-flame-${pw}-${i}`, () => A.flame(i, pw));
-    this.fire = this.add.image(0, -2, 'f-flame-0-0').setOrigin(0.5, 0).setScale(PX);
-    this.hull = this.add.image(0, 0, 'f-rocket-normal').setOrigin(0.5, 1).setScale(PX);
-    this.bubble = this.add.image(0, -44, this.tx('f-bubble', A.bubble)).setScale(PX).setVisible(false);
+    this.fire = this.add.image(0, -2, 'f-flame-0-0').setOrigin(0.5, 0).setScale(this.px('f-flame-0-0'));
+    this.hull = this.add.image(0, 0, 'f-rocket-normal').setOrigin(0.5, 1).setScale(this.px('f-rocket-normal'));
+    this.bubble = this.add.image(0, -this.hull.displayHeight / 2, this.tx('f-bubble', A.bubble)).setScale(PX).setVisible(false);
     this.ship = this.add.container(640, 0, [this.fire, this.hull, this.bubble]).setDepth(10);
     this.tx('f-puff-3', () => A.puff(3));
     this.tx('f-puff-5', () => A.puff(5));
@@ -1153,8 +1158,8 @@ export class RocketScene extends Phaser.Scene {
     const ex = this.add.container(W / 2, top + 236);
     ex.add(this.num(-150, 0, '9 + 9 = 18', 3).setTint(tint(P.L)));
     ex.add(this.txt(30, 0, '→', style(36, P.W, 6)).setOrigin(0.5));
-    ex.add(this.add.image(90, 20, 'f-rocket-joie').setOrigin(0.5, 1).setScale(PX * 0.8));
-    ex.add(this.add.image(90, 22, 'f-flame-1-0').setOrigin(0.5, 0).setScale(PX * 0.8));
+    ex.add(this.add.image(90, 20, 'f-rocket-joie').setOrigin(0.5, 1).setScale(this.px('f-rocket-joie') * 0.8));
+    ex.add(this.add.image(90, 22, 'f-flame-1-0').setOrigin(0.5, 0).setScale(this.px('f-flame-1-0') * 0.8));
     c.add(ex);
     c.add(this.txt(W / 2, top + 330, `Chiffres : clavier ou pavé  ·  Pilote : ← → (ou Q D)  ·  Niveau ${this.tier.label}`, style(18, P.C)).setOrigin(0.5));
     // Les trois couleurs de calculs, chacune écrite dans sa couleur.
