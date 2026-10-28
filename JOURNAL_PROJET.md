@@ -69,6 +69,7 @@ Puis **la fusée et son chat pilote** (planche 4 × 4 `fusee-pilote-decolle.png`
   coque 72 × 98, proche de l'ancienne 60 × 88). Les images de décollage avec débris (cases 6-7) ne servent pas.
 - `px(key)` : ×1 pour une image fournie, ×4 pour un dessin ; le bouclier se centre sur la nouvelle coque.
 - Vérifié : parties gagnée et perdue automatiques sans erreur, captures `fusee-nouvelle-fusee*.png` ; tests 127, CSP ok.
+- **Publié** à 10 h 59 (`calcoolos-20261028-105937-b9a91b0`) et partie gagnée en ligne sans erreur.
 
 **Publié** le 28/10/2026 à 10 h 48 (`calcoolos-20261028-104803-50048cc`, API 132 sur le Dell) ; partie automatique sur
 https://calculos.zfx.fr gagnée sans erreur, jauge, vache et enfants visibles. Commits non poussés sur GitHub.
