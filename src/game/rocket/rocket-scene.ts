@@ -19,6 +19,8 @@ import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
+import jaugeUrl from '../../images/decollage/jauge.webp';
+import fuseeJaugeUrl from '../../images/decollage/fusee-jauge.webp';
 
 export const W = 1280;
 export const H = 720;
@@ -27,6 +29,16 @@ const RECORD_KEY = 'calcoolos.fusee.records';
 const NUM = 'f-num';
 const NUMBER_RE = new RegExp(`^[${A.NUMBER_CHARS.replace(/[-\]\\^]/g, '\\$&')}]+$`);
 const tint = (hex: string): number => parseInt(hex.slice(1), 16);
+
+/**
+ * Jauge d'altitude dessinée par Philippe (sources-images/decollage/), déjà à sa taille d'affichage.
+ * GAUGE_Y : hauteur à l'écran du bas de la fusée pour l'altitude 0 puis pour le haut de chaque étage
+ * (village → bande verte, nuages et dirigeables → bande de ciel, espace → bande étoilée, Bonbon → bande rose).
+ */
+const GAUGE_X = 4;
+const GAUGE_TOP = 92;
+const GAUGE_MID = GAUGE_X + 48;
+const GAUGE_Y = [574, 433, 389, 344, 231, 156];
 
 /** Couleur de l'encadré selon la difficulté du calcul ; les points disent aussi la difficulté (daltoniens). */
 const GRADE_LOOK: Record<Grade, { fill: string; edge: string; text: string; label: string }> = {
@@ -212,6 +224,11 @@ export class RocketScene extends Phaser.Scene {
 
   private sprite(x: number, y: number, key: string, make: () => PixelCanvas): Phaser.GameObjects.Image {
     return this.add.image(x, y, this.tx(key, make)).setScale(PX);
+  }
+
+  preload(): void {
+    this.load.image('f-jauge', jaugeUrl);
+    this.load.image('f-jauge-fusee', fuseeJaugeUrl);
   }
 
   create(): void {
@@ -500,22 +517,10 @@ export class RocketScene extends Phaser.Scene {
     this.scoreText = fixed(this.num(170, 30, '0', 3).setOrigin(0, 0.5).setDepth(60));
     this.comboLabel = fixed(this.txt(84, 58, '', style(20, P.Y, 5)).setDepth(60));
     this.comboText = fixed(this.num(150, 70, '', 3).setOrigin(0, 0.5).setDepth(60).setTint(tint(P.Y)));
-    // Altimètre : la colonne des étages, la fusée qui grimpe, la planète en haut.
-    const meter = this.add.graphics().setScrollFactor(0).setDepth(59);
-    const top = 120;
-    const bottom = 560;
-    const cols = [0x38b764, 0xc2d3e0, 0x9d5fb5, 0x29366f, 0xff8fb1];
-    let prev = 0;
-    ZONES.forEach((z, i) => {
-      const y0 = bottom - ((z.top) / SUMMIT) * (bottom - top);
-      const y1 = bottom - (prev / SUMMIT) * (bottom - top);
-      meter.fillStyle(0x1a1c2c, 1).fillRect(26, y0 - 4, 20, y1 - y0 + 8);
-      meter.fillStyle(cols[i], 1).fillRect(30, y0, 12, y1 - y0);
-      prev = z.top;
-    });
-    fixed(this.add.image(36, top - 26, this.tx('f-planet-mini', () => A.smallPlanet(5, [P.V, P.M, P.p], true))).setScale(PX).setDepth(60));
-    this.altMarker = fixed(this.add.image(36, bottom, this.tx('f-mini', A.miniRocket)).setScale(PX).setDepth(61));
-    this.altText = fixed(this.num(40, bottom + 44, '0m', 2));
+    // Altimètre : la jauge des étages, la fusée qui grimpe, la planète Bonbon en haut.
+    fixed(this.add.image(GAUGE_X, GAUGE_TOP, 'f-jauge').setOrigin(0).setDepth(59));
+    this.altMarker = fixed(this.add.image(GAUGE_MID, GAUGE_Y[0], 'f-jauge-fusee').setOrigin(0.5, 1).setDepth(61));
+    this.altText = fixed(this.num(GAUGE_MID, 604, '0m', 2));
     this.hud = this.add.container(0, 0).setScrollFactor(0).setDepth(60);
     // Son et pause.
     this.soundText = fixed(this.txt(W - 20, H - 12, '', style(18, P.W, 4)).setOrigin(1, 1).setDepth(60).setInteractive({ useHandCursor: true }));
@@ -651,7 +656,17 @@ export class RocketScene extends Phaser.Scene {
   private refreshAltimeter(): void {
     const s = this.session;
     const alt = s ? s.altitude : 0;
-    const y = 560 - (Math.min(SUMMIT, alt) / SUMMIT) * 440;
+    // Interpolation par étage : chaque étage a sa bande sur la jauge.
+    let y = GAUGE_Y[GAUGE_Y.length - 1];
+    let prev = 0;
+    for (let i = 0; i < ZONES.length; i++) {
+      const top = ZONES[i].top;
+      if (alt <= top) {
+        y = GAUGE_Y[i] + ((Math.max(0, alt) - prev) / (top - prev)) * (GAUGE_Y[i + 1] - GAUGE_Y[i]);
+        break;
+      }
+      prev = top;
+    }
     this.altMarker.setY(y);
     this.altText.setText(`${Math.round(alt / 8)}m`);
   }

@@ -34,8 +34,10 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 - **Aide en deux phrases** sur l'accueil et dans l'écran de début de chaque jeu.
 - **Tout est fait maison dans les jeux** : aucun fichier image ni son importé. Les visuels sont dessinés par code
   (Canvas 2D ou PixelForge), les sons et musiques sont synthétisés en direct (Web Audio). **Exception voulue par
-  Philippe : les quatre illustrations de l'accueil** (chantier 01) **et les 49 avatars des profils** (27/10/2026),
-  fournis par lui (`ART_ASSETS.md`).
+  Philippe : les quatre illustrations de l'accueil** (chantier 01), **les 49 avatars des profils** (27/10/2026)
+  **et, depuis le 28/10/2026, les graphismes de Décollage ! qu'il génère et fournit un à un** (d'abord la jauge
+  d'altitude, `src/images/decollage/`), fournis par lui (`ART_ASSETS.md`). Méthode : découper, réduire à la taille
+  d'affichage exacte (le jeu est en pixels nets), WebP sans perte, charger dans `preload()`.
 - **Protection des enfants, vie privée par défaut** : aucun cookie pour un invité, profils enfants avec pseudo seulement,
   classements publics sous ce **pseudo** (simplification voulue par Philippe le 27/10/2026, plus d'autorisation ni de
   nom inventé ; « Aide-moi à trouver un pseudo » en propose des rigolos), export et suppression des données.
@@ -145,6 +147,7 @@ brand.json                 nom, slogan (seul endroit à modifier pour renommer)
 index.html                 accueil : ouverture (logo, table de lancement « Qui joue ? » + niveau, vignettes), carnet
                            (compte), une vitrine par jeu, fenêtre <dialog> du premier niveau
 src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
+src/images/decollage/      graphismes de Décollage ! fournis par Philippe (jauge…), originaux dans sources-images/decollage/
 src/images/avatars/        49 avatars WebP 128 × 128 découpés dans sources-images/avatars/grille-avatars.png
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu

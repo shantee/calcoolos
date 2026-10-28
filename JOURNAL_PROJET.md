@@ -28,6 +28,26 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-28 : Claude, session 17 (Décollage ! : premiers graphismes fournis, la jauge)
+
+Demande de Philippe : remplacer peu à peu les graphismes dessinés par code de Décollage ! par des images PNG qu'il
+génère, une à la fois. Première : la **jauge d'altitude** et sa petite fusée (`sources-images/decollage/jauge-et-fusee.png`).
+
+**Fait**
+- Image découpée (jauge 267 × 1371, fusée 437 × 633) puis réduite à la taille d'affichage exacte (jauge 96 × 494,
+  fusée 38 × 55, `magick -filter Lanczos`), en WebP sans perte dans `src/images/decollage/`. Le jeu est en
+  `pixelArt` (pixels nets) : une image réduite par Phaser à l'affichage serait abîmée, d'où la réduction à l'avance.
+- `rocket-scene.ts` : chargement dans `preload()` ; ancienne colonne de 5 couleurs, mini-planète et mini-fusée
+  supprimées (`miniRocket` retirée de `pixel-rocket.ts`). La jauge a 4 bandes pour 5 étages : village → vert,
+  nuages et dirigeables → ciel (moitié chacun), espace → étoiles, Bonbon → rose ; la fusée monte bande par bande
+  (`GAUGE_Y`, bas de la fusée = altitude), le sommet l'amène au pied de la planète.
+- Vérifié : partie gagnée automatique (`fusee-auto.mjs`), captures à chaque étage (`CAPTURES/fusee-jauge-etages.png`,
+  `fusee-jauge-partie.png`), aucune erreur de console ; tests 127, CSP sans violation.
+
+**Limites**
+- Le pilote de la petite fusée est un astronaute, celui du jeu est un chat (dessin fourni gardé tel quel).
+- Pas encore publié en ligne.
+
 ## 2026-10-27 : Claude, session 16 (classements sur une seule page)
 
 Demande de Philippe : plus de menus déroulants, tous les classements de tous les jeux sur la même page ; pas de

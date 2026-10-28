@@ -876,7 +876,3 @@ export function gradePanel(w: number, h: number, fill: string, edge: string): Pi
   pc.fill(w - 3, 1, 2, h - 3, edge);
   return pc;
 }
-
-export function miniRocket(): PixelCanvas {
-  return art(['.K.', 'KRK', 'KWK', 'KWK', 'RKR']);
-}
