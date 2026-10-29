@@ -18,6 +18,7 @@ import type { Grade } from '../../core/calc-grade';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { partieCommence, partiePause } from '../../platform/suivi';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
@@ -1178,6 +1179,7 @@ export class RocketScene extends Phaser.Scene {
   private pause(): void {
     if (this.paused || this.overlay || this.ending || !this.session) return;
     this.paused = true;
+    partiePause(true);
     this.tweens.pauseAll();
     this.time.paused = true;
     this.sfx.music(false);
@@ -1195,6 +1197,7 @@ export class RocketScene extends Phaser.Scene {
   private resume(): void {
     if (!this.paused) return;
     this.paused = false;
+    partiePause(false);
     this.overlay?.destroy(true);
     this.overlay = null;
     this.overlayButtons = [];
@@ -1759,6 +1762,7 @@ export class RocketScene extends Phaser.Scene {
     this.showControls(true);
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new RocketSession(this.tier.id, this.seed, mode);
+    partieCommence('fusee', this.tier.id, mode);
     this.newWorld();
     this.startedAt = Date.now();
     this.thrustUntil = 0;

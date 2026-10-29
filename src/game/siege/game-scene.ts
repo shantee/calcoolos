@@ -16,6 +16,7 @@ import { Fireworks } from '../fx';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import { ARCHETYPES, MODES, WAVES, type EnemyKind, type Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { partieCommence } from '../../platform/suivi';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
@@ -666,6 +667,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.resetWorld();
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new SiegeSession(this.tier, this.seed, mode);
+    partieCommence('cubes', this.tier.id, mode);
     this.resetBonus(mode);
     this.startedAt = Date.now();
     this.session.round.cubes.forEach((v, i) => {

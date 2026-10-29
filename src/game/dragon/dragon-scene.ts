@@ -21,6 +21,7 @@ import { DragonSession, DRAGON_MODES, DRAGON_STAGES, type EatResult, type Goal, 
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { partieCommence, partiePause } from '../../platform/suivi';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
@@ -1489,6 +1490,7 @@ export class DragonScene extends Phaser.Scene {
   private pause(): void {
     if (this.paused || this.overlay || this.ending || !this.session) return;
     this.paused = true;
+    partiePause(true);
     this.tweens.pauseAll();
     this.time.paused = true;
     this.sfx.music(false);
@@ -1507,6 +1509,7 @@ export class DragonScene extends Phaser.Scene {
   private resume(): void {
     if (!this.paused) return;
     this.paused = false;
+    partiePause(false);
     this.overlay?.destroy(true);
     this.overlay = null;
     this.overlayButtons = [];
@@ -1797,6 +1800,7 @@ export class DragonScene extends Phaser.Scene {
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.resetDragon(240, 400);
     this.session = new DragonSession(this.tier.id, this.seed, mode, { x: 240, y: 400 });
+    partieCommence('dragon', this.tier.id, mode);
     this.startedAt = Date.now();
     this.session.orbs.forEach((o, i) => this.addOrbView(o, 150 + i * 70));
     this.scoreShown = 0;

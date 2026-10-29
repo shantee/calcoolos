@@ -11,6 +11,9 @@ import { TIER_NAMES } from '../platform/stats';
 import { field, h, showErrors } from '../platform/dom';
 import { boutonGoogle, oublierGoogle } from '../platform/google';
 import { pseudoAuHasard } from '../platform/pseudos';
+import { demarrerSuivi, etapeParcours } from '../platform/suivi';
+
+demarrerSuivi('compte');
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
 
@@ -78,6 +81,7 @@ async function connexionGoogle(jeton: string): Promise<void> {
   messagesGoogle(t('Connexion…'), '');
   const r = await api.post<AccountState>('/google', { credential: jeton, adulte: true }).catch(() => null);
   if (r?.status === 200 || r?.status === 201) {
+    if (r.status === 201) etapeParcours('inscription');
     if (window.location.hash) history.replaceState(null, '', window.location.pathname);
     return void render(r.data);
   }
@@ -119,7 +123,10 @@ function renderGuest(googleClientId?: string): void {
     const data = new FormData(signup);
     const r = await api.post<AccountState>('/inscription', { email: data.get('email'), motDePasse: data.get('motDePasse'), adulte: data.get('adulte') === 'on' }).catch(() => null);
     busy(signup, false);
-    if (r?.status === 201) return void render(r.data);
+    if (r?.status === 201) {
+      etapeParcours('inscription');
+      return void render(r.data);
+    }
     showErrors(signup, msgSignup, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
 

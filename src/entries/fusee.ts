@@ -6,6 +6,9 @@ import Phaser from 'phaser';
 import { RocketScene, W, H } from '../game/rocket/rocket-scene';
 import { maxTextures } from '../game/render-config';
 import { installerPleinEcran } from '../game/plein-ecran';
+import { demarrerSuivi } from '../platform/suivi';
+
+demarrerSuivi('fusee');
 
 async function start(): Promise<void> {
   // Les polices doivent être prêtes avant que Phaser ne dessine du texte.

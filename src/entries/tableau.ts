@@ -15,6 +15,9 @@ import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { h } from '../platform/dom';
 import { t } from '../i18n/traduire';
 import { locale } from '../i18n/langue';
+import { demarrerSuivi } from '../platform/suivi';
+
+demarrerSuivi('tableau');
 
 echarts.use([BarChart, LineChart, GridComponent, TooltipComponent, LegendComponent, AriaComponent, CanvasRenderer]);
 

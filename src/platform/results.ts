@@ -5,6 +5,7 @@
  */
 import { api, accountState } from './api';
 import { activePlayer } from './player';
+import { partieTerminee } from './suivi';
 
 export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee';
 
@@ -100,12 +101,13 @@ export function cleanResult(r: GameResult): GameResult {
   };
 }
 
-async function send(profile: number, r: GameResult): Promise<{ status: number; data: { verifie?: boolean; record?: boolean; erreur?: string } }> {
+async function send(profile: number, r: GameResult, partie?: string | null): Promise<{ status: number; data: { verifie?: boolean; record?: boolean; erreur?: string } }> {
   // Le jeton CSRF vient de /etat (page de jeu fraîchement chargée).
   const state = await accountState();
   if (!state) throw new Error('hors ligne');
   if (!state.connecte) return { status: 401, data: { erreur: 'Session terminée : reconnecte-toi.' } };
-  return api.post<{ verifie?: boolean; record?: boolean }>('/resultats', { ...r, profil: profile });
+  // « partie » : clé de la partie mesurée (suivi.ts), pour que le serveur ne la compte qu'une fois.
+  return api.post<{ verifie?: boolean; record?: boolean }>('/resultats', { ...r, profil: profile, ...(partie ? { partie } : {}) });
 }
 
 export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
@@ -115,21 +117,22 @@ export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
   } catch {
     /* stockage indisponible */
   }
+  const partie = partieTerminee(r.gagne, r.score);
   const player = activePlayer();
   if (!player) {
     addLocal(r);
     return { kind: 'local' };
   }
   try {
-    const reply = await send(player.id, r);
+    const reply = await send(player.id, r, partie);
     if (reply.status === 201) return { kind: 'serveur', pseudo: player.pseudo, record: !!reply.data.record, verifie: !!reply.data.verifie };
     if (reply.status >= 500) throw new Error('serveur indisponible');
     // Refus explicite (session terminée, profil supprimé…) : on garde la partie sur l'appareil.
     addLocal(r);
     return { kind: 'refuse', pseudo: player.pseudo, message: reply.data.erreur ?? 'Résultat refusé.' };
   } catch {
-    const queue = read<{ profil: number; r: GameResult }>(QUEUE_KEY);
-    queue.push({ profil: player.id, r });
+    const queue = read<{ profil: number; r: GameResult; partie?: string | null }>(QUEUE_KEY);
+    queue.push({ profil: player.id, r, partie });
     write(QUEUE_KEY, queue.slice(-50));
     return { kind: 'attente', pseudo: player.pseudo };
   }
@@ -137,13 +140,13 @@ export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
 
 /** Renvoie les résultats en attente (appelé à l'accueil). */
 export async function flushQueue(): Promise<number> {
-  const queue = read<{ profil: number; r: GameResult }>(QUEUE_KEY);
+  const queue = read<{ profil: number; r: GameResult; partie?: string | null }>(QUEUE_KEY);
   if (queue.length === 0) return 0;
   let sent = 0;
   const left: typeof queue = [];
   for (const item of queue) {
     try {
-      const reply = await send(item.profil, item.r);
+      const reply = await send(item.profil, item.r, item.partie);
       if (reply.status === 201 || (reply.status >= 400 && reply.status < 500 && reply.status !== 429)) sent++;
       else left.push(item);
     } catch {

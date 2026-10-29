@@ -6,6 +6,9 @@ import Phaser from 'phaser';
 import { DragonScene, W, H } from '../game/dragon/dragon-scene';
 import { maxTextures } from '../game/render-config';
 import { installerPleinEcran } from '../game/plein-ecran';
+import { demarrerSuivi } from '../platform/suivi';
+
+demarrerSuivi('dragon');
 
 async function start(): Promise<void> {
   // Les polices doivent être prêtes : elles servent aussi à dessiner les pancartes.

@@ -16,6 +16,7 @@ import { MeteorSession, METEOR_MODES, type Meteor, type MeteorEvent } from './se
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { partieCommence, partiePause } from '../../platform/suivi';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
 
 export const W = 1280;
@@ -1197,6 +1198,7 @@ export class MeteorScene extends Phaser.Scene {
   private pause(): void {
     if (this.paused || this.overlay || this.ending || !this.session) return;
     this.paused = true;
+    partiePause(true);
     this.tweens.pauseAll();
     this.time.paused = true;
     this.sfx.music(false);
@@ -1214,6 +1216,7 @@ export class MeteorScene extends Phaser.Scene {
   private resume(): void {
     if (!this.paused) return;
     this.paused = false;
+    partiePause(false);
     this.overlay?.destroy(true);
     this.overlay = null;
     this.overlayButtons = [];
@@ -1507,6 +1510,7 @@ export class MeteorScene extends Phaser.Scene {
     this.ending = false;
     this.seed = (this.seed * 7919 + 13) % 1e9;
     this.session = new MeteorSession(this.tier.id, this.seed, mode);
+    partieCommence('meteores', this.tier.id, mode);
     this.startedAt = Date.now();
     this.scoreShown = 0;
     this.refreshShields();

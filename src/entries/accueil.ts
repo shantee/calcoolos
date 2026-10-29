@@ -13,6 +13,9 @@ import { summarize } from '../platform/stats';
 import { api, type AccountState, type Profile } from '../platform/api';
 import { h } from '../platform/dom';
 import type { TierId } from '../core/difficulty';
+import { demarrerSuivi, etapeParcours } from '../platform/suivi';
+
+demarrerSuivi('accueil');
 
 const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="niveau"]')];
 const links = document.querySelectorAll<HTMLAnchorElement>('a[data-jeu]');
@@ -71,6 +74,7 @@ function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): void {
   radio.checked = true;
   confirme = true;
   if (source !== 'retenu') retenirNiveau(value);
+  if (source === 'joueur') etapeParcours('niveau');
   apply();
   const p = activePlayer();
   if (source === 'joueur' && p && p.niveau !== value && etat?.connecte) {

@@ -6,6 +6,9 @@ import Phaser from 'phaser';
 import { CubesDeSiegeScene, W, H } from '../game/siege/game-scene';
 import { maxTextures } from '../game/render-config';
 import { installerPleinEcran } from '../game/plein-ecran';
+import { demarrerSuivi } from '../platform/suivi';
+
+demarrerSuivi('cubes');
 
 async function start(): Promise<void> {
   // Les polices doivent être prêtes : elles servent aussi à dessiner les pancartes.

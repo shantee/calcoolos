@@ -9,3 +9,7 @@ secrets/
 server/var/
 server/config.php
 releases/
+
+# Calcoolos Analytics : module construit, empreinte de jeton locale
+admin/build/
+admin-stats.sha256

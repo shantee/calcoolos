@@ -21,7 +21,8 @@ final class Config
         $root = dirname(__DIR__);
         $file = $envFile ?? (getenv('CALCOOLOS_ENV_FILE') ?: $root . '/.env');
         $values = is_file($file) ? self::parse((string) file_get_contents($file)) : [];
-        foreach (['APP_ENV', 'DB_DSN', 'DB_USER', 'DB_PASSWORD', 'APP_SECRET', 'COOKIE_SECURE', 'VAR_DIR', 'GOOGLE_CLIENT_ID', 'GOOGLE_CERTS_FILE'] as $key) {
+        foreach (['APP_ENV', 'DB_DSN', 'DB_USER', 'DB_PASSWORD', 'APP_SECRET', 'COOKIE_SECURE', 'VAR_DIR', 'GOOGLE_CLIENT_ID', 'GOOGLE_CERTS_FILE',
+            'ADMIN_TOKEN_SHA256', 'SUIVI_CONSERVATION_JOURS'] as $key) {
             $env = getenv($key);
             if ($env !== false && $env !== '') {
                 $values[$key] = $env;
@@ -33,6 +34,12 @@ final class Config
             $values['DB_DSN'] ??= 'sqlite:' . $values['VAR_DIR'] . '/dev.sqlite';
             $values['COOKIE_SECURE'] ??= '0';
             $values['APP_SECRET'] ??= self::devSecret($values['VAR_DIR']);
+        }
+        // Empreinte du jeton de l'administration (tool.zfx.fr/calcoolos/) : fichier posé sans sudo
+        // à côté des versions (voir doc/ANALYTICS.md), sauf si elle est donnée par l'environnement.
+        $hashFile = $values['ADMIN_TOKEN_FILE'] ?? dirname($values['VAR_DIR'], 2) . '/admin-stats.sha256';
+        if (($values['ADMIN_TOKEN_SHA256'] ?? '') === '' && is_file($hashFile) && is_readable($hashFile)) {
+            $values['ADMIN_TOKEN_SHA256'] = trim((string) file_get_contents($hashFile));
         }
         foreach (['DB_DSN', 'APP_SECRET'] as $required) {
             if (($values[$required] ?? '') === '') {

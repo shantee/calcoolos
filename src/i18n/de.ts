@@ -57,7 +57,7 @@ export const DE: Dictionnaire = {
   'Espace famille': 'Familienbereich',
   Confidentialité: 'Datenschutz',
   '← Accueil': '← Start',
-  '· aucune publicité, aucun traceur.': '· keine Werbung, keine Tracker.',
+  '· aucune publicité, aucun traceur extérieur.': '· keine Werbung, keine fremden Tracker.',
   'Aucun profil pour l’instant :': 'Noch keine Profile:',
   'crée-en un dans l’espace parents': 'lege eines im Elternbereich an',
   'Chargement…': 'Wird geladen…',

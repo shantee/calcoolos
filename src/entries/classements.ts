@@ -12,6 +12,9 @@ import { GAME_NAMES, MODE_NAMES, TIER_NAMES } from '../platform/stats';
 import { NIVEAUX, NIVEAU_INFOS, niveauRetenu } from '../platform/niveau';
 import { dateCourte, dateLongue, duree, etoiles, score } from '../platform/classement-format';
 import { h } from '../platform/dom';
+import { demarrerSuivi } from '../platform/suivi';
+
+demarrerSuivi('classements');
 
 interface Row {
   rang?: number;

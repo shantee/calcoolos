@@ -85,6 +85,11 @@ final class Schema
         return $this->driver === 'mysql' ? 'BIGINT UNSIGNED NOT NULL' : 'INTEGER NOT NULL';
     }
 
+    public function refNull(): string
+    {
+        return $this->driver === 'mysql' ? 'BIGINT UNSIGNED NULL' : 'INTEGER NULL';
+    }
+
     public function table(): string
     {
         return $this->driver === 'mysql' ? ' ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci' : '';

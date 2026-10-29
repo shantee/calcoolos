@@ -77,6 +77,12 @@ final class Api
     {
         $m = $r->method;
         $p = $r->path;
+        if (str_starts_with($p, '/admin/')) {
+            return $this->admin($r);
+        }
+        if ($m === 'POST' && $p === '/suivi') {
+            return $this->track($r);
+        }
         if ($m === 'POST') {
             $this->checkPostOrigin($r);
         }
@@ -231,6 +237,51 @@ final class Api
     private static function hash(string $password): string
     {
         return password_hash($password, defined('PASSWORD_ARGON2ID') ? PASSWORD_ARGON2ID : PASSWORD_DEFAULT);
+    }
+
+    // --- Mesure d'audience et statistiques (Calcoolos Analytics) -----------------------------------
+
+    /**
+     * Envoi du suivi (src/platform/suivi.ts). Envoyé aussi par navigator.sendBeacon à la fermeture
+     * de la page, qui ne peut pas porter d'en-tête : pas d'exigence X-Calcoolos ici, mais l'origine
+     * est vérifiée. Ne crée jamais de session ; le compte n'est lu que dans une session existante.
+     */
+    private function track(Request $r): Response
+    {
+        $origin = $r->header('origin');
+        if ($origin !== '' && $r->header('host') !== '' && parse_url($origin, PHP_URL_HOST) !== explode(':', $r->header('host'))[0]) {
+            throw new HttpError(403, 'Requête refusée.');
+        }
+        $id = $this->session->active() ? $this->session->get('compte') : null;
+        $suivi = new Suivi($this->db, $this->config, $this->clock);
+        return new Response(200, $suivi->recevoir($r->json(), is_int($id) ? $id : null, $this->ipKey($r)));
+    }
+
+    /**
+     * Statistiques pour l'administration (tool.zfx.fr/calcoolos/, derrière la connexion du portail).
+     * Accessible seulement depuis le serveur lui-même (127.0.0.1) avec le jeton d'administration,
+     * dont seule l'empreinte SHA-256 est connue ici. Sinon : 404, comme une adresse inconnue.
+     */
+    private function admin(Request $r): Response
+    {
+        $hash = strtolower($this->config->get('ADMIN_TOKEN_SHA256'));
+        $auth = $r->header('authorization');
+        $token = str_starts_with($auth, 'Bearer ') ? substr($auth, 7) : '';
+        if (strlen($hash) !== 64 || !in_array($r->ip, ['127.0.0.1', '::1'], true) || $token === ''
+            || !hash_equals($hash, hash('sha256', $token)) || $r->method !== 'GET') {
+            throw new HttpError(404, 'Adresse inconnue.');
+        }
+        $stats = new Stats($this->db, $this->config, $this->clock);
+        return match ($r->path) {
+            '/admin/resume' => new Response(200, $stats->resume($r->query)),
+            '/admin/joueurs' => new Response(200, $stats->joueurs()),
+            '/admin/joueur' => ($j = $stats->joueur((int) ($r->query['id'] ?? 0))) === null
+                ? throw new HttpError(404, 'Profil introuvable.') : new Response(200, $j),
+            '/admin/historique' => new Response(200, $stats->historique($r->query)),
+            '/admin/direct' => new Response(200, $stats->direct()),
+            '/admin/sante' => new Response(200, $stats->sante()),
+            default => throw new HttpError(404, 'Adresse inconnue.'),
+        };
     }
 
     // --- Comptes ----------------------------------------------------------------------------------
@@ -481,6 +532,9 @@ final class Api
             // Compte créé avec Google (sans mot de passe) : on confirme en recopiant l'adresse.
             throw new HttpError(403, 'Recopie exactement l’adresse du compte pour confirmer.', ['confirmation' => 'Adresse différente.']);
         }
+        // Parties suivies de la famille effacées ; ses visites restent, mais anonymes (compte oublié).
+        $this->db->prepare('DELETE FROM parties WHERE compte_id = ? OR profil_id IN (SELECT id FROM profils WHERE compte_id = ?)')
+            ->execute([$account['id'], $account['id']]);
         // ON DELETE CASCADE : profils et résultats partent avec le compte.
         $this->db->prepare('DELETE FROM comptes WHERE id = ?')->execute([$account['id']]);
         $this->session->destroy();
@@ -495,6 +549,9 @@ final class Api
         $profiles = [];
         foreach ($this->profiles($account) as $p) {
             $p['resultats'] = $this->resultRows($p['id'], 100000);
+            $q2 = $this->db->prepare('SELECT jeu, niveau, mode, debut, fin, actif AS temps_actif_s, etat FROM parties WHERE profil_id = ? ORDER BY debut');
+            $q2->execute([$p['id']]);
+            $p['parties_mesurees'] = $q2->fetchAll();
             $profiles[] = $p;
         }
         return new Response(200, [
@@ -636,11 +693,13 @@ final class Api
             throw new HttpError(429, 'Résultat envoyé trop vite après le précédent.');
         }
         $doubt = Games::doubt($res);
-        $this->db->prepare('INSERT INTO resultats (profil_id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, motif, joue_le)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
+        // Clé de la partie suivie (src/platform/suivi.ts) : le résultat et la partie ne comptent qu'une fois.
+        $partie = is_string($in['partie'] ?? null) && preg_match('/^[A-Za-z0-9_-]{16,32}$/', $in['partie']) ? $in['partie'] : null;
+        $this->db->prepare('INSERT INTO resultats (profil_id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, motif, joue_le, partie_cle)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
             $profile['id'], $res['jeu'], $res['niveau'], $res['mode'], $res['score'], $res['gagne'] ? 1 : 0, $res['etoiles'],
             $res['duree'], (int) round($res['precision'] * 100), json_encode((object) $res['ops'], JSON_UNESCAPED_UNICODE),
-            json_encode((object) $res['details']), $doubt === null ? 1 : 0, $doubt, $this->stamp(),
+            json_encode((object) $res['details']), $doubt === null ? 1 : 0, $doubt, $this->stamp(), $partie,
         ]);
         // Meilleur score vérifié précédent, pour annoncer un record.
         $q = $this->db->prepare('SELECT MAX(score) FROM resultats WHERE profil_id = ? AND jeu = ? AND niveau = ? AND mode = ? AND verifie = 1 AND id <> ?');
