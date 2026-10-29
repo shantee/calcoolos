@@ -16,6 +16,7 @@
 | Langues : anglais et allemand | fait le 26/10/2026 : drapeaux, détection du navigateur, traductions (sauf confidentialité) |
 | Chantier 02 : logo animé, espace joueur, comptes, niveau | fait le 26/10/2026 (session 10), publié |
 | Calcoolos Analytics (mesure d'audience + administration) | fait le 29/10/2026 : https://tool.zfx.fr/calcoolos/ (`doc/ANALYTICS.md`) |
+| Chantier 03 : Neon Flight 5e jeu + statistiques communes + Mes progrès | fait le 29/10/2026 (voir session du 29/10 ci-dessous) ; reste : admin, scripts e2e à 5 jeux, docs |
 | E. Finition | à faire : vrais téléphones et tablettes, accessibilité, page de confidentialité |
 
 ## Rappels pour Philippe
@@ -28,6 +29,35 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
+
+## 2026-10-29 : Claude, chantier 03 (Neon Flight, statistiques communes, Mes progrès)
+
+**Demande** : intégrer Neon Flight (Babylon.js, `mes-sites/neon-flight`) comme 5e jeu, statistiques riches pour
+les 5 jeux, page « Mes progrès » motivante et honnête, classements équitables, admin, publication.
+
+**Fait** (commits `07580d0`, `846d152`, `253f242`, `1085a11`) :
+- Neon Flight dans `src/game/neon/` (moteur conservé), page `jeu/neon-flight.html` ; Babylon chargé seulement là
+  (découpé en petits morceaux par Rollup). Niveaux Calcoolos = temps par calcul (16/13/10/7 s), séries de
+  tables ; Arcade classé par série (`variante`), Entraînement et « tables au choix » hors classement. Réglages et
+  records locaux par profil (`parJoueur`). Accueil : vitrine 05 avec l'illustration de Philippe, phrase
+  d'accroche + compétences pour chaque jeu.
+- Contrat commun : `src/platform/releve.ts` (calculs, justes, fausses, temps moyen/médian, série, faits « a×b »),
+  temps actif (`suivi.ts`, pauses/onglet caché exclus), clé unique de partie (doublons ignorés côté serveur).
+  Migration `005_mesures.php` (colonnes NULL pour le passé : rien d'inventé). Validation stricte dans `Games.php`.
+- « Mes progrès » : `src/platform/progres.ts` (pur, 15 tests) + `tableau.ts` : synthèse justifiée, choix du jeu,
+  évolution sur parties comparables (médianes début/fin, 3 parties min de chaque côté), grille 2–12 de maîtrise,
+  points forts / à réviser, minutes par jour.
+- Classements : onglets par série pour Neon Flight.
+
+**Tests** : 170 Vitest, API 172 vérifications (php-wasm, sans les sections Google : openssl absent), parties
+Neon automatiques (`scripts/neon-auto.mjs`), compte à deux profils `scripts/neon-compte-e2e.mjs` 29/29.
+
+**Reste (pour reprendre)** : admin `admin/assets/app.js` (ajouter neon : JEUX, ORDRE, PAGES, couleur) puis
+`bash admin/deployer.sh` ; scripts `accueil-e2e`, `plein-ecran-auto`, `analytics-e2e`, `verifier-en-ligne`
+(`['neon-flight','__neon']`), `csp-check` à passer à 5 jeux ; vérifier la CSP sous WebGPU ; docs (AGENTS.md,
+ARCHITECTURE, ANALYTICS, ART_ASSETS : navette « my-top-free-unity-asset », licence à vérifier). Limites : rendu
+testé en WebGL logiciel seulement ; navigateur MCP verrouillé (non utilisé) ; pas de reprise de l'historique
+invité à l'inscription (n'existait pas).
 
 ## 2026-10-29 : Claude, Calcoolos Analytics (mesure d'audience et administration)
 
