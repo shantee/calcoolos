@@ -207,7 +207,7 @@ $board = static fn (Response $r, string $jeu, string $niveau, string $mode): arr
     static fn (array $b): bool => $b['jeu'] === $jeu && $b['niveau'] === $niveau && $b['mode'] === $mode,
 ))[0];
 $r = $guest->get('/classements');
-assert_true(count($r->data['classements']) === 4 * 4 * 2 + 4 * 4, 'tous les classements d’un coup (jeu × niveau × mode, Neon Flight : niveau × série de tables)');
+assert_true(count($r->data['classements']) === 4 * 4 * 2 + 4 * 4 + 4 * 4, 'tous les classements d’un coup (jeu × niveau × mode ; Neon Flight et MULTIRAIL : niveau × variante)');
 $b = $board($r, 'dragon', 'explorateur', 'defi');
 assert_true(!isset($b['famille']), 'pas de classement familial pour un invité');
 $row = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
@@ -284,6 +284,32 @@ assert_true(!isset($old['mesures']) && !isset($old['actif']) && !isset($old['var
 assert_true($h['totaux']['neon']['parties'] === 6 && $h['totaux']['dragon']['parties'] === 3, 'totaux par jeu (au-delà de l’historique détaillé)');
 assert_true(count(array_filter($alice->get("/profils/{$noe['id']}/resultats")->data['resultats'], static fn (array $x): bool => $x['jeu'] === 'neon')) === 1, 'les résultats de Noé restent les siens');
 
+$rail = static fn (int $profile, array $over = []): array => array_replace_recursive([
+    'profil' => $profile, 'jeu' => 'multirail', 'niveau' => 'explorateur', 'mode' => 'defi', 'variante' => 'zen', 'score' => 42000,
+    'gagne' => true, 'etoiles' => 2, 'duree' => 300, 'actif' => 290, 'debut' => gmdate('Y-m-d\TH:i:s\Z', $now - 300),
+    'precision' => 0.9, 'ops' => ['+' => [20, 2], '×' => [16, 2]], 'details' => ['distance' => 4200, 'regions' => 4, 'voyageurs' => 6],
+    'mesures' => ['calculs' => 40, 'justes' => 36, 'fausses' => 4, 'serie' => 9, 'tempsMoyen' => 6400, 'tempsMedian' => 5900,
+        'faits' => ['6×7' => [2, 0, 9000, 2]]],
+], $over);
+$now += 30;
+$r = $alice->post('/resultats', $rail($lina['id'], ['partie' => 'partieRAILAAAAAAAAA1']));
+assert_true($r->status === 201 && $r->data['verifie'] === true, 'MULTIRAIL Voyage Zen : vérifié');
+$now += 30;
+$r = $alice->post('/resultats', $rail($lina['id'], ['variante' => 'petites', 'score' => 30000, 'partie' => 'partieRAILAAAAAAAAA2']));
+assert_true($r->status === 201 && $r->data['verifie'] === true, 'MULTIRAIL tables 2 à 5 : vérifié');
+assert_status($alice->post('/resultats', $rail($lina['id'], ['variante' => 'tables-bizarres'])), 422, 'MULTIRAIL : variante inconnue');
+$now += 30;
+$r = $alice->post('/resultats', $rail($lina['id'], ['variante' => 'perso', 'score' => 77000, 'partie' => 'partieRAILAAAAAAAAA3']));
+assert_status($r, 201, 'MULTIRAIL tables au choix enregistrées');
+$now += 30;
+$r = $alice->post('/resultats', $rail($lina['id'], ['mode' => 'tranquille', 'score' => 88000, 'partie' => 'partieRAILAAAAAAAAA4']));
+assert_status($r, 201, 'MULTIRAIL Entraînement enregistré');
+$r = $alice->get('/classements');
+$rails = array_values(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'multirail'));
+$zen = array_values(array_filter($rails, static fn (array $b): bool => ($b['variante'] ?? '') === 'zen' && $b['niveau'] === 'explorateur'))[0] ?? [];
+assert_true(array_column($zen['public'] ?? [], 'score') === [42000], 'classement MULTIRAIL Voyage Zen (Explorateur)');
+assert_true(!str_contains(json_encode(array_column($rails, 'public')), '77000') && !str_contains(json_encode(array_column($rails, 'public')), '88000'), 'MULTIRAIL : tables « perso » et Entraînement hors classement');
+
 section('Connexion');
 $alice2 = $newClient('198.51.100.1');
 assert_status($alice2->post('/connexion', ['email' => 'alice@exemple.fr', 'motDePasse' => 'mauvais']), 401, 'mauvais mot de passe');
@@ -311,7 +337,7 @@ section('Export et suppression');
 $r = $alice2->get('/export');
 assert_status($r, 200, 'export');
 assert_true(($r->headers['Content-Disposition'] ?? '') !== '', 'export téléchargeable');
-assert_true($r->data['compte']['email'] === 'alice@exemple.fr' && count($r->data['profils']) === 6 && count($r->data['profils'][0]['resultats']) === 9, 'export complet');
+assert_true($r->data['compte']['email'] === 'alice@exemple.fr' && count($r->data['profils']) === 6 && count($r->data['profils'][0]['resultats']) === 13, 'export complet');
 assert_true(!str_contains($r->body(), 'mot_de_passe') && !str_contains($r->body(), '$argon'), 'l’export ne contient pas le mot de passe');
 assert_status($alice2->post("/profils/{$noe['id']}/supprimer"), 200, 'profil supprimé');
 assert_status($alice2->post('/supprimer-compte', ['motDePasse' => 'faux-faux-faux']), 403, 'suppression protégée par le mot de passe');

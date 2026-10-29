@@ -8,7 +8,7 @@ import { activePlayer } from './player';
 import { nouvelId, partieTerminee } from './suivi';
 import type { Mesures } from './releve';
 
-export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon';
+export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon' | 'multirail';
 
 /**
  * Résultat d'une partie, commun à tous les jeux. Les champs facultatifs (variante, mesures) sont arrivés
@@ -28,7 +28,8 @@ export interface GameResult {
   /** Par opération : [réussis, ratés]. */
   ops: Record<string, [number, number]>;
   details: Record<string, number>;
-  /** Ce qui sépare les classements d'un même jeu, niveau et mode (Neon Flight : la série de tables). */
+  /** Ce qui sépare les classements d'un même jeu, niveau et mode (Neon Flight : la série de tables ;
+   *  MULTIRAIL : Voyage Zen ou série de tables). */
   variante?: string;
   /** Indicateurs mathématiques communs (src/platform/releve.ts). */
   mesures?: Mesures;

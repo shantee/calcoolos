@@ -41,7 +41,7 @@ function chart(el: HTMLElement, option: echarts.EChartsCoreOption): void {
   charts.push(c);
 }
 
-const COULEURS: Record<GameId, string> = { cubes: '#5fd3bc', meteores: '#8fb8ff', dragon: '#f0745e', fusee: '#ffc94a', neon: '#ff7ae0' };
+const COULEURS: Record<GameId, string> = { cubes: '#5fd3bc', meteores: '#8fb8ff', dragon: '#f0745e', fusee: '#ffc94a', neon: '#ff7ae0', multirail: '#2fc3b4' };
 const JEUX = Object.keys(GAME_NAMES) as GameId[];
 const nombre = new Intl.NumberFormat(locale());
 const sec = (ms: number) => `${(ms / 1000).toLocaleString(locale(), { maximumFractionDigits: 1 })} s`;

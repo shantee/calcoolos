@@ -30,6 +30,23 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-29 : Claude, chantier 04 (MULTIRAIL intégré à Calcoolos)
+
+**Demande** : intégrer MULTIRAIL (dépôt `shantee/multirails`, branche `chantier-2-voyage`) comme Neon Flight :
+classements, points, statistiques, illustration de l'accueil.
+
+**Fait** : jeu copié dans `src/game/multirail/` (Three.js 0.186, police Fredoka), page `jeu/multirail.html`.
+Niveau de Calcoolos → vitesse (`TIER_SPEED`) et niveau du Voyage Zen ; profil, avatar, réglages et records par profil ;
+`partieCommence`/`partiePause` ; fin de partie → `reportResult` (variante `zen`, `petites`, `grandes`, `toutes` ;
+tables au choix = `perso`, hors classement ; Entraînement hors classement ; voyage d'essai `?depart` non envoyé),
+mesures (`Releve`, faits ≤ 12) et ops par signe ; étoiles = régions traversées (2, 4, 7). `Games::CATALOG`, succès
+« Chef de gare », couleur dans Mes progrès, onglets de classement par variante, Analytics (admin). Accueil : 6ᵉ vitrine
+(capture du jeu, `sources-images/accueil/multirail.png`), mosaïque de 6 vignettes, bandeau des classements.
+
+**Tests** : 174 Vitest (dont `tests/multirail.test.ts`), 225 vérifications d'API, CSP sans violation (Chrome),
+captures dans `CAPTURES/multirail/`. **Limites** : 3D lourde (ordinateur ou tablette récents) ; pas de pilote
+automatique complet en script pour MULTIRAIL (`?auto=` du jeu sert aux captures).
+
 ## 2026-10-29 : Claude, chantier 03 (Neon Flight, statistiques communes, Mes progrès)
 
 **Demande** : intégrer Neon Flight (Babylon.js, `mes-sites/neon-flight`) comme 5e jeu, statistiques riches pour

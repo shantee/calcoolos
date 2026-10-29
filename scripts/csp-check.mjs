@@ -62,7 +62,7 @@ page.on('console', (m) => {
   else if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) problems.push(`${page.url()} : ${m.text()}`);
 });
 page.on('pageerror', (e) => problems.push(`${page.url()} : ${e.message}`));
-const pages = ['index.html', 'compte.html', 'tableau.html', 'classements.html', 'confidentialite.html', 'jeu/cubes-de-siege.html', 'jeu/pluie-de-meteores.html', 'jeu/dragon-gourmand.html', 'jeu/decollage.html'];
+const pages = ['index.html', 'compte.html', 'tableau.html', 'classements.html', 'confidentialite.html', 'jeu/cubes-de-siege.html', 'jeu/pluie-de-meteores.html', 'jeu/dragon-gourmand.html', 'jeu/decollage.html', 'jeu/neon-flight.html', 'jeu/multirail.html'];
 for (const p of pages) {
   await page.goto(`http://127.0.0.1:4180/${p}`, { waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
@@ -73,6 +73,7 @@ for (const p of pages) {
     w.__meteores?.start('tranquille');
     w.__dragon?.start('tranquille');
     w.__fusee?.start('tranquille');
+    w.__multirail?.start?.();
   });
   await page.mouse.click(400, 300);
   await page.waitForTimeout(1500);

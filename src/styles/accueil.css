@@ -43,6 +43,10 @@
   --ambiance: #1a0b36;
 }
 
+:root[data-univers='multirail'] {
+  --ambiance: #173a4a;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -578,6 +582,11 @@ h1 {
   --halo: rgb(255 90 220 / 0.26);
 }
 
+.vitrine[data-univers='multirail'] {
+  --accent: #5fe3d2;
+  --halo: rgb(70 220 200 / 0.26);
+}
+
 /* Fine séparation entre deux univers. */
 .vitrine + .vitrine::before {
   content: '';
@@ -818,6 +827,20 @@ h1 {
 .neon-monte {
   color: #ff7ae0;
   text-shadow: 0 0 10px rgb(255 122 224 / 0.7);
+}
+
+/* Exemple de MULTIRAIL : un calcul sur la plaque de la locomotive, puis un rail se pose. */
+.rail-ex {
+  padding: 0.2em 0.6em;
+  border: 2px solid #d9a441;
+  border-radius: 10px;
+  color: #3a2410;
+  background: #fff3d6;
+  box-shadow: 0 3px 0 #b07a2a;
+}
+
+.rail-pose {
+  color: #5fe3d2;
 }
 
 /* Cinquième vignette : Neon Flight en bandeau sur toute la largeur de la mosaïque. */

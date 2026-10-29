@@ -15,7 +15,7 @@
 import { apiUrl } from './api';
 import { activePlayer } from './player';
 
-export type PageSuivie = 'accueil' | 'compte' | 'tableau' | 'classements' | 'confidentialite' | 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon' | 'autre';
+export type PageSuivie = 'accueil' | 'compte' | 'tableau' | 'classements' | 'confidentialite' | 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon' | 'multirail' | 'autre';
 export type Appareil = 'ordinateur' | 'tablette' | 'telephone';
 
 /** Sans geste depuis ce délai, le temps ne compte plus (ms). */

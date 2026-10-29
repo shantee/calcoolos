@@ -11,6 +11,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   dragon: 'Le Dragon gourmand',
   fusee: 'Décollage !',
   neon: 'Neon Flight',
+  multirail: 'MULTIRAIL',
 };
 
 /** Page de chaque jeu (dans jeu/). */
@@ -20,6 +21,7 @@ export const GAME_PAGES: Record<GameId, string> = {
   dragon: 'dragon-gourmand.html',
   fusee: 'decollage.html',
   neon: 'neon-flight.html',
+  multirail: 'multirail.html',
 };
 
 export const TIER_NAMES: Record<string, string> = {
@@ -31,17 +33,20 @@ export const TIER_NAMES: Record<string, string> = {
 
 export const MODE_NAMES: Record<string, string> = { tranquille: 'Tranquille', defi: 'Défi' };
 
-/** Neon Flight appelle ses modes Arcade (classé) et Entraînement. */
+/** Neon Flight appelle ses modes Arcade (classé) et Entraînement ; MULTIRAIL, Aventure et Entraînement. */
 export const modeName = (jeu: GameId, mode: string): string =>
-  jeu === 'neon' ? (mode === 'defi' ? 'Arcade' : 'Entraînement') : (MODE_NAMES[mode] ?? mode);
+  jeu === 'neon' ? (mode === 'defi' ? 'Arcade' : 'Entraînement')
+  : jeu === 'multirail' ? (mode === 'defi' ? 'Aventure' : 'Entraînement')
+  : (MODE_NAMES[mode] ?? mode);
 
-/** Variantes (Neon Flight : séries de tables). */
+/** Variantes (Neon Flight et MULTIRAIL : séries de tables ; MULTIRAIL : Voyage Zen). */
 export const VARIANT_NAMES: Record<string, string> = {
   petites: 'Tables 2 à 5',
   grandes: 'Tables 6 à 9',
   toutes: 'Tables 2 à 10',
   expert: 'Tables 2 à 12',
   perso: 'Tables au choix',
+  zen: 'Voyage Zen',
 };
 
 export const OP_NAMES: Record<string, string> = { '+': 'Additions', '−': 'Soustractions', '×': 'Multiplications', '÷': 'Divisions' };
@@ -129,6 +134,7 @@ export function summarize(results: readonly StoredResult[], now = new Date()): S
     { id: 'dragon', name: 'Ami du dragon', hint: 'Gagner au Dragon gourmand', earned: wonGame('dragon') },
     { id: 'fusee', name: 'Astronaute', hint: 'Atteindre le royaume de la confiserie', earned: wonGame('fusee') },
     { id: 'neon', name: 'Pilote néon', hint: 'Atteindre le village dans Neon Flight', earned: wonGame('neon') },
+    { id: 'multirail', name: 'Chef de gare', hint: 'Traverser deux régions avec Bouillotte dans MULTIRAIL', earned: wonGame('multirail') },
     { id: 'trois-jeux', name: 'Tour de l’archipel', hint: 'Gagner aux quatre jeux de l’archipel', earned: wonGame('cubes') && wonGame('meteores') && wonGame('dragon') && wonGame('fusee') },
     { id: 'etoiles', name: 'Trois étoiles', hint: 'Finir une partie avec 3 étoiles', earned: sorted.some((r) => r.etoiles >= 3) },
     { id: 'defi', name: 'Défi relevé', hint: 'Gagner une partie en mode Défi', earned: sorted.some((r) => r.gagne && r.mode === 'defi') },

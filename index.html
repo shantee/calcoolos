@@ -27,7 +27,7 @@
           <p class="accroche">%BRAND_TAGLINE%</p>
           <p class="intro">
             Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu.
-            Cinq jeux, aucun questionnaire.
+            Six jeux, aucun questionnaire.
           </p>
 
           <!-- La table de lancement : qui joue, à quel niveau. -->
@@ -58,7 +58,7 @@
           </div>
         </div>
 
-        <nav class="mosaique" aria-label="Les cinq jeux">
+        <nav class="mosaique" aria-label="Les six jeux">
           <a class="vignette" href="#jeu-fusee" style="--i: 0">
             <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
             <span>Décollage !</span>
@@ -75,9 +75,13 @@
             <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
             <span>Le Dragon gourmand</span>
           </a>
-          <a class="vignette vignette-large" href="#jeu-neon" style="--i: 4">
-            <img src="/src/images/accueil/neon-flight-800.webp" width="800" height="600" alt="" />
-            <span>Neon Flight <small>· tables de multiplication en 3D</small></span>
+          <a class="vignette" href="#jeu-neon" style="--i: 4">
+            <img src="/src/images/accueil/neon-flight-480.webp" width="480" height="360" alt="" />
+            <span>Neon Flight</span>
+          </a>
+          <a class="vignette" href="#jeu-multirail" style="--i: 5">
+            <img src="/src/images/accueil/multirail-480.webp" width="480" height="360" alt="" />
+            <span>MULTIRAIL</span>
           </a>
         </nav>
       </section>
@@ -131,6 +135,7 @@
         <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
         <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
         <a href="#jeu-neon" data-repere="jeu-neon"><span class="visuel-masque">Neon Flight</span></a>
+        <a href="#jeu-multirail" data-repere="jeu-multirail"><span class="visuel-masque">MULTIRAIL</span></a>
       </nav>
 
       <div class="jeux" id="jeux">
@@ -151,7 +156,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>01</span> / 05</p>
+            <p class="numero"><span>01</span> / 06</p>
             <p class="surtitre">Du village jusqu’aux étoiles</p>
             <h2 id="fusee-titre">Décollage !</h2>
             <p class="accroche-jeu">Chaque bonne réponse propulse ta fusée : pose-toi sur les plateformes et monte jusqu’aux étoiles&nbsp;!</p>
@@ -188,7 +193,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>02</span> / 05</p>
+            <p class="numero"><span>02</span> / 06</p>
             <p class="surtitre">Au-dessus de l’archipel</p>
             <h2 id="meteores-titre">Pluie de météores</h2>
             <p class="accroche-jeu">Résous les calculs à toute vitesse pour pulvériser les météores avant l’impact&nbsp;!</p>
@@ -226,7 +231,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>03</span> / 05</p>
+            <p class="numero"><span>03</span> / 06</p>
             <p class="surtitre">L’Atelier des Cubes</p>
             <h2 id="cubes-titre">Cubes de siège</h2>
             <p class="accroche-jeu">Additionne les bons cubes pour repousser les monstres et protéger ton phare&nbsp;!</p>
@@ -264,7 +269,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>04</span> / 05</p>
+            <p class="numero"><span>04</span> / 06</p>
             <p class="surtitre">Dans le ciel du soir</p>
             <h2 id="dragon-titre">Le Dragon gourmand</h2>
             <p class="accroche-jeu">Guide ton dragon vers les bons nombres : il doit avaler exactement le total demandé&nbsp;!</p>
@@ -302,7 +307,7 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>05</span> / 05</p>
+            <p class="numero"><span>05</span> / 06</p>
             <p class="surtitre">Multiply · en 3D</p>
             <h2 id="neon-titre">Neon Flight</h2>
             <p class="accroche-jeu">Révise tes tables de multiplication aux commandes d’une navette, et survole une ville spectaculaire sans te crasher&nbsp;!</p>
@@ -317,6 +322,43 @@
             </p>
             <div class="actions">
               <a class="jouer" data-jeu href="jeu/neon-flight.html">Jouer<span class="visuel-masque"> à Neon Flight</span></a>
+              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
+            </div>
+          </div>
+        </section>
+        <section class="vitrine" id="jeu-multirail" data-univers="multirail" aria-labelledby="multirail-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/multirail-800.webp"
+              srcset="/src/images/accueil/multirail-480.webp 480w, /src/images/accueil/multirail-800.webp 800w, /src/images/accueil/multirail-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un petit train à vapeur et ses wagons-tasses roule sur une île verte flottant au-dessus des nuages, entre un lac suspendu et des îles en montgolfière."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/multirail.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>06</span> / 06</p>
+            <p class="surtitre">L’Express des Nuages · en 3D</p>
+            <h2 id="multirail-titre">MULTIRAIL</h2>
+            <p class="accroche-jeu">Conduis Bouillotte, la petite locomotive, d’île en île au-dessus des nuages : chaque bonne réponse pose un rail&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de multiplication</li><li>Calcul mental varié</li><li>Calculs en plusieurs étapes</li></ul>
+            <p class="pitch">
+              Choisis <strong>Tables à bord</strong> pour réviser tes tables, ou le <strong>Voyage Zen</strong> :
+              additions, soustractions, divisions exactes et parenthèses, à ton rythme. Traverse forêts de champignons,
+              mer des lanternes et palais de cristal, ramasse des voyageurs… et surveille la pression de la chaudière.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="rail-ex">27 + 33 + (2 × 6)</span> → <span class="cube">72</span> → <span class="rail-pose">🛤️ un rail de plus</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/multirail.html">Jouer<span class="visuel-masque"> à MULTIRAIL</span></a>
               <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
             </div>
           </div>

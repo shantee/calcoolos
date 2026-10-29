@@ -32,7 +32,15 @@ final class Games
         // × 2 (arc-en-ciel) ; « victoire » = village atteint (2,6 km). Les mesures communes sont obligatoires.
         'neon' => ['nom' => 'Neon Flight', 'maxScore' => 3_000_000, 'minWin' => 20, 'maxPerSecond' => 2500, 'maxPerAnswer' => 3600,
             'mesures' => true, 'variantes' => self::NEON_SERIES, 'classes' => ['defi']],
+        // MULTIRAIL (chantier 4) : voyage sans fin ; par réponse au plus (100 + 100) × 4 (série) × 2 (ébullition)
+        // + 500 (voyageur sauvé) + 300 (grand pont), et 500 points par kilomètre en Voyage Zen ;
+        // « victoire » = deux régions traversées. Classé en Aventure, séparé par série de tables ou Voyage Zen.
+        'multirail' => ['nom' => 'MULTIRAIL', 'maxScore' => 3_000_000, 'minWin' => 40, 'maxPerSecond' => 2500, 'maxPerAnswer' => 3000,
+            'mesures' => true, 'variantes' => self::MULTIRAIL_VARIANTES, 'classes' => ['defi']],
     ];
+
+    /** MULTIRAIL : le Voyage Zen (calcul mental varié) et trois séries de tables ont un classement. */
+    public const MULTIRAIL_VARIANTES = ['zen', 'petites', 'grandes', 'toutes'];
 
     /**
      * Neon Flight : séries de tables qui ont un classement (les autres choix donnent « perso », gardé dans
@@ -225,7 +233,7 @@ final class Games
             if (isset($g['maxPerAnswer']) && $r['score'] > $m['justes'] * $g['maxPerAnswer']) {
                 return 'score supérieur au maximum des bonnes réponses';
             }
-            // Jeu qui mesure tout (Neon Flight) : la précision annoncée doit être celle des mesures.
+            // Jeu qui mesure tout (Neon Flight, MULTIRAIL) : la précision annoncée doit être celle des mesures.
             if (($g['mesures'] ?? false) && $m['calculs'] > 0 && abs($r['precision'] - $m['justes'] / $m['calculs']) > 0.02) {
                 return 'précision incohérente';
             }

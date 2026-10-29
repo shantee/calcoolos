@@ -1121,6 +1121,14 @@ table.tableau {
   --cadrage: 50% 40%;
 }
 
+.jeu-classements[data-univers='multirail'],
+.sommaire-jeux a[data-univers='multirail'] {
+  --accent: #5fe3d2;
+  --halo: rgb(70 220 200 / 0.3);
+  --vignette: url('../images/accueil/multirail-800.webp');
+  --cadrage: 48% 88%;
+}
+
 .jeu-classements[data-univers='dragon'],
 .sommaire-jeux a[data-univers='dragon'] {
   --accent: #ffa36b;

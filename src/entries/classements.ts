@@ -49,6 +49,7 @@ const JEUX: { jeu: GameId; surtitre: string; page: string }[] = [
   { jeu: 'cubes', surtitre: 'L’Atelier des Cubes', page: 'jeu/cubes-de-siege.html' },
   { jeu: 'dragon', surtitre: 'Dans le ciel du soir', page: 'jeu/dragon-gourmand.html' },
   { jeu: 'neon', surtitre: 'Tables de multiplication en 3D', page: 'jeu/neon-flight.html' },
+  { jeu: 'multirail', surtitre: 'L’Express des Nuages', page: 'jeu/multirail.html' },
 ];
 
 /**
@@ -73,11 +74,17 @@ interface Onglet {
   aide: string;
   garde: (b: Board) => boolean;
 }
-const SERIES_NEON = ['petites', 'grandes', 'toutes', 'expert'] as const;
-const onglets = (jeu: GameId): Onglet[] =>
-  jeu === 'neon'
-    ? SERIES_NEON.map((v) => ({ id: v, nom: VARIANT_NAMES[v], aide: 'Arcade', garde: (b) => b.variante === v }))
+/** Jeux classés par variante plutôt que par mode (Neon Flight : séries ; MULTIRAIL : Voyage Zen et séries). */
+const VARIANTES: Partial<Record<GameId, { ids: readonly string[]; aide: (v: string) => string; titre: string }>> = {
+  neon: { ids: ['petites', 'grandes', 'toutes', 'expert'], aide: () => 'Arcade', titre: 'Série de tables' },
+  multirail: { ids: ['zen', 'petites', 'grandes', 'toutes'], aide: (v) => (v === 'zen' ? 'Calcul mental varié' : 'Aventure'), titre: 'Voyage Zen ou série de tables' },
+};
+const onglets = (jeu: GameId): Onglet[] => {
+  const v = VARIANTES[jeu];
+  return v
+    ? v.ids.map((id) => ({ id, nom: VARIANT_NAMES[id], aide: v.aide(id), garde: (b) => b.variante === id }))
     : MODES.map((m) => ({ id: m, nom: MODE_NAMES[m], aide: MODE_AIDE[m], garde: (b) => b.mode === m }));
+};
 
 const place = (rang: number) => (rang <= 3 ? MEDALS[rang - 1] : `${rang}e`);
 
@@ -185,7 +192,7 @@ function banniere(jeu: GameId, surtitre: string, page: string, boards: Board[], 
 }
 
 /** Choix de l'onglet : Défi / Tranquille commun aux quatre jeux, série à part pour Neon Flight ; retenu sur l'appareil. */
-const cleOnglet = (jeu: GameId) => (jeu === 'neon' ? 'calcoolos.classements.neon' : 'calcoolos.classements.mode');
+const cleOnglet = (jeu: GameId) => (VARIANTES[jeu] ? `calcoolos.classements.${jeu}` : 'calcoolos.classements.mode');
 function ongletRetenu(jeu: GameId, defaut: string): string {
   const ids = onglets(jeu).map((o) => o.id);
   try {
@@ -198,7 +205,9 @@ function ongletRetenu(jeu: GameId, defaut: string): string {
 
 function choisirOnglet(jeu: GameId, id: string, retenir = true): void {
   // Défi / Tranquille : le même choix pour les quatre jeux qui ont ces onglets.
-  const sections = [...document.querySelectorAll<HTMLElement>('.jeu-classements')].filter((s) => (jeu === 'neon') === (s.dataset.univers === 'neon'));
+  // Jeux à variantes : chacun ses onglets.
+  const sections = [...document.querySelectorAll<HTMLElement>('.jeu-classements')].filter((s) =>
+    VARIANTES[jeu] ? s.dataset.univers === jeu : !VARIANTES[s.dataset.univers as GameId]);
   for (const sec of sections) {
     for (const tab of sec.querySelectorAll<HTMLButtonElement>('.onglets-mode [role="tab"]')) {
       const on = tab.dataset.onglet === id;
@@ -218,7 +227,7 @@ function choisirOnglet(jeu: GameId, id: string, retenir = true): void {
 function barreOnglets(jeu: GameId): HTMLElement {
   const tabs = onglets(jeu).map((o) => h('button', { type: 'button', role: 'tab', id: `onglet-${jeu}-${o.id}`, 'data-onglet': o.id, 'aria-controls': `niveaux-${jeu}-${o.id}` },
     h('b', {}, o.nom), h('small', {}, o.aide)));
-  const bar = h('div', { class: `onglets-mode${tabs.length > 2 ? ' quatre' : ''}`, role: 'tablist', 'aria-label': jeu === 'neon' ? 'Série de tables' : `Mode de ${GAME_NAMES[jeu]}` }, ...tabs);
+  const bar = h('div', { class: `onglets-mode${tabs.length > 2 ? ' quatre' : ''}`, role: 'tablist', 'aria-label': VARIANTES[jeu]?.titre ?? `Mode de ${GAME_NAMES[jeu]}` }, ...tabs);
   bar.addEventListener('click', (e) => {
     const tab = (e.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
     if (tab?.dataset.onglet) choisirOnglet(jeu, tab.dataset.onglet);
@@ -265,7 +274,7 @@ void (async () => {
   });
   root.replaceChildren(
     h('h1', {}, 'Classements'),
-    h('p', { class: 'chapeau' }, 'Les meilleurs scores de chaque jeu, niveau par niveau, en Défi et en Tranquille (Neon Flight : en Arcade, série de tables par série de tables). Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur. Survole (ou touche) une ligne pour voir le détail du record.'),
+    h('p', { class: 'chapeau' }, 'Les meilleurs scores de chaque jeu, niveau par niveau, en Défi et en Tranquille (Neon Flight : en Arcade, série de tables par série de tables ; MULTIRAIL : en Aventure, Voyage Zen ou série de tables). Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur. Survole (ou touche) une ligne pour voir le détail du record.'),
     h('nav', { class: 'sommaire-jeux', 'aria-label': 'Aller au jeu' },
       ...JEUX.map(({ jeu }) => h('a', { href: `#jeu-${jeu}`, 'data-univers': jeu }, h('span', { class: 'embleme', 'aria-hidden': 'true' }), GAME_NAMES[jeu]))),
     connected
@@ -278,4 +287,6 @@ void (async () => {
   choisirOnglet('cubes', ongletRetenu('cubes', 'defi'), false);
   // Neon Flight : d'office, la série proposée au niveau du joueur (comme dans le jeu).
   choisirOnglet('neon', ongletRetenu('neon', (estNiveau(monNiveau) ? TIER_SERIES[monNiveau] : 'petites')), false);
+  // MULTIRAIL : d'office le Voyage Zen, la nouveauté (puis le dernier onglet choisi).
+  choisirOnglet('multirail', ongletRetenu('multirail', 'zen'), false);
 })();

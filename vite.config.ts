@@ -78,6 +78,7 @@ export default defineConfig({
         dragon: resolve(import.meta.dirname, 'jeu/dragon-gourmand.html'),
         fusee: resolve(import.meta.dirname, 'jeu/decollage.html'),
         neon: resolve(import.meta.dirname, 'jeu/neon-flight.html'),
+        multirail: resolve(import.meta.dirname, 'jeu/multirail.html'),
         compte: resolve(import.meta.dirname, 'compte.html'),
         tableau: resolve(import.meta.dirname, 'tableau.html'),
         classements: resolve(import.meta.dirname, 'classements.html'),
