@@ -66,6 +66,8 @@ export default defineConfig({
         manualChunks(id: string) {
           if (id.includes('node_modules/phaser')) return 'phaser';
           if (id.includes('node_modules/echarts') || id.includes('node_modules/zrender')) return 'echarts';
+          // Babylon.js (Neon Flight) reste découpé par Rollup : ses shaders (WebGPU ou WebGL) ne sont
+          // téléchargés qu'à la demande, et rien n'en est chargé hors de la page du jeu.
           return undefined;
         },
       },
@@ -75,6 +77,7 @@ export default defineConfig({
         meteores: resolve(import.meta.dirname, 'jeu/pluie-de-meteores.html'),
         dragon: resolve(import.meta.dirname, 'jeu/dragon-gourmand.html'),
         fusee: resolve(import.meta.dirname, 'jeu/decollage.html'),
+        neon: resolve(import.meta.dirname, 'jeu/neon-flight.html'),
         compte: resolve(import.meta.dirname, 'compte.html'),
         tableau: resolve(import.meta.dirname, 'tableau.html'),
         classements: resolve(import.meta.dirname, 'classements.html'),

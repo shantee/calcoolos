@@ -5,10 +5,15 @@
  */
 import { api, accountState } from './api';
 import { activePlayer } from './player';
-import { partieTerminee } from './suivi';
+import { nouvelId, partieTerminee } from './suivi';
+import type { Mesures } from './releve';
 
-export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee';
+export type GameId = 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon';
 
+/**
+ * Résultat d'une partie, commun à tous les jeux. Les champs facultatifs (variante, mesures) sont arrivés
+ * avec le chantier 3 (29/10/2026) : les parties plus anciennes ne les ont pas, et on ne les invente pas.
+ */
 export interface GameResult {
   jeu: GameId;
   niveau: string;
@@ -23,11 +28,22 @@ export interface GameResult {
   /** Par opération : [réussis, ratés]. */
   ops: Record<string, [number, number]>;
   details: Record<string, number>;
+  /** Ce qui sépare les classements d'un même jeu, niveau et mode (Neon Flight : la série de tables). */
+  variante?: string;
+  /** Indicateurs mathématiques communs (src/platform/releve.ts). */
+  mesures?: Mesures;
 }
 
 export interface StoredResult extends GameResult {
+  /** Fin de la partie (ISO). */
   date: string;
   verifie?: boolean;
+  /** Identifiant unique de la partie (le serveur ne l'enregistre qu'une fois). */
+  cle?: string;
+  /** Début de la partie (ISO). */
+  debut?: string;
+  /** Temps de jeu actif en secondes : pauses, onglet caché et inactivité exclus. */
+  actif?: number;
 }
 
 export type ReportOutcome =
@@ -77,9 +93,9 @@ export function clearLocalHistory(): void {
   write(HISTORY_KEY, []);
 }
 
-function addLocal(r: GameResult): void {
+function addLocal(r: StoredResult): void {
   const list = localHistory();
-  list.unshift({ ...r, date: new Date().toISOString() });
+  list.unshift(r);
   write(HISTORY_KEY, list.slice(0, MAX_LOCAL));
 }
 
@@ -90,7 +106,7 @@ export function cleanResult(r: GameResult): GameResult {
   for (const [op, [ok, ko]] of Object.entries(r.ops)) if (ok + ko > 0) ops[op] = [int(ok), int(ko)];
   const details: Record<string, number> = {};
   for (const [k, v] of Object.entries(r.details)) details[k] = int(v);
-  return {
+  const out: GameResult = {
     ...r,
     score: int(r.score),
     etoiles: Math.min(3, int(r.etoiles)),
@@ -99,15 +115,33 @@ export function cleanResult(r: GameResult): GameResult {
     ops,
     details,
   };
+  if (r.mesures) {
+    const m = r.mesures;
+    const calculs = int(m.calculs);
+    const justes = Math.min(calculs, int(m.justes));
+    const faits: Record<string, [number, number, number, number]> = {};
+    for (const [k, f] of Object.entries(m.faits ?? {})) if (/^\d{1,2}×\d{1,2}$/.test(k)) faits[k] = [int(f[0]), int(f[1]), int(f[2]), int(f[3])];
+    out.mesures = {
+      calculs,
+      justes,
+      fausses: calculs - justes,
+      serie: Math.min(justes, int(m.serie)),
+      ...(m.tempsMoyen !== undefined && justes > 0 ? { tempsMoyen: int(m.tempsMoyen), tempsMedian: int(m.tempsMedian ?? m.tempsMoyen) } : {}),
+      ...(Object.keys(faits).length > 0 ? { faits } : {}),
+    };
+  }
+  return out;
 }
 
-async function send(profile: number, r: GameResult, partie?: string | null): Promise<{ status: number; data: { verifie?: boolean; record?: boolean; erreur?: string } }> {
+async function send(profile: number, r: StoredResult | GameResult, partie?: string | null): Promise<{ status: number; data: { verifie?: boolean; record?: boolean; erreur?: string } }> {
   // Le jeton CSRF vient de /etat (page de jeu fraîchement chargée).
   const state = await accountState();
   if (!state) throw new Error('hors ligne');
   if (!state.connecte) return { status: 401, data: { erreur: 'Session terminée : reconnecte-toi.' } };
-  // « partie » : clé de la partie mesurée (suivi.ts), pour que le serveur ne la compte qu'une fois.
-  return api.post<{ verifie?: boolean; record?: boolean }>('/resultats', { ...r, profil: profile, ...(partie ? { partie } : {}) });
+  // « partie » : clé unique de la partie, pour que le serveur ne la compte qu'une fois (même renvoyée).
+  const { cle, date: _date, ...rest } = r as StoredResult;
+  const key = partie ?? cle;
+  return api.post<{ verifie?: boolean; record?: boolean }>('/resultats', { ...rest, profil: profile, ...(key ? { partie: key } : {}) });
 }
 
 export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
@@ -117,22 +151,30 @@ export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
   } catch {
     /* stockage indisponible */
   }
-  const partie = partieTerminee(r.gagne, r.score);
+  const fin = partieTerminee(r.gagne, r.score);
+  const now = new Date();
+  // Durée active : celle de l'horloge commune ; sans elle (jeu qui n'appelle pas partieCommence), rien.
+  const stored: StoredResult = {
+    ...r,
+    date: now.toISOString(),
+    cle: fin?.cle ?? nouvelId(),
+    ...(fin ? { debut: fin.debut, actif: Math.min(r.duree, Math.max(0, fin.actif)) } : {}),
+  };
   const player = activePlayer();
   if (!player) {
-    addLocal(r);
+    addLocal(stored);
     return { kind: 'local' };
   }
   try {
-    const reply = await send(player.id, r, partie);
+    const reply = await send(player.id, stored);
     if (reply.status === 201) return { kind: 'serveur', pseudo: player.pseudo, record: !!reply.data.record, verifie: !!reply.data.verifie };
     if (reply.status >= 500) throw new Error('serveur indisponible');
     // Refus explicite (session terminée, profil supprimé…) : on garde la partie sur l'appareil.
-    addLocal(r);
+    addLocal(stored);
     return { kind: 'refuse', pseudo: player.pseudo, message: reply.data.erreur ?? 'Résultat refusé.' };
   } catch {
-    const queue = read<{ profil: number; r: GameResult; partie?: string | null }>(QUEUE_KEY);
-    queue.push({ profil: player.id, r, partie });
+    const queue = read<{ profil: number; r: StoredResult; partie?: string | null }>(QUEUE_KEY);
+    queue.push({ profil: player.id, r: stored });
     write(QUEUE_KEY, queue.slice(-50));
     return { kind: 'attente', pseudo: player.pseudo };
   }
@@ -140,7 +182,8 @@ export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
 
 /** Renvoie les résultats en attente (appelé à l'accueil). */
 export async function flushQueue(): Promise<number> {
-  const queue = read<{ profil: number; r: GameResult; partie?: string | null }>(QUEUE_KEY);
+  // Les anciennes entrées (avant le 29/10/2026) portent la clé à part, dans « partie ».
+  const queue = read<{ profil: number; r: StoredResult; partie?: string | null }>(QUEUE_KEY);
   if (queue.length === 0) return 0;
   let sent = 0;
   const left: typeof queue = [];

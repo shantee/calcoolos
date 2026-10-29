@@ -682,6 +682,17 @@ final class Api
         }
         $profile = $this->ownedProfile($account, $profileId);
         $res = Games::parse($in);
+        // Clé unique de la partie (src/platform/suivi.ts) : la même partie renvoyée (file d'attente, double
+        // clic, réseau qui hésite) n'est enregistrée qu'une fois ; on répond comme la première fois.
+        $partie = is_string($in['partie'] ?? null) && preg_match('/^[A-Za-z0-9_-]{16,32}$/', $in['partie']) ? $in['partie'] : null;
+        if ($partie !== null) {
+            $q = $this->db->prepare('SELECT id, verifie FROM resultats WHERE profil_id = ? AND partie_cle = ?');
+            $q->execute([$profile['id'], $partie]);
+            $old = $q->fetch();
+            if ($old) {
+                return new Response(201, ['id' => (int) $old['id'], 'verifie' => (bool) $old['verifie'], 'record' => false, 'deja' => true]);
+            }
+        }
         // Débit : pas deux parties en quelques secondes, ni des centaines par heure.
         $q = $this->db->prepare('SELECT MAX(joue_le) AS dernier, COUNT(*) AS n FROM resultats WHERE profil_id = ? AND joue_le > ?');
         $q->execute([$profile['id'], $this->stamp($this->now() - 3600)]);
@@ -693,18 +704,23 @@ final class Api
             throw new HttpError(429, 'Résultat envoyé trop vite après le précédent.');
         }
         $doubt = Games::doubt($res);
-        // Clé de la partie suivie (src/platform/suivi.ts) : le résultat et la partie ne comptent qu'une fois.
-        $partie = is_string($in['partie'] ?? null) && preg_match('/^[A-Za-z0-9_-]{16,32}$/', $in['partie']) ? $in['partie'] : null;
-        $this->db->prepare('INSERT INTO resultats (profil_id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, motif, joue_le, partie_cle)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
+        $m = $res['mesures'];
+        // Début : seulement s'il est cohérent avec la durée annoncée (sinon on ne le garde pas).
+        $debut = $res['debut'] !== null && $res['debut'] <= $this->now() && $res['debut'] >= $this->now() - $res['duree'] - 3600 ? $this->stamp($res['debut']) : null;
+        $this->db->prepare('INSERT INTO resultats (profil_id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, motif, joue_le, partie_cle,
+                variante, debut, actif, calculs, justes, fausses, temps_moyen, temps_median, serie, faits)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')->execute([
             $profile['id'], $res['jeu'], $res['niveau'], $res['mode'], $res['score'], $res['gagne'] ? 1 : 0, $res['etoiles'],
             $res['duree'], (int) round($res['precision'] * 100), json_encode((object) $res['ops'], JSON_UNESCAPED_UNICODE),
             json_encode((object) $res['details']), $doubt === null ? 1 : 0, $doubt, $this->stamp(), $partie,
+            $res['variante'], $debut, $res['actif'] === null ? null : min($res['actif'], $res['duree']),
+            $m['calculs'] ?? null, $m['justes'] ?? null, $m['fausses'] ?? null, $m['tempsMoyen'] ?? null, $m['tempsMedian'] ?? null, $m['serie'] ?? null,
+            $m && $m['faits'] ? json_encode((object) $m['faits'], JSON_UNESCAPED_UNICODE) : null,
         ]);
         // Meilleur score vérifié précédent, pour annoncer un record.
-        $q = $this->db->prepare('SELECT MAX(score) FROM resultats WHERE profil_id = ? AND jeu = ? AND niveau = ? AND mode = ? AND verifie = 1 AND id <> ?');
+        $q = $this->db->prepare('SELECT MAX(score) FROM resultats WHERE profil_id = ? AND jeu = ? AND niveau = ? AND mode = ? AND variante = ? AND verifie = 1 AND id <> ?');
         $id = (int) $this->db->lastInsertId();
-        $q->execute([$profile['id'], $res['jeu'], $res['niveau'], $res['mode'], $id]);
+        $q->execute([$profile['id'], $res['jeu'], $res['niveau'], $res['mode'], $res['variante'], $id]);
         $best = $q->fetchColumn();
         return new Response(201, [
             'id' => $id,
@@ -716,9 +732,11 @@ final class Api
     /** @return list<array<string, mixed>> */
     private function resultRows(int $profileId, int $limit): array
     {
-        $q = $this->db->prepare('SELECT id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, joue_le
+        $q = $this->db->prepare('SELECT id, jeu, niveau, mode, score, gagne, etoiles, duree, precision_pct, ops, details, verifie, joue_le,
+                partie_cle, variante, debut, actif, calculs, justes, fausses, temps_moyen, temps_median, serie, faits
             FROM resultats WHERE profil_id = ? ORDER BY joue_le DESC, id DESC LIMIT ' . max(1, $limit));
         $q->execute([$profileId]);
+        $iso = static fn (?string $d): ?string => $d === null ? null : str_replace(' ', 'T', $d) . 'Z';
         return array_map(static fn (array $x): array => [
             'id' => (int) $x['id'],
             'jeu' => (string) $x['jeu'],
@@ -732,14 +750,46 @@ final class Api
             'ops' => json_decode((string) $x['ops'], true) ?: [],
             'details' => json_decode((string) $x['details'], true) ?: [],
             'verifie' => (bool) $x['verifie'],
-            'date' => str_replace(' ', 'T', (string) $x['joue_le']) . 'Z',
-        ], $q->fetchAll());
+            'date' => $iso((string) $x['joue_le']),
+        ] + array_filter([
+            // Champs du chantier 3 : absents (et non inventés) pour les parties plus anciennes.
+            'cle' => $x['partie_cle'],
+            'variante' => $x['variante'] === '' ? null : (string) $x['variante'],
+            'debut' => $iso($x['debut']),
+            'actif' => $x['actif'] === null ? null : (int) $x['actif'],
+            'mesures' => $x['calculs'] === null ? null : array_filter([
+                'calculs' => (int) $x['calculs'],
+                'justes' => (int) $x['justes'],
+                'fausses' => (int) $x['fausses'],
+                'serie' => (int) $x['serie'],
+                'tempsMoyen' => $x['temps_moyen'] === null ? null : (int) $x['temps_moyen'],
+                'tempsMedian' => $x['temps_median'] === null ? null : (int) $x['temps_median'],
+                'faits' => $x['faits'] === null ? null : (json_decode((string) $x['faits'], true) ?: null),
+            ], static fn ($v) => $v !== null),
+        ], static fn ($v) => $v !== null), $q->fetchAll());
+    }
+
+    /**
+     * Totaux de toutes les parties d'un profil, par jeu (l'historique détaillé s'arrête aux plus récentes).
+     * @return array<string, array{parties: int, duree: int, actif: int, mesurees: int, premiere: string}>
+     */
+    private function totals(int $profileId): array
+    {
+        $q = $this->db->prepare('SELECT jeu, COUNT(*) AS n, SUM(duree) AS duree, SUM(actif) AS actif, COUNT(actif) AS mesurees, MIN(joue_le) AS premiere
+            FROM resultats WHERE profil_id = ? GROUP BY jeu');
+        $q->execute([$profileId]);
+        $out = [];
+        foreach ($q->fetchAll() as $x) {
+            $out[(string) $x['jeu']] = ['parties' => (int) $x['n'], 'duree' => (int) $x['duree'], 'actif' => (int) $x['actif'],
+                'mesurees' => (int) $x['mesurees'], 'premiere' => str_replace(' ', 'T', (string) $x['premiere']) . 'Z'];
+        }
+        return $out;
     }
 
     /** @param array{id: int, compte_id: int} $profile */
     private function results(array $profile): Response
     {
-        return new Response(200, ['resultats' => $this->resultRows($profile['id'], 300)]);
+        return new Response(200, ['resultats' => $this->resultRows($profile['id'], 500), 'totaux' => $this->totals($profile['id'])]);
     }
 
     // --- Classements ------------------------------------------------------------------------------
@@ -755,30 +805,33 @@ final class Api
      */
     private function leaderboards(): Response
     {
+        // Un tableau par jeu × niveau × mode classé × variante (Neon Flight : série de tables, Arcade seulement).
         $boards = [];
         foreach (array_keys(Games::CATALOG) as $jeu) {
             foreach (Games::TIERS as $niveau) {
-                foreach (Games::MODES as $mode) {
-                    $boards["$jeu/$niveau/$mode"] = ['jeu' => $jeu, 'niveau' => $niveau, 'mode' => $mode, 'public' => []];
+                foreach (Games::boards($jeu) as [$mode, $variante]) {
+                    $boards["$jeu/$niveau/$mode/$variante"] = ['jeu' => $jeu, 'niveau' => $niveau, 'mode' => $mode, 'public' => []]
+                        + ($variante === '' ? [] : ['variante' => $variante]);
                 }
             }
         }
         $id = $this->session->active() ? $this->session->get('compte') : null;
         $mine = is_int($id) ? $id : -1;
         // Meilleur score de chaque profil, son nombre de parties, et la première partie qui l'a atteint.
-        $q = $this->db->query('SELECT b.jeu, b.niveau, b.mode, b.score, b.parties, p.compte_id, p.pseudo AS nom, p.avatar,
+        $q = $this->db->query('SELECT b.jeu, b.niveau, b.mode, b.variante, b.score, b.parties, p.compte_id, p.pseudo AS nom, p.avatar,
                 (SELECT r2.id FROM resultats r2
                     WHERE r2.profil_id = b.profil_id AND r2.jeu = b.jeu AND r2.niveau = b.niveau AND r2.mode = b.mode
-                        AND r2.verifie = 1 AND r2.score = b.score
+                        AND r2.variante = b.variante AND r2.verifie = 1 AND r2.score = b.score
                     ORDER BY r2.joue_le ASC, r2.id ASC LIMIT 1) AS meilleure
-            FROM (SELECT profil_id, jeu, niveau, mode, MAX(score) AS score, COUNT(*) AS parties
-                FROM resultats WHERE verifie = 1 GROUP BY profil_id, jeu, niveau, mode) b
+            FROM (SELECT profil_id, jeu, niveau, mode, variante, MAX(score) AS score, COUNT(*) AS parties
+                FROM resultats WHERE verifie = 1 GROUP BY profil_id, jeu, niveau, mode, variante) b
             JOIN profils p ON p.id = b.profil_id
-            ORDER BY b.jeu, b.niveau, b.mode, b.score DESC, p.id ASC');
+            ORDER BY b.jeu, b.niveau, b.mode, b.variante, b.score DESC, p.id ASC');
         $rank = [];
         $best = [];
         foreach ($q->fetchAll() as $row) {
-            $key = "{$row['jeu']}/{$row['niveau']}/{$row['mode']}";
+            // Les tableaux inexistants (Neon Flight en Entraînement, tables « perso ») sont ignorés.
+            $key = "{$row['jeu']}/{$row['niveau']}/{$row['mode']}/{$row['variante']}";
             if (!isset($boards[$key])) {
                 continue;
             }
@@ -815,15 +868,15 @@ final class Api
         }
         if (is_int($id)) {
             // Toutes les parties de la famille comptent ici, vérifiées ou non : c'est entre soi.
-            $q = $this->db->prepare('SELECT r.jeu, r.niveau, r.mode, p.pseudo AS nom, p.avatar, MAX(r.score) AS score
+            $q = $this->db->prepare('SELECT r.jeu, r.niveau, r.mode, r.variante, p.pseudo AS nom, p.avatar, MAX(r.score) AS score
                 FROM resultats r JOIN profils p ON p.id = r.profil_id
                 WHERE p.compte_id = ?
-                GROUP BY r.jeu, r.niveau, r.mode, p.id, p.pseudo, p.avatar
-                ORDER BY r.jeu, r.niveau, r.mode, score DESC, p.id ASC');
+                GROUP BY r.jeu, r.niveau, r.mode, r.variante, p.id, p.pseudo, p.avatar
+                ORDER BY r.jeu, r.niveau, r.mode, r.variante, score DESC, p.id ASC');
             $q->execute([$id]);
             $family = [];
             foreach ($q->fetchAll() as $row) {
-                $family["{$row['jeu']}/{$row['niveau']}/{$row['mode']}"][] = ['nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
+                $family["{$row['jeu']}/{$row['niveau']}/{$row['mode']}/{$row['variante']}"][] = ['nom' => (string) $row['nom'], 'avatar' => (string) $row['avatar'], 'score' => (int) $row['score']];
             }
             foreach ($family as $key => $rows) {
                 if (isset($boards[$key]) && count($rows) >= 2) {

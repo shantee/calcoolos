@@ -15,7 +15,7 @@
 import { apiUrl } from './api';
 import { activePlayer } from './player';
 
-export type PageSuivie = 'accueil' | 'compte' | 'tableau' | 'classements' | 'confidentialite' | 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'autre';
+export type PageSuivie = 'accueil' | 'compte' | 'tableau' | 'classements' | 'confidentialite' | 'cubes' | 'meteores' | 'dragon' | 'fusee' | 'neon' | 'autre';
 export type Appareil = 'ordinateur' | 'tablette' | 'telephone';
 
 /** Sans geste depuis ce délai, le temps ne compte plus (ms). */
@@ -43,6 +43,15 @@ interface Partie {
   mode: string;
   actif: number;
   pause: boolean;
+  /** Début de la partie (ms). */
+  debut: number;
+}
+
+/** Ce que la fin d'une partie transmet au résultat : sa clé, son début et son temps de jeu actif. */
+export interface FinPartie {
+  cle: string;
+  debut: string;
+  actif: number;
 }
 
 type Evenement = Record<string, string | number | boolean>;
@@ -95,6 +104,7 @@ let dernierGeste = Date.now();
 let dejaEnvoye = -1;
 let dernierEnvoi = 0;
 let demarre = false;
+let horloge = false;
 
 function visite(): Visite {
   const now = Date.now();
@@ -144,11 +154,13 @@ function seconde(): void {
   const now = Date.now();
   const visible = document.visibilityState === 'visible';
   if (!secondeActive(visible, now, dernierGeste)) return;
+  // Le temps de jeu actif est compté même sans mesure d'audience : il part avec le résultat.
+  if (partie && secondeActive(visible, now, dernierGeste, partie.pause)) partie.actif++;
+  if (!demarre) return;
   const v = visite();
   v.actif++;
   v.dernier = now;
   ecrire(CLE_VISITE, v);
-  if (partie && secondeActive(visible, now, dernierGeste, partie.pause)) partie.actif++;
   if (now - dernierEnvoi >= SIGNAL) {
     if (partie) file.push({ type: 'jeu', p: partie.cle, actif: partie.actif, jeu: partie.jeu, niveau: partie.niveau, mode: partie.mode });
     envoyer();
@@ -170,20 +182,11 @@ export function demarrerSuivi(p: PageSuivie): void {
   if (file[0]?.type !== 'page') file.unshift({ type: 'page' });
   v.dernier = Date.now();
   ecrire(CLE_VISITE, v);
-  const geste = (): void => {
-    dernierGeste = Date.now();
-  };
-  // Seul l'instant du dernier geste est retenu (sur cet appareil), jamais le geste lui-même.
-  for (const type of ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel']) {
-    window.addEventListener(type, geste, { passive: true, capture: true });
-  }
-  window.setInterval(seconde, 1000);
+  demarrerHorloge();
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       if (partie) file.push({ type: 'jeu', p: partie.cle, actif: partie.actif, jeu: partie.jeu, niveau: partie.niveau, mode: partie.mode });
       envoyer(true);
-    } else {
-      geste();
     }
   });
   window.addEventListener('pagehide', () => {
@@ -194,32 +197,54 @@ export function demarrerSuivi(p: PageSuivie): void {
   envoyer();
 }
 
-function finir(issue: 'terminee' | 'abandon', gagne?: boolean, score?: number): string | null {
+const geste = (): void => {
+  dernierGeste = Date.now();
+};
+
+/** Horloge d'une seconde et écoute des gestes, une seule fois par page. */
+function demarrerHorloge(): void {
+  if (horloge) return;
+  horloge = true;
+  // Seul l'instant du dernier geste est retenu (sur cet appareil), jamais le geste lui-même.
+  for (const type of ['pointerdown', 'pointermove', 'keydown', 'touchstart', 'wheel']) {
+    window.addEventListener(type, geste, { passive: true, capture: true });
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') geste();
+  });
+  window.setInterval(seconde, 1000);
+}
+
+function finir(issue: 'terminee' | 'abandon', gagne?: boolean, score?: number): FinPartie | null {
   if (!partie) return null;
   const ev: Evenement = { type: 'fin', p: partie.cle, actif: partie.actif, issue, jeu: partie.jeu, niveau: partie.niveau, mode: partie.mode };
   if (gagne !== undefined) ev.gagne = gagne;
   if (score !== undefined) ev.score = Math.max(0, Math.round(score));
-  file.push(ev);
-  const cle = partie.cle;
+  if (demarre) file.push(ev);
+  const fin = { cle: partie.cle, debut: new Date(partie.debut).toISOString(), actif: partie.actif };
   partie = null;
-  return cle;
+  return fin;
 }
 
 /** Une partie commence (bouton Tranquille / Défi). Une partie précédente non finie est un abandon. */
 export function partieCommence(jeu: string, niveau: string, mode: string): void {
-  if (!demarre) return;
   if (partie) finir('abandon');
-  partie = { cle: nouvelId(), jeu, niveau, mode, actif: 0, pause: false };
+  demarrerHorloge();
+  partie = { cle: nouvelId(), jeu, niveau, mode, actif: 0, pause: false, debut: Date.now() };
   dernierGeste = Date.now();
+  if (!demarre) return;
   file.push({ type: 'debut', p: partie.cle, jeu, niveau, mode });
   envoyer();
 }
 
-/** Fin normale (écran de fin). Renvoie la clé de la partie, jointe au résultat envoyé au serveur. */
-export function partieTerminee(gagne: boolean, score: number): string | null {
-  const cle = finir('terminee', gagne, score);
-  if (cle) envoyer();
-  return cle;
+/**
+ * Fin normale (écran de fin). Renvoie la clé de la partie (jointe au résultat envoyé au serveur, qui ne
+ * l'enregistre qu'une fois), son début et son temps de jeu actif (pauses et arrière-plan exclus).
+ */
+export function partieTerminee(gagne: boolean, score: number): FinPartie | null {
+  const fin = finir('terminee', gagne, score);
+  if (fin) envoyer();
+  return fin;
 }
 
 /** Pause du jeu (bouton II) : le temps de jeu s'arrête, le temps sur le site continue. */

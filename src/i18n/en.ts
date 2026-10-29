@@ -11,7 +11,7 @@ export const EN: Dictionnaire = {
   'Aller directement aux jeux': 'Skip to the games',
   'Jeux de calcul mental, pour les enfants et les grands': 'Mental maths games, for kids and grown-ups',
   'Ici, le calcul est l’action du jeu : on additionne des cubes pour repousser un monstre, on tape un résultat pour pulvériser un météore. Quatre jeux, aucun questionnaire.':
-    'Here, maths is the action: add up cubes to push back a monster, type an answer to blast a meteor. Four games, no quizzes.',
+    'Here, maths is the action: add up cubes to push back a monster, type an answer to blast a meteor. Five games, no quizzes.',
   'Qui joue ?': 'Who’s playing?',
   'Ton niveau': 'Your level',
   'Explore les 4 jeux': 'Explore the 4 games',
@@ -526,7 +526,7 @@ export const EN: Dictionnaire = {
   // Le nom de marque ne se traduit jamais.
   Calcoolos: 'Calcoolos',
   'Jeux': 'Games',
-  'Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu. Quatre jeux, aucun questionnaire.': 'Mental maths games for kids and grown-ups: here, calculating is the game itself. Four games, no quizzes.',
+  'Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu. Cinq jeux, aucun questionnaire.': 'Mental maths games for kids and grown-ups: here, calculating is the game itself. Five games, no quizzes.',
   'Tu joues en invité': 'You’re playing as a guest',
   ', sans inscription.': ', no sign-up needed.',
   'Pourquoi créer un compte ?': 'Why create an account?',

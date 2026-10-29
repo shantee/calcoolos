@@ -526,7 +526,7 @@ export const DE: Dictionnaire = {
   // Le nom de marque ne se traduit jamais.
   Calcoolos: 'Calcoolos',
   'Jeux': 'Spiele',
-  'Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu. Quatre jeux, aucun questionnaire.': 'Kopfrechenspiele für Kinder und Erwachsene: Hier ist das Rechnen das Spiel selbst. Vier Spiele, keine Abfragen.',
+  'Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu. Cinq jeux, aucun questionnaire.': 'Kopfrechenspiele für Kinder und Erwachsene: Hier ist das Rechnen das Spiel selbst. Fünf Spiele, keine Abfragen.',
   'Tu joues en invité': 'Du spielst als Gast',
   ', sans inscription.': ', ohne Anmeldung.',
   'Pourquoi créer un compte ?': 'Warum ein Konto anlegen?',

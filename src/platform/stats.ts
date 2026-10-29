@@ -10,6 +10,7 @@ export const GAME_NAMES: Record<GameId, string> = {
   meteores: 'Pluie de météores',
   dragon: 'Le Dragon gourmand',
   fusee: 'Décollage !',
+  neon: 'Neon Flight',
 };
 
 export const TIER_NAMES: Record<string, string> = {
@@ -103,7 +104,8 @@ export function summarize(results: readonly StoredResult[], now = new Date()): S
     { id: 'station', name: 'Pilote de la station', hint: 'Gagner à Pluie de météores', earned: wonGame('meteores') },
     { id: 'dragon', name: 'Ami du dragon', hint: 'Gagner au Dragon gourmand', earned: wonGame('dragon') },
     { id: 'fusee', name: 'Astronaute', hint: 'Atteindre le royaume de la confiserie', earned: wonGame('fusee') },
-    { id: 'trois-jeux', name: 'Tour de l’archipel', hint: 'Gagner aux quatre jeux', earned: wonGame('cubes') && wonGame('meteores') && wonGame('dragon') && wonGame('fusee') },
+    { id: 'neon', name: 'Pilote néon', hint: 'Atteindre le village dans Neon Flight', earned: wonGame('neon') },
+    { id: 'trois-jeux', name: 'Tour de l’archipel', hint: 'Gagner aux quatre jeux de l’archipel', earned: wonGame('cubes') && wonGame('meteores') && wonGame('dragon') && wonGame('fusee') },
     { id: 'etoiles', name: 'Trois étoiles', hint: 'Finir une partie avec 3 étoiles', earned: sorted.some((r) => r.etoiles >= 3) },
     { id: 'defi', name: 'Défi relevé', hint: 'Gagner une partie en mode Défi', earned: sorted.some((r) => r.gagne && r.mode === 'defi') },
     { id: 'tables', name: 'As des tables', hint: '50 multiplications justes à 90 %', earned: !!mul && mul.ok >= 50 && mul.ok / (mul.ok + mul.ko) >= 0.9 },

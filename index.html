@@ -27,7 +27,7 @@
           <p class="accroche">%BRAND_TAGLINE%</p>
           <p class="intro">
             Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu.
-            Quatre jeux, aucun questionnaire.
+            Cinq jeux, aucun questionnaire.
           </p>
 
           <!-- La table de lancement : qui joue, à quel niveau. -->
@@ -58,7 +58,7 @@
           </div>
         </div>
 
-        <nav class="mosaique" aria-label="Les quatre jeux">
+        <nav class="mosaique" aria-label="Les cinq jeux">
           <a class="vignette" href="#jeu-fusee" style="--i: 0">
             <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
             <span>Décollage !</span>
@@ -74,6 +74,10 @@
           <a class="vignette" href="#jeu-dragon" style="--i: 3">
             <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
             <span>Le Dragon gourmand</span>
+          </a>
+          <a class="vignette vignette-large" href="#jeu-neon" style="--i: 4">
+            <img src="/src/images/accueil/neon-flight-800.webp" width="800" height="600" alt="" />
+            <span>Neon Flight <small>· tables de multiplication en 3D</small></span>
           </a>
         </nav>
       </section>
@@ -126,6 +130,7 @@
         <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
         <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
         <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
+        <a href="#jeu-neon" data-repere="jeu-neon"><span class="visuel-masque">Neon Flight</span></a>
       </nav>
 
       <div class="jeux" id="jeux">
@@ -146,9 +151,11 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>01</span> / 04</p>
+            <p class="numero"><span>01</span> / 05</p>
             <p class="surtitre">Du village jusqu’aux étoiles</p>
             <h2 id="fusee-titre">Décollage !</h2>
+            <p class="accroche-jeu">Chaque bonne réponse propulse ta fusée : pose-toi sur les plateformes et monte jusqu’aux étoiles&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Calcul rapide</li><li>Additions et soustractions</li><li>Tables (dès Explorateur)</li></ul>
             <p class="pitch">
               Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
               Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’au royaume de la confiserie !
@@ -181,9 +188,11 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>02</span> / 04</p>
+            <p class="numero"><span>02</span> / 05</p>
             <p class="surtitre">Au-dessus de l’archipel</p>
             <h2 id="meteores-titre">Pluie de météores</h2>
+            <p class="accroche-jeu">Résous les calculs à toute vitesse pour pulvériser les météores avant l’impact&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Les quatre opérations</li><li>Rapidité</li><li>Repérer le bon calcul</li></ul>
             <p class="pitch">
               Météores et robots foncent sur la station, et chacun porte un calcul.
               <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt !
@@ -217,9 +226,11 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>03</span> / 04</p>
+            <p class="numero"><span>03</span> / 05</p>
             <p class="surtitre">L’Atelier des Cubes</p>
             <h2 id="cubes-titre">Cubes de siège</h2>
+            <p class="accroche-jeu">Additionne les bons cubes pour repousser les monstres et protéger ton phare&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Décomposer un nombre</li><li>Stratégie</li></ul>
             <p class="pitch">
               Un monstre approche du phare avec un nombre sur sa pancarte.
               <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
@@ -253,9 +264,11 @@
             </a>
           </figure>
           <div class="vitrine-texte">
-            <p class="numero"><span>04</span> / 04</p>
+            <p class="numero"><span>04</span> / 05</p>
             <p class="surtitre">Dans le ciel du soir</p>
             <h2 id="dragon-titre">Le Dragon gourmand</h2>
+            <p class="accroche-jeu">Guide ton dragon vers les bons nombres : il doit avaler exactement le total demandé&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Compléments</li><li>Multiplications (Stratège, Maître)</li></ul>
             <p class="pitch">
               Guide le dragon et fais-lui avaler des lanternes.
               <strong>Ensemble, elles doivent faire exactement le nombre demandé.</strong>
@@ -267,6 +280,44 @@
             <div class="actions">
               <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer<span class="visuel-masque"> au Dragon gourmand</span></a>
               <p class="commandes">Souris, doigt ou flèches</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="vitrine" id="jeu-neon" data-univers="neon" aria-labelledby="neon-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/neon-flight-800.webp"
+              srcset="/src/images/accueil/neon-flight-480.webp 480w, /src/images/accueil/neon-flight-800.webp 800w, /src/images/accueil/neon-flight-1448.webp 1448w"
+              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un vaisseau vu de dos file entre des gratte-ciel au néon vers un soleil rétro ; des panneaux lumineux affichent « 7 × 8 = ? » et « 6 × 4 = ? »."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/neon-flight.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="numero"><span>05</span> / 05</p>
+            <p class="surtitre">Multiply · en 3D</p>
+            <h2 id="neon-titre">Neon Flight</h2>
+            <p class="accroche-jeu">Révise tes tables de multiplication aux commandes d’une navette, et survole une ville spectaculaire sans te crasher&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de 2 à 12</li><li>Rapidité</li><li>Mémoriser les produits</li></ul>
+            <p class="pitch">
+              De la forêt jusqu’à la mégapole, <strong>chaque bonne réponse fait remonter ta navette</strong> ;
+              trop lent ou faux, elle descend vers les toits. Choisis tes tables, enchaîne les combos et bats ton record.
+              Pour apprendre, réviser ou enfin maîtriser ses tables, à 8 ans comme à 40.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="neon-ex">7 × 8</span> → <span class="cube">56</span> → <span class="neon-monte">▲ altitude</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/neon-flight.html">Jouer<span class="visuel-masque"> à Neon Flight</span></a>
+              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
             </div>
           </div>
         </section>

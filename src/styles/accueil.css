@@ -39,6 +39,10 @@
   --ambiance: #0e2c4c;
 }
 
+:root[data-univers='neon'] {
+  --ambiance: #1a0b36;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -569,6 +573,11 @@ h1 {
   --halo: rgb(90 190 255 / 0.25);
 }
 
+.vitrine[data-univers='neon'] {
+  --accent: #ff7ae0;
+  --halo: rgb(255 90 220 / 0.26);
+}
+
 /* Fine séparation entre deux univers. */
 .vitrine + .vitrine::before {
   content: '';
@@ -764,6 +773,66 @@ h1 {
 
 .pitch strong {
   color: var(--safran);
+}
+
+/* Accroche de chaque jeu (principe en une phrase) et ce qu'il fait travailler. */
+.accroche-jeu {
+  margin: 0;
+  max-width: 30em;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--creme);
+}
+
+.competences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.competences li {
+  padding: 3px 11px;
+  border: 2px solid var(--accent);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgb(10 12 24 / 0.35);
+}
+
+/* Exemple de Neon Flight : calcul en néon, puis la navette remonte. */
+.neon-ex {
+  padding: 0.2em 0.6em;
+  border: 2px solid #5ff2ff;
+  border-radius: 10px;
+  color: #e9fdff;
+  background: #10153a;
+  box-shadow: 0 0 14px rgb(95 242 255 / 0.55), inset 0 0 10px rgb(95 242 255 / 0.25);
+  text-shadow: 0 0 8px #5ff2ff;
+}
+
+.neon-monte {
+  color: #ff7ae0;
+  text-shadow: 0 0 10px rgb(255 122 224 / 0.7);
+}
+
+/* Cinquième vignette : Neon Flight en bandeau sur toute la largeur de la mosaïque. */
+.vignette-large {
+  grid-column: 1 / -1;
+}
+
+.vignette-large img {
+  aspect-ratio: 16 / 5;
+  object-position: 50% 62%;
+}
+
+.vignette small {
+  font-weight: 600;
+  opacity: 0.8;
 }
 
 .actions {
@@ -1499,6 +1568,11 @@ h1 {
   .vignette:nth-child(even):hover,
   .vignette:nth-child(even):focus-visible {
     transform: translateY(32px);
+  }
+
+  /* Les vignettes paires descendent de 36 px : le bandeau du bas laisse la place. */
+  .vignette-large {
+    margin-top: 36px;
   }
 
   .anime .vignette img {

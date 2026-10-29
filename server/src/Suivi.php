@@ -20,7 +20,7 @@ use PDO;
 final class Suivi
 {
     public const APPAREILS = ['ordinateur', 'tablette', 'telephone'];
-    public const PAGES = ['accueil', 'compte', 'tableau', 'classements', 'confidentialite', 'cubes', 'meteores', 'dragon', 'fusee', 'autre'];
+    public const PAGES = ['accueil', 'compte', 'tableau', 'classements', 'confidentialite', 'cubes', 'meteores', 'dragon', 'fusee', 'neon', 'autre'];
     public const ISSUES = ['terminee', 'abandon'];
     /** Une partie sans nouvelles depuis ce délai (s) est considérée comme abandonnée. */
     public const PERDUE_APRES = 600;

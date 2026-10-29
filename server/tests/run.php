@@ -207,7 +207,7 @@ $board = static fn (Response $r, string $jeu, string $niveau, string $mode): arr
     static fn (array $b): bool => $b['jeu'] === $jeu && $b['niveau'] === $niveau && $b['mode'] === $mode,
 ))[0];
 $r = $guest->get('/classements');
-assert_true(count($r->data['classements']) === 4 * 4 * 2, 'tous les classements d’un coup (jeu × niveau × mode)');
+assert_true(count($r->data['classements']) === 4 * 4 * 2 + 4 * 4, 'tous les classements d’un coup (jeu × niveau × mode, Neon Flight : niveau × série de tables)');
 $b = $board($r, 'dragon', 'explorateur', 'defi');
 assert_true(!isset($b['famille']), 'pas de classement familial pour un invité');
 $row = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
@@ -229,6 +229,60 @@ assert_true(array_column($b['famille'] ?? [], 'nom') === ['Lina', 'Noé'], 'clas
 $r = $bob->get('/classements');
 $seen = array_values(array_filter($board($r, 'dragon', 'explorateur', 'defi')['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
 assert_true(!isset($seen['famille']), 'Lina n’est pas marquée « famille » chez Bob');
+
+section('Neon Flight et mesures communes');
+// Une partie Neon Flight réaliste : 40 calculs, 36 justes, mode Arcade (Défi), tables 2 à 5.
+$neon = static fn (int $profile, array $over = []): array => array_replace_recursive([
+    'profil' => $profile, 'jeu' => 'neon', 'niveau' => 'explorateur', 'mode' => 'defi', 'variante' => 'petites', 'score' => 21000,
+    'gagne' => true, 'etoiles' => 1, 'duree' => 130, 'actif' => 120, 'debut' => gmdate('Y-m-d\TH:i:s\Z', $now - 130),
+    'precision' => 0.9, 'ops' => ['×' => [36, 4]], 'details' => ['distance' => 3100, 'altitude' => 140, 'crash' => 1],
+    'mesures' => ['calculs' => 40, 'justes' => 36, 'fausses' => 4, 'serie' => 12, 'tempsMoyen' => 2400, 'tempsMedian' => 2100,
+        'faits' => ['2×7' => [3, 1, 6000, 3], '7×8' => [1, 2, 5200, 1]]],
+], $over);
+$now += 30;
+$r = $alice->post('/resultats', $neon($lina['id'], ['partie' => 'partieNEONAAAAAAAAA1']));
+assert_status($r, 201, 'Neon Flight : résultat enregistré');
+assert_true($r->data['verifie'] === true && $r->data['record'] === true, 'Neon Flight : vérifié et record');
+$now += 30;
+$r = $alice->post('/resultats', $neon($lina['id'], ['partie' => 'partieNEONAAAAAAAAA1', 'score' => 99999]));
+assert_true($r->status === 201 && ($r->data['deja'] ?? false) === true, 'même partie renvoyée (file d’attente) : pas de doublon');
+assert_true((int) $db->query("SELECT COUNT(*) FROM resultats WHERE partie_cle = 'partieNEONAAAAAAAAA1'")->fetchColumn() === 1, 'une seule ligne pour la partie');
+assert_status($alice->post('/resultats', $neon($lina['id'], ['variante' => 'deux-a-cinq'])), 422, 'série de tables inconnue');
+assert_status($alice->post('/resultats', $neon($lina['id'], ['mesures' => ['justes' => 50]])), 422, 'mesures incohérentes (justes > calculs)');
+assert_status($alice->post('/resultats', $neon($lina['id'], ['mesures' => ['faits' => ['8×7' => [1, 0, 100, 1]]]])), 422, 'fait mal écrit (8×7 au lieu de 7×8)');
+assert_status($alice->post('/resultats', $neon($lina['id'], ['mesures' => ['faits' => ['7×8' => [1, 0, 999999, 1]]]])), 422, 'temps de fait impossible');
+$r = $alice->post('/resultats', $neon($lina['id'], ['score' => 500000, 'partie' => 'partieNEONAAAAAAAAA2']));
+assert_true($r->status === 201 && $r->data['verifie'] === false, 'score au-delà de 3 600 points par bonne réponse : gardé, non vérifié');
+$now += 30;
+$r = $alice->post('/resultats', $neon($lina['id'], ['precision' => 0.5, 'partie' => 'partieNEONAAAAAAAAA3']));
+assert_true($r->status === 201 && $r->data['verifie'] === false, 'précision annoncée différente des mesures : non vérifié');
+$now += 30;
+$r = $alice->post('/resultats', array_diff_key($neon($lina['id'], ['partie' => 'partieNEONAAAAAAAAA4']), ['mesures' => 1]));
+assert_true($r->status === 201 && $r->data['verifie'] === false, 'Neon Flight sans mesures : non vérifié');
+$now += 30;
+$r = $alice->post('/resultats', $neon($lina['id'], ['mode' => 'tranquille', 'score' => 90000, 'partie' => 'partieNEONAAAAAAAAA5']));
+assert_true($r->status === 201 && $r->data['verifie'] === true, 'Entraînement enregistré');
+$now += 30;
+$r = $alice->post('/resultats', $neon($lina['id'], ['variante' => 'perso', 'score' => 80000, 'partie' => 'partieNEONAAAAAAAAA6']));
+assert_status($r, 201, 'tables au choix enregistrées');
+$now += 30;
+$r = $alice->post('/resultats', $neon($noe['id'], ['score' => 25000, 'variante' => 'expert', 'niveau' => 'maitre', 'partie' => 'partieNEONAAAAAAAAA7']));
+assert_status($r, 201, 'Noé, autre profil de la même famille');
+$r = $alice->get('/classements');
+$nb = static fn (Response $r, string $niveau, string $variante): array => array_values(array_filter($r->data['classements'],
+    static fn (array $b): bool => $b['jeu'] === 'neon' && $b['niveau'] === $niveau && ($b['variante'] ?? '') === $variante))[0] ?? [];
+assert_true(array_column($nb($r, 'explorateur', 'petites')['public'], 'score') === [21000], 'classement Neon (Explorateur, tables 2 à 5) : le seul score vérifié de la série');
+assert_true(array_column($nb($r, 'maitre', 'expert')['public'], 'nom') === ['Noé'], 'Noé classé à part (Maître, tables 2 à 12)');
+assert_true(count(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'neon' && $b['mode'] === 'tranquille')) === 0, 'pas de classement Neon en Entraînement');
+assert_true(!str_contains(json_encode(array_column(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'neon'), 'public')), '80000'), 'tables « perso » hors classement');
+assert_true(!isset($board($r, 'dragon', 'explorateur', 'defi')['variante']), 'les autres jeux n’ont pas de variante');
+$h = $alice->get("/profils/{$lina['id']}/resultats")->data;
+$first = array_values(array_filter($h['resultats'], static fn (array $x): bool => ($x['cle'] ?? '') === 'partieNEONAAAAAAAAA1'))[0];
+assert_true($first['mesures']['tempsMedian'] === 2100 && $first['mesures']['faits']['7×8'] === [1, 2, 5200, 1] && $first['actif'] === 120 && $first['variante'] === 'petites', 'historique : mesures, faits, temps actif et série relus');
+$old = array_values(array_filter($h['resultats'], static fn (array $x): bool => $x['jeu'] === 'dragon'))[0];
+assert_true(!isset($old['mesures']) && !isset($old['actif']) && !isset($old['variante']), 'anciennes parties : aucune mesure inventée');
+assert_true($h['totaux']['neon']['parties'] === 6 && $h['totaux']['dragon']['parties'] === 3, 'totaux par jeu (au-delà de l’historique détaillé)');
+assert_true(count(array_filter($alice->get("/profils/{$noe['id']}/resultats")->data['resultats'], static fn (array $x): bool => $x['jeu'] === 'neon')) === 1, 'les résultats de Noé restent les siens');
 
 section('Connexion');
 $alice2 = $newClient('198.51.100.1');
@@ -257,7 +311,7 @@ section('Export et suppression');
 $r = $alice2->get('/export');
 assert_status($r, 200, 'export');
 assert_true(($r->headers['Content-Disposition'] ?? '') !== '', 'export téléchargeable');
-assert_true($r->data['compte']['email'] === 'alice@exemple.fr' && count($r->data['profils']) === 6 && count($r->data['profils'][0]['resultats']) === 3, 'export complet');
+assert_true($r->data['compte']['email'] === 'alice@exemple.fr' && count($r->data['profils']) === 6 && count($r->data['profils'][0]['resultats']) === 9, 'export complet');
 assert_true(!str_contains($r->body(), 'mot_de_passe') && !str_contains($r->body(), '$argon'), 'l’export ne contient pas le mot de passe');
 assert_status($alice2->post("/profils/{$noe['id']}/supprimer"), 200, 'profil supprimé');
 assert_status($alice2->post('/supprimer-compte', ['motDePasse' => 'faux-faux-faux']), 403, 'suppression protégée par le mot de passe');
