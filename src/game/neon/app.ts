@@ -4,7 +4,7 @@
  * le son commun, l'enregistrement du résultat (reportResult) et la mesure du temps de jeu actif.
  */
 import "./style.css";
-import { CEILING, COMBO_TIME, Flight, RECORD_KEY, SERIES, SETTINGS_KEY, TIME_LIMIT, loadSettings, readRecord, save, seriesOf, starsFor, type SeriesId, type Settings } from "./model";
+import { CEILING, COMBO_TIME, Flight, RECORD_KEY, SERIES, SETTINGS_KEY, TIME_LIMIT, loadSettings, parJoueur, readRecord, save, seriesOf, starsFor, type SeriesId, type Settings } from "./model";
 import { Fx } from "./fx";
 import { dangerAltitude, placeAt } from "./stages";
 import { World } from "./world";
@@ -20,11 +20,13 @@ const params = new URLSearchParams(location.search);
 const player = activePlayer();
 const tierParam = params.get("niveau");
 let tier: TierId = estNiveau(tierParam) ? tierParam : estNiveau(player?.niveau) ? player.niveau : niveauRetenu() ?? "explorateur";
-const settings = loadSettings(tier),
+const settingsKey = parJoueur(SETTINGS_KEY, player?.id),
+  recordsKey = parJoueur(RECORD_KEY, player?.id);
+const settings = loadSettings(tier, settingsKey),
   flight = new Flight(settings),
   world = new World(),
   audio = new Synth();
-let record = readRecord(),
+let record = readRecord(recordsKey),
   input = "",
   last = performance.now(),
   crashTime = 0,
@@ -85,7 +87,7 @@ function syncSettings() {
   $("#sound").textContent = settings.sound ? "♫ SON" : "♫ MUET";
   $("#sound").setAttribute("aria-pressed", String(settings.sound));
   audio.set(settings.sound);
-  save(SETTINGS_KEY, settings);
+  save(settingsKey, settings);
   try {
     localStorage.setItem(SOUND_KEY, settings.sound ? "on" : "off");
   } catch {
@@ -265,7 +267,7 @@ function finish() {
       old.correct += s.correct;
       old.total += s.total;
     }
-    save(RECORD_KEY, record);
+    save(recordsKey, record);
     recorded = true;
     report(stars);
   }

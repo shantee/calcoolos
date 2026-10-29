@@ -8,10 +8,11 @@ import { api } from '../platform/api';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer } from '../platform/player';
 import { localHistory, type GameId, type StoredResult } from '../platform/results';
-import { GAME_NAMES, MODE_NAMES, TIER_NAMES } from '../platform/stats';
-import { NIVEAUX, NIVEAU_INFOS, niveauRetenu } from '../platform/niveau';
+import { GAME_NAMES, MODE_NAMES, TIER_NAMES, VARIANT_NAMES } from '../platform/stats';
+import { NIVEAUX, NIVEAU_INFOS, estNiveau, niveauRetenu } from '../platform/niveau';
 import { dateCourte, dateLongue, duree, etoiles, score } from '../platform/classement-format';
 import { h } from '../platform/dom';
+import { TIER_SERIES } from '../game/neon/model';
 import { demarrerSuivi } from '../platform/suivi';
 
 demarrerSuivi('classements');
@@ -35,6 +36,8 @@ interface Board {
   jeu: GameId;
   niveau: string;
   mode: string;
+  /** Neon Flight : série de tables (Arcade seulement). */
+  variante?: string;
   public: Row[];
   famille?: Row[];
 }
@@ -45,6 +48,7 @@ const JEUX: { jeu: GameId; surtitre: string; page: string }[] = [
   { jeu: 'meteores', surtitre: 'Au-dessus de l’archipel', page: 'jeu/pluie-de-meteores.html' },
   { jeu: 'cubes', surtitre: 'L’Atelier des Cubes', page: 'jeu/cubes-de-siege.html' },
   { jeu: 'dragon', surtitre: 'Dans le ciel du soir', page: 'jeu/dragon-gourmand.html' },
+  { jeu: 'neon', surtitre: 'Tables de multiplication en 3D', page: 'jeu/neon-flight.html' },
 ];
 
 /**
@@ -58,6 +62,22 @@ const root = document.querySelector<HTMLElement>('#contenu')!;
 const MEDALS = ['🥇', '🥈', '🥉'];
 const MODES = ['defi', 'tranquille'] as const;
 const MODE_AIDE: Record<string, string> = { defi: 'avec cœurs et chrono', tranquille: 'rien à perdre' };
+
+/**
+ * Onglets d'un jeu : Défi / Tranquille, sauf Neon Flight, classé en Arcade seulement et séparé par série
+ * de tables (on ne compare pas un record des tables 2 à 5 à un record des tables 2 à 12).
+ */
+interface Onglet {
+  id: string;
+  nom: string;
+  aide: string;
+  garde: (b: Board) => boolean;
+}
+const SERIES_NEON = ['petites', 'grandes', 'toutes', 'expert'] as const;
+const onglets = (jeu: GameId): Onglet[] =>
+  jeu === 'neon'
+    ? SERIES_NEON.map((v) => ({ id: v, nom: VARIANT_NAMES[v], aide: 'Arcade', garde: (b) => b.variante === v }))
+    : MODES.map((m) => ({ id: m, nom: MODE_NAMES[m], aide: MODE_AIDE[m], garde: (b) => b.mode === m }));
 
 const place = (rang: number) => (rang <= 3 ? MEDALS[rang - 1] : `${rang}e`);
 
@@ -122,6 +142,8 @@ function boardEl(b: Board, page: string, me: string | undefined, guest: StoredRe
 }
 
 /** Classement en famille : seulement les tableaux où au moins deux profils ont joué (renvoyés par le serveur). */
+const nomTableau = (b: Board) => b.variante ? VARIANT_NAMES[b.variante] ?? b.variante : MODE_NAMES[b.mode] ?? b.mode;
+
 function familyCard(boards: Board[]): HTMLElement | null {
   const played = boards.filter((b) => b.famille);
   if (played.length === 0) return null;
@@ -129,7 +151,7 @@ function familyCard(boards: Board[]): HTMLElement | null {
   return h('details', { class: 'carte famille-classements' },
     h('summary', {}, h('h2', {}, 'Dans la famille'), h('span', { class: 'discret' }, `${played.length} tableau${played.length > 1 ? 'x' : ''} où plusieurs d’entre vous ont joué`)),
     h('ul', {}, ...played.map((b) => h('li', {},
-      h('b', {}, `${GAME_NAMES[b.jeu]} · ${TIER_NAMES[b.niveau] ?? b.niveau} · ${MODE_NAMES[b.mode] ?? b.mode} : `),
+      h('b', {}, `${GAME_NAMES[b.jeu]} · ${TIER_NAMES[b.niveau] ?? b.niveau} · ${nomTableau(b)} : `),
       ...b.famille!.flatMap((r, i) => [i > 0 ? ' · ' : '', `${MEDALS[i] ?? `${i + 1}e`} ${r.nom} ${score(r.score)}`]),
     ))));
 }
@@ -156,51 +178,58 @@ function banniere(jeu: GameId, surtitre: string, page: string, boards: Board[], 
       h('p', { class: 'surtitre' }, surtitre),
       h('h2', {}, GAME_NAMES[jeu]),
       h('p', { class: 'resume' },
-        pl ? h('span', { class: 'ma-place' }, `${place(pl.rang)} Ta meilleure place : ${pl.rang === 1 ? '1re' : `${pl.rang}e`} en ${TIER_NAMES[pl.b.niveau]} · ${MODE_NAMES[pl.b.mode]}`)
+        pl ? h('span', { class: 'ma-place' }, `${place(pl.rang)} Ta meilleure place : ${pl.rang === 1 ? '1re' : `${pl.rang}e`} en ${TIER_NAMES[pl.b.niveau]} · ${nomTableau(pl.b)}`)
           : nb > 0 ? `${nb} joueur${nb > 1 ? 's' : ''} sur les podiums` : 'Aucun record pour l’instant : le premier sera le tien ?')),
     img ? h('img', { class: 'mascotte', src: img, alt: '', 'aria-hidden': 'true' }) : h('span', { class: 'mascotte place-libre', 'aria-hidden': 'true' }),
     h('a', { class: 'jouer', href: page }, 'Jouer', h('span', { class: 'visuel-masque' }, ` à ${GAME_NAMES[jeu]}`)));
 }
 
-/** Onglets Défi / Tranquille d'un jeu ; le choix est commun à tous les jeux et retenu sur l'appareil. */
-const CLE_MODE = 'calcoolos.classements.mode';
-function modeRetenu(): string {
+/** Choix de l'onglet : Défi / Tranquille commun aux quatre jeux, série à part pour Neon Flight ; retenu sur l'appareil. */
+const cleOnglet = (jeu: GameId) => (jeu === 'neon' ? 'calcoolos.classements.neon' : 'calcoolos.classements.mode');
+function ongletRetenu(jeu: GameId, defaut: string): string {
+  const ids = onglets(jeu).map((o) => o.id);
   try {
-    const v = localStorage.getItem(CLE_MODE);
-    return v === 'tranquille' ? v : 'defi';
+    const v = localStorage.getItem(cleOnglet(jeu));
+    return v && ids.includes(v) ? v : defaut;
   } catch {
-    return 'defi';
+    return defaut;
   }
 }
 
-function choisirMode(mode: string): void {
-  for (const tab of document.querySelectorAll<HTMLButtonElement>('.onglets-mode [role="tab"]')) {
-    const on = tab.dataset.mode === mode;
-    tab.setAttribute('aria-selected', String(on));
-    tab.tabIndex = on ? 0 : -1;
+function choisirOnglet(jeu: GameId, id: string, retenir = true): void {
+  // Défi / Tranquille : le même choix pour les quatre jeux qui ont ces onglets.
+  const sections = [...document.querySelectorAll<HTMLElement>('.jeu-classements')].filter((s) => (jeu === 'neon') === (s.dataset.univers === 'neon'));
+  for (const sec of sections) {
+    for (const tab of sec.querySelectorAll<HTMLButtonElement>('.onglets-mode [role="tab"]')) {
+      const on = tab.dataset.onglet === id;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+    }
+    for (const panel of sec.querySelectorAll<HTMLElement>('.niveaux[data-onglet]')) panel.hidden = panel.dataset.onglet !== id;
   }
-  for (const panel of document.querySelectorAll<HTMLElement>('.niveaux[data-mode]')) panel.hidden = panel.dataset.mode !== mode;
+  if (!retenir) return;
   try {
-    localStorage.setItem(CLE_MODE, mode);
+    localStorage.setItem(cleOnglet(jeu), id);
   } catch {
     /* navigation privée : le choix ne sera pas retenu */
   }
 }
 
-function onglets(jeu: GameId): HTMLElement {
-  const tabs = MODES.map((mode) => h('button', { type: 'button', role: 'tab', id: `onglet-${jeu}-${mode}`, 'data-mode': mode, 'aria-controls': `niveaux-${jeu}-${mode}` },
-    h('b', {}, MODE_NAMES[mode]), h('small', {}, MODE_AIDE[mode])));
-  const bar = h('div', { class: 'onglets-mode', role: 'tablist', 'aria-label': `Mode de ${GAME_NAMES[jeu]}` }, ...tabs);
+function barreOnglets(jeu: GameId): HTMLElement {
+  const tabs = onglets(jeu).map((o) => h('button', { type: 'button', role: 'tab', id: `onglet-${jeu}-${o.id}`, 'data-onglet': o.id, 'aria-controls': `niveaux-${jeu}-${o.id}` },
+    h('b', {}, o.nom), h('small', {}, o.aide)));
+  const bar = h('div', { class: `onglets-mode${tabs.length > 2 ? ' quatre' : ''}`, role: 'tablist', 'aria-label': jeu === 'neon' ? 'Série de tables' : `Mode de ${GAME_NAMES[jeu]}` }, ...tabs);
   bar.addEventListener('click', (e) => {
     const tab = (e.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
-    if (tab?.dataset.mode) choisirMode(tab.dataset.mode);
+    if (tab?.dataset.onglet) choisirOnglet(jeu, tab.dataset.onglet);
   });
   bar.addEventListener('keydown', (e) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
-    const other = tabs.find((t) => t.getAttribute('aria-selected') !== 'true');
-    if (other?.dataset.mode) {
-      choisirMode(other.dataset.mode);
-      other.focus();
+    const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
+    const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+    if (next?.dataset.onglet) {
+      choisirOnglet(jeu, next.dataset.onglet);
+      next.focus();
     }
   });
   return bar;
@@ -223,20 +252,20 @@ void (async () => {
   // Invité : ses parties restent sur l'appareil ; on glisse son meilleur score dans chaque classement.
   const history = connected ? [] : localHistory();
   const guestBest = (b: Board) => history
-    .filter((x) => x.jeu === b.jeu && x.niveau === b.niveau && x.mode === b.mode)
+    .filter((x) => x.jeu === b.jeu && x.niveau === b.niveau && x.mode === b.mode && (x.variante ?? '') === (b.variante ?? ''))
     .reduce<StoredResult | null>((m, x) => (!m || x.score > m.score ? x : m), null);
 
   const sections = JEUX.map(({ jeu, surtitre, page }) => {
     const mine = boards.filter((b) => b.jeu === jeu);
     return h('section', { class: 'jeu-classements', id: `jeu-${jeu}`, 'data-univers': jeu, 'aria-label': GAME_NAMES[jeu] },
       banniere(jeu, surtitre, page, mine, me),
-      onglets(jeu),
-      ...MODES.map((mode) => h('div', { class: 'niveaux', 'data-mode': mode, role: 'tabpanel', id: `niveaux-${jeu}-${mode}`, 'aria-labelledby': `onglet-${jeu}-${mode}` },
-        ...mine.filter((b) => b.mode === mode).map((b) => boardEl(b, page, me, connected ? null : guestBest(b), b.niveau === monNiveau)))));
+      barreOnglets(jeu),
+      ...onglets(jeu).map((o) => h('div', { class: 'niveaux', 'data-onglet': o.id, role: 'tabpanel', id: `niveaux-${jeu}-${o.id}`, 'aria-labelledby': `onglet-${jeu}-${o.id}` },
+        ...mine.filter(o.garde).map((b) => boardEl(b, page, me, connected ? null : guestBest(b), b.niveau === monNiveau)))));
   });
   root.replaceChildren(
     h('h1', {}, 'Classements'),
-    h('p', { class: 'chapeau' }, 'Les meilleurs scores de chaque jeu, niveau par niveau, en Défi et en Tranquille. Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur. Survole (ou touche) une ligne pour voir le détail du record.'),
+    h('p', { class: 'chapeau' }, 'Les meilleurs scores de chaque jeu, niveau par niveau, en Défi et en Tranquille (Neon Flight : en Arcade, série de tables par série de tables). Toutes les parties comptent, gagnées ou perdues, tant que le score est jugé vraisemblable par le serveur. Survole (ou touche) une ligne pour voir le détail du record.'),
     h('nav', { class: 'sommaire-jeux', 'aria-label': 'Aller au jeu' },
       ...JEUX.map(({ jeu }) => h('a', { href: `#jeu-${jeu}`, 'data-univers': jeu }, h('span', { class: 'embleme', 'aria-hidden': 'true' }), GAME_NAMES[jeu]))),
     connected
@@ -246,5 +275,7 @@ void (async () => {
           h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'))),
     ...sections,
   );
-  choisirMode(modeRetenu());
+  choisirOnglet('cubes', ongletRetenu('cubes', 'defi'), false);
+  // Neon Flight : d'office, la série proposée au niveau du joueur (comme dans le jeu).
+  choisirOnglet('neon', ongletRetenu('neon', (estNiveau(monNiveau) ? TIER_SERIES[monNiveau] : 'petites')), false);
 })();

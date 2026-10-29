@@ -1113,6 +1113,14 @@ table.tableau {
   --cadrage: 65% 7%;
 }
 
+.jeu-classements[data-univers='neon'],
+.sommaire-jeux a[data-univers='neon'] {
+  --accent: #ff7ae0;
+  --halo: rgb(255 90 220 / 0.32);
+  --vignette: url('../images/accueil/neon-flight-800.webp');
+  --cadrage: 50% 40%;
+}
+
 .jeu-classements[data-univers='dragon'],
 .sommaire-jeux a[data-univers='dragon'] {
   --accent: #ffa36b;
@@ -1332,6 +1340,10 @@ table.tableau {
   display: flex;
   gap: 10px;
   margin: 22px 0 14px;
+}
+
+.onglets-mode.quatre {
+  flex-wrap: wrap;
 }
 
 .onglets-mode button {

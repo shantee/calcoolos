@@ -281,10 +281,12 @@ export class Flight {
 }
 export const SETTINGS_KEY = "calcoolos.neon.reglages";
 export const RECORD_KEY = "calcoolos.neon.records";
+/** Réglages et records propres à chaque profil (deux enfants sur la même tablette ne se mélangent pas). */
+export const parJoueur = (key: string, profil?: number) => `${key}.${profil ?? "invite"}`;
 /** Réglages retenus sur l'appareil ; le niveau, lui, vient de Calcoolos (et la série d'office du niveau). */
-export function loadSettings(tier: TierId = defaults.difficulty): Settings {
+export function loadSettings(tier: TierId = defaults.difficulty, key = SETTINGS_KEY): Settings {
   try {
-    const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    const s = JSON.parse(localStorage.getItem(key) || "{}");
     return {
       ...defaults,
       ...s,
@@ -309,9 +311,9 @@ export function loadSettings(tier: TierId = defaults.difficulty): Settings {
     return { ...defaults };
   }
 }
-export function readRecord(): RecordData {
+export function readRecord(key = RECORD_KEY): RecordData {
   try {
-    const r = JSON.parse(localStorage.getItem(RECORD_KEY) || "null");
+    const r = JSON.parse(localStorage.getItem(key) || "null");
     if (
       r &&
       Number.isFinite(r.best) &&
