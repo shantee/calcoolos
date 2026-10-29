@@ -1781,3 +1781,228 @@ table.tableau {
     transform: none;
   }
 }
+
+/* --- Mes progrès (chantier 3) : synthèse, choix du jeu, verdicts, grille des tables --- */
+.synthese ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.synthese li {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: rgb(246 236 216 / 0.06);
+  line-height: 1.45;
+  font-size: 1.05rem;
+}
+
+.synthese li.bravo {
+  background: rgb(127 176 105 / 0.18);
+  font-weight: 700;
+}
+
+.synthese li.conseil {
+  background: rgb(255 201 74 / 0.12);
+}
+
+.choix-jeu {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 22px;
+}
+
+.choix-jeu button {
+  display: grid;
+  gap: 2px;
+  padding: 10px 16px;
+  font: inherit;
+  font-weight: 800;
+  color: var(--creme);
+  background: rgb(14 34 54 / 0.85);
+  border: 3px solid var(--encre);
+  border-left: 8px solid var(--jeu, var(--brume));
+  border-radius: 16px;
+  box-shadow: 0 5px 0 var(--encre);
+  cursor: pointer;
+  text-align: left;
+}
+
+.choix-jeu button small {
+  font-weight: 600;
+  font-size: 0.8rem;
+  color: var(--brume);
+}
+
+.choix-jeu button[aria-pressed='true'] {
+  background: var(--safran);
+  color: var(--encre);
+}
+
+.choix-jeu button[aria-pressed='true'] small {
+  color: var(--encre);
+}
+
+.choix-jeu button:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+.titre-vue {
+  margin: 0 0 4px;
+  font-size: 1.7rem;
+  border-left: 8px solid var(--jeu);
+  padding-left: 12px;
+}
+
+.comparer select {
+  font: inherit;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 3px solid var(--encre);
+  background: var(--creme);
+  color: var(--encre);
+  max-width: 100%;
+}
+
+.verdicts {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  color: #dfeeea;
+}
+
+.verdicts li::before {
+  content: '• ';
+  color: var(--brume);
+}
+
+.verdicts li.mieux {
+  color: #b9e59f;
+  font-weight: 700;
+}
+
+.verdicts li.mieux::before {
+  content: '▲ ';
+  color: #7fb069;
+}
+
+.grille-tables {
+  border-collapse: separate;
+  border-spacing: 3px;
+  margin: 8px auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.grille-tables th {
+  color: var(--safran);
+  font-weight: 800;
+  width: 2.4em;
+}
+
+.grille-tables td {
+  width: 2.4em;
+  height: 2.2em;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 7px;
+  color: var(--encre);
+}
+
+.m-maitrise { background: #7fb069; }
+.m-acquis { background: #c2df7f; }
+.m-en-cours { background: #ffc94a; }
+.m-a-revoir { background: #f0745e; }
+.m-inconnu { background: rgb(246 236 216 / 0.07); }
+
+.legende-tables {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin: 6px 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}
+
+.legende-tables span {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border-radius: 4px;
+  vertical-align: -2px;
+}
+
+.tables-carte h3 {
+  margin: 14px 0 8px;
+}
+
+.forces {
+  gap: 10px 22px;
+}
+
+.faits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.faits span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgb(246 236 216 / 0.1);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.par-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 6px 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.par-table li {
+  display: grid;
+  grid-template-columns: 7.5em 1fr auto;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.jauge {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7fb069 var(--r), rgb(246 236 216 / 0.1) var(--r));
+}
+
+@media (max-width: 480px) {
+  .grille-tables {
+    border-spacing: 2px;
+  }
+
+  .grille-tables th,
+  .grille-tables td {
+    width: 1.9em;
+    height: 1.9em;
+    font-size: 0.7rem;
+  }
+
+  .choix-jeu button {
+    padding: 8px 12px;
+  }
+}

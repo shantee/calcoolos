@@ -13,6 +13,15 @@ export const GAME_NAMES: Record<GameId, string> = {
   neon: 'Neon Flight',
 };
 
+/** Page de chaque jeu (dans jeu/). */
+export const GAME_PAGES: Record<GameId, string> = {
+  cubes: 'cubes-de-siege.html',
+  meteores: 'pluie-de-meteores.html',
+  dragon: 'dragon-gourmand.html',
+  fusee: 'decollage.html',
+  neon: 'neon-flight.html',
+};
+
 export const TIER_NAMES: Record<string, string> = {
   eveil: 'Éveil',
   explorateur: 'Explorateur',
@@ -21,6 +30,19 @@ export const TIER_NAMES: Record<string, string> = {
 };
 
 export const MODE_NAMES: Record<string, string> = { tranquille: 'Tranquille', defi: 'Défi' };
+
+/** Neon Flight appelle ses modes Arcade (classé) et Entraînement. */
+export const modeName = (jeu: GameId, mode: string): string =>
+  jeu === 'neon' ? (mode === 'defi' ? 'Arcade' : 'Entraînement') : (MODE_NAMES[mode] ?? mode);
+
+/** Variantes (Neon Flight : séries de tables). */
+export const VARIANT_NAMES: Record<string, string> = {
+  petites: 'Tables 2 à 5',
+  grandes: 'Tables 6 à 9',
+  toutes: 'Tables 2 à 10',
+  expert: 'Tables 2 à 12',
+  perso: 'Tables au choix',
+};
 
 export const OP_NAMES: Record<string, string> = { '+': 'Additions', '−': 'Soustractions', '×': 'Multiplications', '÷': 'Divisions' };
 
@@ -36,8 +58,8 @@ export interface Summary {
   wins: number;
   stars: number;
   seconds: number;
-  /** Meilleur score par jeu / niveau / mode. */
-  records: Array<{ jeu: GameId; niveau: string; mode: string; score: number; etoiles: number; date: string }>;
+  /** Meilleur score par jeu / niveau / mode / variante. */
+  records: Array<{ jeu: GameId; niveau: string; mode: string; variante: string; score: number; etoiles: number; date: string }>;
   ops: Array<{ op: string; ok: number; ko: number; rate: number }>;
   /** Un point par jour joué (30 derniers jours), du plus ancien au plus récent. */
   days: Array<{ day: string; games: number; precision: number; stars: number }>;
@@ -52,13 +74,15 @@ export function summarize(results: readonly StoredResult[], now = new Date()): S
   const games = sorted.length;
   const wins = sorted.filter((r) => r.gagne).length;
   const stars = sorted.reduce((a, r) => a + r.etoiles, 0);
-  const seconds = sorted.reduce((a, r) => a + r.duree, 0);
+  // Temps actif quand il a été mesuré (depuis le 29/10/2026), sinon durée de la partie.
+  const seconds = sorted.reduce((a, r) => a + (r.actif ?? r.duree), 0);
 
   const recMap = new Map<string, Summary['records'][number]>();
   for (const r of sorted) {
-    const key = `${r.jeu}|${r.niveau}|${r.mode}`;
+    const variante = r.variante ?? '';
+    const key = `${r.jeu}|${r.niveau}|${r.mode}|${variante}`;
     const cur = recMap.get(key);
-    if (!cur || r.score > cur.score) recMap.set(key, { jeu: r.jeu, niveau: r.niveau, mode: r.mode, score: r.score, etoiles: r.etoiles, date: r.date });
+    if (!cur || r.score > cur.score) recMap.set(key, { jeu: r.jeu, niveau: r.niveau, mode: r.mode, variante, score: r.score, etoiles: r.etoiles, date: r.date });
   }
   const order = Object.keys(GAME_NAMES);
   const records = [...recMap.values()].sort((a, b) => order.indexOf(a.jeu) - order.indexOf(b.jeu) || b.score - a.score);
