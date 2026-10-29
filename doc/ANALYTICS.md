@@ -58,7 +58,7 @@ sans son début reconstitue la partie.
 
 ## Données anciennes
 
-Avant la mesure (installée le 29/10/2026), seule la table `resultats` existe : parties **terminées** des **profils
+Avant la mesure (installée le 29/10/2026 à 13 h 56), seule la table `resultats` existe : parties **terminées** des **profils
 connectés**, avec la durée annoncée par le jeu (pauses comprises). L'administration les compte comme « historique »
 (parties terminées, temps de jeu, fiches des joueurs, records) ; elle n'invente ni visites, ni invités, ni parties
 commencées ou abandonnées pour cette période, et l'écrit dans un bandeau.

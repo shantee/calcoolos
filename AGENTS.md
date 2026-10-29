@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 27/10/2026 (session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
+Dernière mise à jour : 29/10/2026 (Calcoolos Analytics, voir `doc/ANALYTICS.md` ; 27/10/2026 session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
 
 ---
 
@@ -85,9 +85,10 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
 | Plein écran + PWA légère | boutons Accueil / Plein écran dans les 4 jeux (`src/game/plein-ecran.ts`), manifeste et icônes, sans service worker |
 | Page de confidentialité | brouillon, à faire relire (identité du responsable, hébergement) |
+| Calcoolos Analytics (29/10/2026) | mesure d'audience maison + administration dans le portail : https://tool.zfx.fr/calcoolos/ ; tout est dans `doc/ANALYTICS.md` |
 | Langues (26/10/2026) | drapeaux 🇬🇧 🇩🇪 🇫🇷 tout à droite de la barre, détection de la langue du navigateur ; anglais et allemand traduits une fois (pages, 4 jeux, messages du serveur), sauf la page de confidentialité |
 
-Tests : 127 tests TypeScript (Vitest, dont 7 pour les langues, 7 pour le niveau, 3 pour les avatars et 6 pour les couleurs de calculs), 126 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
+Tests : 135 tests TypeScript (Vitest, dont 5 pour la mesure d'audience, 7 pour les langues, 7 pour le niveau, 3 pour les avatars et 6 pour les couleurs de calculs), 195 vérifications d'API PHP (SQLite et MariaDB 11.8, dont la vérification des jetons Google), parcours complet de la
 plateforme dans Chromium (21 vérifications), parcours de l'accueil (`scripts/accueil-e2e.mjs`, 68 vérifications), « Continuer avec Google » avec un Google imité (`scripts/google-e2e.mjs`, 33), parties gagnées et perdues jouées automatiquement pour chaque jeu,
 vérification de la CSP sur toutes les pages. En ligne : parcours de la plateforme (20/20) et
 `scripts/verifier-en-ligne.mjs` (24/24 : quatre jeux sur ordinateur, tablette et téléphone, reconnexion sur un autre
@@ -178,7 +179,9 @@ src/entries/               point d'entrée de chaque page (chacun importe d'abor
 src/i18n/                  langue.ts (détection, choix), drapeaux.ts (sélecteur), traduire.ts (t()), page.ts (DOM),
                            phaser.ts (textes des jeux), en.ts et de.ts (dictionnaires « texte français → traduction »)
 tests/                     Vitest
-server/                    API PHP sans Composer : src/{Api,Games,Db,Http,Session,Config,Google}.php, migrations/,
+admin/                     Calcoolos Analytics : module du portail tool.zfx.fr (app/, assets/), deployer.sh (doc/ANALYTICS.md)
+src/platform/suivi.ts      mesure d'audience (visites, parties, temps actif) ; serveur : Suivi.php, Stats.php
+server/                    API PHP sans Composer : src/{Api,Games,Db,Http,Session,Config,Google,Suivi,Stats}.php, migrations/,
                            bin/{migrate,reset-password}.php, tests/run.php, public/index.php
 deploy/                    Nginx, pool PHP-FPM, scripts d'installation, mise en service, retour arrière, sauvegarde
 doc/                       cahier des charges, ARCHITECTURE, DIRECTION_ARTISTIQUE, IDEES_JEUX, DEPLOIEMENT
@@ -318,6 +321,11 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Tests en ligne** : le résultat d'une partie n'est envoyé qu'à l'affichage de l'écran de fin ; un script qui
   quitte la page avant ne laisse aucune trace. Limite de 5 inscriptions par heure : ne pas relancer en boucle
   `verifier-en-ligne.mjs`, qui crée (puis supprime) un compte.
+
+- **Mesure d'audience** : les navigateurs pilotés (`navigator.webdriver`) ne sont **pas** comptés ; un script qui
+  veut tester la mesure pose `localStorage['calcoolos.suivi-test'] = '1'` (voir `scripts/analytics-e2e.mjs`). Un
+  nouveau jeu doit appeler `partieCommence()` au départ (et `partiePause()` s'il a une pause) ; la fin passe par
+  `reportResult()`. Le module d'administration se publie à part : `bash admin/deployer.sh` (sans sudo).
 
 - **Plusieurs sessions en parallèle (normal, voulu par Philippe)** : deux agents peuvent travailler en même temps sur
   le dépôt (souvent sur le même fichier, ex. `rocket-scene.ts`). Avant chaque commit, `git status` et `git diff` :

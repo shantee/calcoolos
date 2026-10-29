@@ -15,6 +15,7 @@
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (Dell, CloudPanel) ; publier : `bash deploy/publier.sh` |
 | Langues : anglais et allemand | fait le 26/10/2026 : drapeaux, détection du navigateur, traductions (sauf confidentialité) |
 | Chantier 02 : logo animé, espace joueur, comptes, niveau | fait le 26/10/2026 (session 10), publié |
+| Calcoolos Analytics (mesure d'audience + administration) | fait le 29/10/2026 : https://tool.zfx.fr/calcoolos/ (`doc/ANALYTICS.md`) |
 | E. Finition | à faire : vrais téléphones et tablettes, accessibilité, page de confidentialité |
 
 ## Rappels pour Philippe
@@ -27,6 +28,41 @@
   (les jeux seulement, en mode invité : l'aperçu n'a pas de serveur PHP).
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
+
+## 2026-10-29 : Claude, Calcoolos Analytics (mesure d'audience et administration)
+
+**Demande** : une application d'administration et de statistiques (visiteurs, invités, joueurs connectés, temps réel
+de jeu, jeu préféré, historique, fidélisation, entonnoir, appareils, santé), en tuile du portail tool.zfx.fr, avec sa
+connexion (pas de deuxième connexion ni de Cloudflare Access), API réservées, données sur MariaDB, sans service tiers
+et sans ralentir les jeux.
+
+**Fait**
+- **Collecte** (`src/platform/suivi.ts`) : visiteur et visite tirés au hasard (localStorage, aucun cookie), parties
+  du bouton Tranquille/Défi à l'écran de fin ou au départ de la page ; temps **actif** (page visible, geste dans la
+  dernière minute, jeu hors pause) ; envoi groupé toutes les 30 s et `sendBeacon` à la fermeture. Rien sur les
+  touches, clics, mouvements, position.
+- **API** : `POST /api/suivi` (`Suivi.php` : contrôles, idempotence, cumuls bornés par le temps écoulé, parties
+  perdues fermées après 10 min, conservation 400 jours puis totaux par jour, compte créé pendant la visite déduit) ;
+  `GET /api/admin/*` (`Stats.php`) répond 404 sauf depuis 127.0.0.1 avec le jeton dont l'empreinte est sur le Dell.
+  Migration `004_suivi.php` (aucune donnée existante modifiée ; `resultats.partie_cle` relie résultat et partie).
+- **Administration** (`admin/`) : module du portail appelé après sa vérification de session ; vue d'ensemble, jeux et
+  « jeu préféré » (indice à 5 signaux), visiteurs et entonnoir, joueurs et fiches (profils enfants : pseudo et avatar
+  seulement, aucun e-mail), historique filtrable, santé de la collecte. ECharts 6.1. Tuile « Calcoolos Analytics ».
+- **Confidentialité** : section « Mesure de fréquentation » ; pieds de page « aucun traceur extérieur ».
+- **Tests** : 195 vérifications d'API (SQLite et MariaDB), 135 Vitest, `scripts/analytics-e2e.mjs` (28 : vraies
+  parties dans les quatre jeux, pause de 15 s non comptée, abandon, profil connecté, chiffres de l'administration),
+  captures `CAPTURES/analytics/` (banc) et `CAPTURES/analytics-prod/` (en ligne, avec la connexion du portail),
+  aucune erreur de console. En ligne : chiffres affichés = base (à la seconde) ; protections vérifiées (sans session :
+  renvoi vers la connexion pour pages, API et fichiers ; API interne 404 sans jeton, 404 depuis Internet).
+- **Publié** : `deploy/publier.sh` (migration 004 après sauvegarde) puis `admin/deployer.sh` (sauvegardes du routeur
+  et de `tools.json` dans `~/portail-backups/calcoolos-analytics-20261029-135630/` sur le Dell).
+
+**Limites**
+- Avant le 29/10/2026 à 13 h 56, seules les parties terminées des profils (table `resultats`, durée annoncée par le
+  jeu) sont connues : ni visites, ni invités, ni abandons pour cette période (rien n'est inventé, un bandeau le dit).
+- Visiteurs = navigateurs (estimation) ; un onglet fermé brutalement sans `pagehide` n'est clos qu'au bout de 10 min.
+- Navigateurs pilotés (Playwright) non comptés, sauf `localStorage['calcoolos.suivi-test'] = '1'`.
+- Le portail n'a qu'un compte : pas de rôles plus fins.
 
 ## 2026-10-28 : Claude, page Classements refaite
 

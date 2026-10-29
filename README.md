@@ -109,6 +109,7 @@ src/entries/          point d'entrée de chaque page
 src/i18n/             langues : détection, drapeaux, traduction anglaise (en.ts) et allemande (de.ts)
 src/art/              dessins par code : variante B, monde de l'archipel, espace, dragon
 server/               API PHP (src/, migrations/, bin/ outils, tests/, public/index.php)
+admin/                Calcoolos Analytics, statistiques dans le portail tool.zfx.fr (doc/ANALYTICS.md)
 deploy/               mise en ligne : publier.sh (publication), webdell/ (serveur Dell), kit générique
 tests/                tests Vitest
 scripts/              captures Playwright et partie automatique
