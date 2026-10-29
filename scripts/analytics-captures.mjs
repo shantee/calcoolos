@@ -33,7 +33,7 @@ for (const [nom, vp] of [['ordinateur', { width: 1440, height: 900 }], ['tablett
     if (!process.env.PORTAIL_MDP) throw new Error('Connexion du portail demandée : PORTAIL_UTILISATEUR / PORTAIL_MDP');
     await page.fill('input[name="identifiant"]', process.env.PORTAIL_UTILISATEUR ?? 'philippe');
     await page.fill('input[name="mot_de_passe"]', process.env.PORTAIL_MDP);
-    await page.uncheck('input[name="rester"]'); // pas de jeton « rester connecté » pour une session de test
+    await page.$eval('input[name="rester"]', (c) => { c.checked = false; }); // pas de jeton « rester connecté » pour une session de test
     await Promise.all([page.waitForNavigation(), page.click('button.entrer')]);
     if (!page.url().includes('/calcoolos')) await page.goto(`${admin}/calcoolos/`, { waitUntil: 'load' });
   }

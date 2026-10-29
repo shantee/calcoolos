@@ -169,14 +169,25 @@ const jourAxe = (j) => {
 function legende() {
   return { top: 0, right: 0, icon: 'roundRect', itemWidth: 12, itemHeight: 8, textStyle: { color: T.texte2, fontSize: 12.5 } };
 }
+/** Pas d'axe rond pour des durées en secondes (10 s, 1 min, 15 min, 1 h…), 5 graduations au plus. */
+function pasDuree(max) {
+  const pas = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 10800, 21600, 43200, 86400];
+  return pas.find((p) => max / p <= 5) ?? 86400 * Math.ceil(max / 86400 / 5);
+}
+/** Réglage d'un axe de durée : pas rond et sommet sur un multiple du pas. */
+const axeDuree = (max) => {
+  const interval = pasDuree(max);
+  return { interval, max: Math.ceil(max / interval) * interval };
+};
 function courbes(el, jours, series, unite = '', label = '') {
+  const maxS = unite === 's' ? Math.max(1, ...jours.map((_, i) => series.reduce((t, x) => t + (Number(x.data[i]?.value ?? x.data[i]) || 0), 0))) : 0;
   return dessiner(el, {
     grid: { left: 44, right: 14, top: 34, bottom: 28 },
     tooltip: { ...infobulle, trigger: 'axis', axisPointer: { type: 'line', lineStyle: { color: 'rgba(255,255,255,.25)' } },
       valueFormatter: (v) => (unite === 's' ? duree(v) : nombre(v)) },
     legend: series.length > 1 ? legende() : undefined,
     xAxis: { type: 'category', data: jours.map(jourAxe), boundaryGap: series.some((s) => s.type === 'bar'), ...axeCommun, splitLine: { show: false } },
-    yAxis: { type: 'value', minInterval: unite === 's' ? 60 : 1, ...axeCommun, axisLabel: { ...axeCommun.axisLabel, formatter: (v) => (unite === 's' ? duree(v, true) : nombre(v)) } },
+    yAxis: { type: 'value', ...(unite === 's' ? axeDuree(maxS) : { minInterval: 1 }), ...axeCommun, axisLabel: { ...axeCommun.axisLabel, formatter: (v) => (unite === 's' ? duree(v, true) : nombre(v)) } },
     series,
   }, label);
 }
@@ -285,7 +296,7 @@ function barresJeux(el, jeux, val, unite = '') {
   return dessiner(el, {
     grid: { left: 92, right: 70, top: 10, bottom: 20 },
     tooltip: { ...infobulle, trigger: 'item', formatter: (p) => `${p.name}<br><b>${f(p.value)}</b>` },
-    xAxis: { type: 'value', minInterval: unite === 'x' ? 0 : 1, ...axeCommun, axisLabel: { ...axeCommun.axisLabel, formatter: (v) => f(v, true) } },
+    xAxis: { type: 'value', ...(unite === 's' ? axeDuree(Math.max(1, ...data.map(val))) : { minInterval: unite === 'x' ? 0 : 1 }), ...axeCommun, axisLabel: { ...axeCommun.axisLabel, formatter: (v) => f(v, true) } },
     yAxis: { type: 'category', data: data.map((j) => JEUX[j.jeu].court), inverse: true, ...axeCommun, axisLabel: { ...axeCommun.axisLabel, color: T.texte2, fontSize: 13 } },
     series: [{ type: 'bar', barMaxWidth: 24, data: data.map((j) => ({ value: val(j), itemStyle: { color: JEUX[j.jeu].couleur, borderRadius: [0, 4, 4, 0] } })),
       label: { show: true, position: 'right', color: T.texte2, formatter: (p) => f(p.value, true) } }],
