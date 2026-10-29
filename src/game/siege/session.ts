@@ -6,6 +6,7 @@ import { SiegeRound, type ValidateOutcome } from './round';
 import { AdaptiveDifficulty, adjustConfig } from '../../core/adaptive';
 import { ARCHETYPES, MODES, WAVES, damageTo, type Archetype, type EnemyKind, type Mode } from '../../core/waves';
 import type { Tier } from '../../core/difficulty';
+import { Releve } from '../../platform/releve';
 
 export interface Stats {
   attempts: number;
@@ -25,6 +26,8 @@ export class SiegeSession {
   readonly mode: Mode;
   readonly adaptive = new AdaptiveDifficulty();
   readonly stats: Stats = { attempts: 0, hits: 0, perfects: 0, misses: 0, bestCombo: 0, defeated: 0, times: [] };
+  /** Relevé commun (src/platform/releve.ts) : une validation = un calcul, temps depuis l'apparition de la cible. */
+  readonly releve = new Releve();
   wave = 0;
   private queue: EnemyKind[] = [];
   enemy: Archetype | null = null;
@@ -97,6 +100,7 @@ export class SiegeSession {
     this.stats.attempts++;
     if (outcome.kind === 'miss') {
       this.stats.misses++;
+      this.releve.reponse(false);
       this.adaptive.record('miss');
       return { outcome, damage, killed, armoredHalved, mega };
     }
@@ -105,6 +109,7 @@ export class SiegeSession {
     if (perfect) this.stats.perfects++;
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.round.combo);
     this.stats.times.push((nowMs - this.shownAt) / 1000);
+    this.releve.reponse(true, nowMs - this.shownAt);
     this.adaptive.record(perfect ? 'perfect' : 'hit');
     // La difficulté ajustée s'applique aux cibles suivantes.
     this.round.puzzleConfig = adjustConfig(this.round.tier.puzzle, this.adaptive.offset);

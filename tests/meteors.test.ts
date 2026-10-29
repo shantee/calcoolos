@@ -71,6 +71,12 @@ describe('partie de Pluie de météores', () => {
       expect(s.phase).toBe('won');
       expect(s.shields).toBe(3);
       expect(s.stats.errors).toBe(0);
+      // Relevé commun : autant de calculs que de tirs, temps mesurés sur la chute des météores.
+      const m = s.releve.mesures();
+      expect(m.calculs).toBe(s.stats.hits);
+      expect(m.fausses).toBe(0);
+      expect(m.tempsMedian).toBeGreaterThan(0);
+      if (tier !== 'eveil') expect(Object.keys(m.faits ?? {}).length).toBeGreaterThan(0);
       const total = METEOR_WAVES.reduce((n, w) => n + w.rocks + w.robots + w.gold, 0);
       // Chaque météore est détruit (par un tir ou par une onde dorée), plus les calculs du boss.
       expect(s.stats.hits).toBeLessThanOrEqual(total + BOSS_CALCS);

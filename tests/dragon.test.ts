@@ -110,6 +110,7 @@ describe('partie du dragon', () => {
         expect(s.stats.goals).toBe(DRAGON_STAGES.reduce((a, p) => a + p.goals, 0));
         expect(s.stats.overshoots).toBe(0);
         expect(s.accuracy()).toBe(1);
+        expect(s.releve.mesures()).toMatchObject({ calculs: s.stats.goals, justes: s.stats.goals, fausses: 0 });
       }
       if (cfg.mul) expect(ops).toEqual(new Set(['+', '×']));
       else expect(ops).toEqual(new Set(['+']));

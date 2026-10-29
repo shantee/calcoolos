@@ -1754,6 +1754,7 @@ export class DragonScene extends Phaser.Scene {
       precision: s.accuracy(),
       ops: s.stats.byOp,
       details: { objectifs: s.stats.goals, parfaits: s.stats.perfect, hoquets: s.stats.overshoots, serie: s.stats.bestCombo, chauvesSouris: s.stats.batsBurned },
+      mesures: s.releve.mesures(),
     }).then((o) => status.active && status.setText(outcomeText(o)));
     this.addOverlayButton(W / 2 - 130, top + 482, 'Accueil', false, () => {
       window.location.href = '../index.html';

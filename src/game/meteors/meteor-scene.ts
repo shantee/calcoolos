@@ -1468,6 +1468,7 @@ export class MeteorScene extends Phaser.Scene {
       precision: s.accuracy(),
       ops: s.stats.byOp,
       details: { tirs: s.stats.hits, erreurs: s.stats.errors, impacts: s.stats.impacts, serie: s.stats.bestCombo },
+      mesures: s.releve.mesures(),
     }).then((o) => status.active && status.setText(outcomeText(o)));
     this.addOverlayButton(W / 2 - 130, top + 460, 'Accueil', false, () => {
       window.location.href = '../index.html';

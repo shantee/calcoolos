@@ -1735,6 +1735,7 @@ export class RocketScene extends Phaser.Scene {
       precision: s.accuracy(),
       ops: s.stats.byOp,
       details: { altitude: Math.round(s.best / 8), justes: s.stats.correct, serie: s.stats.bestCombo, etoiles: s.stats.stars, chutes: s.stats.falls },
+      mesures: s.releve.mesures(),
     }).then((o) => status.active && status.setText(outcomeText(o)));
     this.addOverlayButton(W / 2 - 130, top + 520, 'Accueil', false, () => {
       window.location.href = '../index.html';

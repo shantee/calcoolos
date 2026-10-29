@@ -19,6 +19,7 @@ import type { Expression } from '../../core/expressions';
 import { gradeOf, pickGrade, pickGraded, type Grade } from '../../core/calc-grade';
 import type { TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
+import { Releve } from '../../platform/releve';
 
 export const WORLD_W = 1280;
 /** Couloir où se trouvent les plateformes (le pavé et les flèches occupent les bords). */
@@ -316,6 +317,8 @@ export class RocketSession {
   /** Délai avant le prochain calcul (s). */
   private wait = 0.6;
   readonly stats: RocketStats = { correct: 0, wrong: 0, timeouts: 0, falls: 0, hardLandings: 0, powers: 0, stars: 0, bestCombo: 0, byOp: {} };
+  /** Relevé commun : juste, faux ou temps écoulé ; temps de réponse = temps écoulé depuis l'affichage du calcul. */
+  readonly releve = new Releve();
 
   constructor(
     readonly tier: TierId,
@@ -366,9 +369,11 @@ export class RocketSession {
     this.question = null;
     const op = q.expr.op;
     const tally = (this.stats.byOp[op] ??= [0, 0]);
+    const used = (q.time - q.left) * 1000;
     if (Number(typed) !== expected) {
       tally[1]++;
       this.stats.wrong++;
+      this.releve.reponse(false, used, q.expr);
       this.combo = 0;
       this.wait = 0.7;
       const lifeLost = this.miss(q);
@@ -377,6 +382,7 @@ export class RocketSession {
     }
     tally[0]++;
     this.stats.correct++;
+    this.releve.reponse(true, used, q.expr);
     this.combo++;
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     // Points : rapidité et série.
@@ -436,6 +442,7 @@ export class RocketSession {
       this.typed = '';
       this.stats.timeouts++;
       (this.stats.byOp[q.expr.op] ??= [0, 0])[1]++;
+      this.releve.reponse(false, undefined, q.expr);
       this.combo = 0;
       this.wait = 0.5;
       ev.push({ type: 'timeout', q, lifeLost: this.miss(q) });

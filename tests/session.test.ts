@@ -43,6 +43,8 @@ describe('partie complète', () => {
       expect(shots).toBeLessThan(40);
       expect(s.score).toBeGreaterThan(0);
       expect(s.medianTime()).toBe(2);
+      // Relevé commun : un calcul par tir, 2 s chacun.
+      expect(s.releve.mesures()).toMatchObject({ calculs: shots, justes: shots, fausses: 0, serie: shots, tempsMedian: 2000 });
     }
   });
 

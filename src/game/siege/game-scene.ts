@@ -645,6 +645,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       precision: s.accuracy(),
       ops: { '+': [s.stats.hits, s.stats.misses] },
       details: { monstres: s.stats.defeated, parfaits: s.stats.perfects, serie: s.stats.bestCombo, bonus: this.powers?.caught ?? 0 },
+      mesures: s.releve.mesures(),
     }).then((o) => status.active && status.setText(`${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}   ${outcomeText(o)}`));
     this.overlayButton(W / 2 - 130, top + 440, 'Accueil', false, () => {
       window.location.href = '../index.html';

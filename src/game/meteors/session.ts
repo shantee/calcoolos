@@ -13,6 +13,7 @@ import { createRng, type Rng } from '../../core/rng';
 import { pickExpression, type Expression } from '../../core/expressions';
 import type { TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
+import { Releve } from '../../platform/releve';
 
 export type MeteorKind = 'rocher' | 'robot' | 'dore' | 'boss';
 
@@ -91,6 +92,11 @@ export class MeteorSession {
   score = 0;
   combo = 0;
   stats: MeteorStats = { hits: 0, errors: 0, impacts: 0, bestCombo: 0, heights: [], byOp: {} };
+  /**
+   * Relevé commun : un tir juste ou une saisie fausse = un calcul. Temps d'une bonne réponse : temps passé
+   * à l'écran par le météore visé (sa chute), sauf pour le Robot-Mère dont les calculs se succèdent.
+   */
+  readonly releve = new Releve();
   private nextId = 1;
   private toSpawn: MeteorKind[] = [];
   private spawnTimer = 1.5;
@@ -244,6 +250,7 @@ export class MeteorSession {
     this.typed = '';
     this.combo = 0;
     this.stats.errors++;
+    this.releve.reponse(false);
     return { kind: 'error', typed };
   }
 
@@ -258,6 +265,7 @@ export class MeteorSession {
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     this.stats.heights.push(m.p);
     this.countOp(m.expr.op, true);
+    this.releve.reponse(true, m.kind === 'boss' ? undefined : m.p * m.fall * 1000, m.expr);
     const multiplier = 1 + 0.1 * Math.min(this.combo - 1, 20);
     let points = Math.round((50 + 100 * (1 - Math.min(1, m.p))) * multiplier);
     const destroyed: Meteor[] = [];

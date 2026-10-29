@@ -21,6 +21,7 @@ import { createRng, type Rng } from '../../core/rng';
 import { minCubesTable } from '../../core/puzzle';
 import type { TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
+import { Releve } from '../../platform/releve';
 
 export type DragonOp = '+' | '×';
 
@@ -195,6 +196,9 @@ export class DragonSession {
   hunger = 0;
   phase: 'play' | 'won' | 'lost' = 'play';
   elapsed = 0;
+  /** Relevé commun : un objectif atteint (juste) ou un hoquet (faux) ; temps = durée pour atteindre l'objectif. */
+  readonly releve = new Releve();
+  private goalAt = 0;
   readonly stats: DragonStats = { goals: 0, perfect: 0, overshoots: 0, hurts: 0, hungers: 0, orbsEaten: 0, bestCombo: 0, batsBurned: 0, bonuses: 0, byOp: {} };
   private nextId = 1;
   private lastTarget = 0;
@@ -210,6 +214,7 @@ export class DragonSession {
     this.hearts = DRAGON_MODES[mode].hearts;
     for (let i = 0; i < this.cfg.orbs; i++) this.orbs.push(this.newOrb(this.randomValue(), start));
     this.goal = this.nextGoal(start, { added: [], removed: [] });
+    this.goalAt = this.elapsed;
     this.hunger = this.cfg.hunger;
   }
 
@@ -260,6 +265,7 @@ export class DragonSession {
       // Dépassé : hoquet, le ventre se vide ; l'objectif reste le même.
       this.stats.overshoots++;
       (this.stats.byOp[this.goal.op] ??= [0, 0])[1]++;
+      this.releve.reponse(false);
       this.combo = 0;
       const spat = this.belly;
       this.belly = [];
@@ -281,6 +287,7 @@ export class DragonSession {
     this.combo++;
     this.stats.goals++;
     (this.stats.byOp[goal.op] ??= [0, 0])[0]++;
+    this.releve.reponse(true, (this.elapsed - this.goalAt) * 1000);
     if (perfect) this.stats.perfect++;
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     const comboMul = Math.min(2, 1 + 0.1 * (this.combo - 1));
@@ -459,6 +466,7 @@ export class DragonSession {
         const g = this.rng.pick(pool);
         this.lastTarget = g.target;
         this.goal = g;
+        this.goalAt = this.elapsed;
         return g;
       }
       // Aucun objectif possible : une lanterne lointaine change de valeur.

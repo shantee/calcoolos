@@ -165,6 +165,8 @@ describe('partie', () => {
     expect(r?.kind).toBe('wrong');
     expect(s.combo).toBe(0);
     expect(s.stats.wrong).toBe(1);
+    // Relevé commun : une juste puis une fausse, avec leur fait si c'est une multiplication.
+    expect(s.releve.mesures()).toMatchObject({ calculs: 2, justes: 1, fausses: 1, serie: 1 });
     expect(r?.kind === 'wrong' && r.lifeLost).toBeGreaterThan(0);
     expect(s.lives).toBe(MAX_LIVES - (r?.kind === 'wrong' ? r.lifeLost : 0));
   });
