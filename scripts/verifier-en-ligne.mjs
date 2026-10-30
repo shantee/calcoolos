@@ -98,7 +98,7 @@ await page.waitForSelector('h1:text-is("Espace famille")');
 const form = page.locator('section[aria-labelledby="t-new"] form');
 await form.locator('input[name="pseudo"]').fill('Testeur');
 await form.locator('select[name="niveau"]').selectOption('explorateur');
-await form.locator('input[value="dragon"]').check({ force: true });
+await form.locator('input[value="astronaute"]').check({ force: true });
 await form.locator('button[type="submit"]').click();
 await page.waitForSelector('h3:text-is("Testeur")');
 check(true, 'compte familial et profil créés');

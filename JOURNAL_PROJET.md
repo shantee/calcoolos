@@ -40,7 +40,7 @@
 - Nouvelle accroche (`brand.json`) et introduction, compétences sur les vignettes.
 - Tests : Vitest 176, API 225, plateforme 21/21, CSP ok, accueil 66/68 (les 2 échecs : textes Neon Flight et MULTIRAIL
   non traduits en anglais/allemand, antérieurs au chantier). Captures dans `CAPTURES/accueil-30-10/`, avec API simulée.
-- Limites : favoris et option retenus sur l'appareil seulement (pas de synchronisation) ; `verifier-en-ligne` à relire.
+- Limites : favoris et option retenus sur l'appareil seulement (pas de synchronisation). En ligne : verifier-en-ligne 24/24, script corrigé (avatar disparu) ; 2 comptes d'essai `verif-…@exemple.fr` sans profil restés après les 2 essais plantés.
 
 ## 2026-10-30 : Claude, menu déroulant des langues
 
