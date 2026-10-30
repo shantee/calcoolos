@@ -30,6 +30,15 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-30 : Claude, jeux 3D sans WebGL
+
+- **Constat** : dans Brave de Philippe, MULTIRAIL plantait sur une erreur non gérée (`Error creating WebGL context`), page
+  vide. Cause côté poste : Brave refuse WebGL (`WebGL1/2 blocklisted`, rendu `llvmpipe`) alors que Chrome, sur la même
+  page, utilise la GTX 1060 sans erreur. Les avertissements `Permissions-Policy` ne viennent pas de l'en-tête du site.
+- **Correctif** : écran commun `src/platform/sans3d.ts` (raison, conseil, retour à l'accueil ; fr/en/de). MULTIRAIL teste
+  WebGL 2 avant de charger Three.js et intercepte aussi un refus du moteur ; Neon Flight remplace son ancien message.
+- **Tests** : `scripts/sans3d-e2e.mjs`, avec la 3D réellement coupée dans Chromium (`--disable-3d-apis`).
+
 ## 2026-10-30 : Claude, chantier comptes pour tous
 
 - **Modèle** : `comptes.profil_personnel` (migration 006, colonne vide au départ, aucune donnée réécrite, pas de clé

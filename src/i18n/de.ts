@@ -735,4 +735,7 @@ export const DE: Dictionnaire = {
   'Voir tous les progrès': 'Alle Fortschritte ansehen',
   'Progrès de {*}, enregistrés sur le serveur (visibles seulement depuis ce compte).': 'Fortschritte von {*}, auf dem Server gespeichert (nur von diesem Konto aus sichtbar).',
   'sous ton pseudo': 'unter deinem Spitznamen',
+  'La 3D ne démarre pas sur ce navigateur': '3D startet in diesem Browser nicht',
+  'Ce jeu a besoin de la 3D (WebGL), qui est bloquée ou indisponible ici.': 'Dieses Spiel braucht 3D (WebGL), das hier blockiert oder nicht verfügbar ist.',
+  'Vérifie que l’accélération matérielle est activée dans les réglages du navigateur, puis redémarre-le. Sinon, essaie un autre navigateur : les jeux en 2D fonctionnent partout.': 'Prüfe, ob die Hardwarebeschleunigung in den Browsereinstellungen aktiviert ist, und starte den Browser neu. Sonst probiere einen anderen Browser: Die 2D-Spiele funktionieren überall.',
 };

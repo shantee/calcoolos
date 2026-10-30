@@ -14,6 +14,7 @@ import { partieCommence, partiePause } from "../../platform/suivi";
 import { activePlayer } from "../../platform/player";
 import { estNiveau, niveauRetenu, NIVEAUX, NIVEAU_INFOS } from "../../platform/niveau";
 import { AVATAR_INVITE, avatarImg } from "../../platform/avatars";
+import { afficherSans3d } from "../../platform/sans3d";
 import type { TierId } from "../../core/difficulty";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const params = new URLSearchParams(location.search);
@@ -434,9 +435,7 @@ try {
   });
 } catch (e) {
   console.error(e);
-  $("#play").textContent = "3D indisponible";
-  $(".hint").textContent =
-    "Active l’accélération graphique de ton navigateur, puis recharge cette page.";
+  afficherSans3d();
 }
 /** Crochets de test (scripts Playwright), comme les autres jeux : window.__neon. */
 Object.assign(window, {

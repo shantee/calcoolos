@@ -1,0 +1,35 @@
+.sans3d {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow: auto;
+  background: linear-gradient(160deg, #1d2352, #4b2a6b);
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.sans3d div {
+  max-width: 34rem;
+  text-align: center;
+  line-height: 1.5;
+}
+.sans3d h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.5rem, 5vw, 2.1rem);
+  line-height: 1.2;
+}
+.sans3d p {
+  margin: 0 0 0.75rem;
+}
+.sans3d a {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  background: #ffd166;
+  color: #2a1a4a;
+  font-weight: 700;
+  text-decoration: none;
+}
