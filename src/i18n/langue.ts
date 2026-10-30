@@ -2,8 +2,8 @@
  * Langue de l'interface. Le français est la langue de référence : tout le code est écrit en français et les
  * autres langues sont des traductions posées par-dessus (voir traduire.ts), qui peuvent avoir du retard.
  *
- * Choix : celui du visiteur (drapeaux de la barre du haut, retenu dans le navigateur), sinon la langue du
- * navigateur (français, allemand ou anglais), sinon l'anglais.
+ * Choix : celui du visiteur (menu des drapeaux de la barre du haut, retenu dans le navigateur), sinon la langue
+ * du navigateur (français, allemand ou anglais), sinon le français.
  */
 export type Langue = 'fr' | 'en' | 'de';
 
@@ -22,7 +22,7 @@ export function langueDuNavigateur(prefs: readonly string[] = navigator.language
     const code = p.toLowerCase().slice(0, 2);
     if (estLangue(code)) return code;
   }
-  return 'en';
+  return 'fr';
 }
 
 let courante: Langue | null = null;

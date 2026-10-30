@@ -16,9 +16,9 @@ describe('détection de la langue', () => {
     expect(langueDuNavigateur(['es-ES', 'fr-CH'])).toBe('fr');
     expect(langueDuNavigateur(['en-US'])).toBe('en');
   });
-  it('passe à l’anglais pour une langue non traduite', () => {
-    expect(langueDuNavigateur(['it-IT', 'es'])).toBe('en');
-    expect(langueDuNavigateur([])).toBe('en');
+  it('passe au français pour une langue non traduite ou inconnue', () => {
+    expect(langueDuNavigateur(['it-IT', 'es'])).toBe('fr');
+    expect(langueDuNavigateur([])).toBe('fr');
   });
 });
 

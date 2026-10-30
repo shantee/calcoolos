@@ -30,6 +30,13 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-30 : Claude, menu déroulant des langues
+
+- Barre du haut : un seul drapeau (langue en cours) qui ouvre un menu déroulant English / Deutsch / Français ;
+  fermeture par clic ailleurs ou Échap. Le choix reste retenu dans le navigateur.
+- Langue du navigateur absente, inconnue ou non traduite (italien, espagnol…) : **français** (avant : anglais).
+- Vérifié dans Chromium sans écran (ordinateur et téléphone, navigateur fr, de, it), tests 174.
+
 ## 2026-10-29 : Claude, chantier 04 (MULTIRAIL intégré à Calcoolos)
 
 **Demande** : intégrer MULTIRAIL (dépôt `shantee/multirails`, branche `chantier-2-voyage`) comme Neon Flight :

@@ -1,5 +1,6 @@
 /**
- * Sélecteur de langue : trois petits drapeaux (Royaume-Uni, Allemagne, France), tout à droite de la barre.
+ * Sélecteur de langue, tout à droite de la barre : le drapeau de la langue en cours ouvre un menu déroulant
+ * (Royaume-Uni, Allemagne, France).
  * Les drapeaux sont dessinés en SVG (aucun fichier image) ; les noms des langues restent dans leur langue.
  */
 import { LANGUES, choisirLangue, langue, type Langue } from './langue';
@@ -27,20 +28,51 @@ const SVG: Record<Langue, string> = {
 export function selecteurLangue(): HTMLElement {
   const groupe = document.createElement('div');
   groupe.className = 'langues';
-  groupe.setAttribute('role', 'group');
-  groupe.setAttribute('aria-label', 'Language · Sprache · Langue');
   groupe.translate = false;
+
+  const bouton = document.createElement('button');
+  bouton.type = 'button';
+  bouton.className = 'langue-courante';
+  bouton.title = NOMS[langue()];
+  bouton.setAttribute('aria-label', `Language · Sprache · Langue : ${NOMS[langue()]}`);
+  bouton.setAttribute('aria-expanded', 'false');
+  bouton.setAttribute('aria-haspopup', 'true');
+  // Dessin constant écrit ci-dessus (aucune donnée extérieure).
+  bouton.innerHTML = `${SVG[langue()]}<span class="langue-fleche" aria-hidden="true">▾</span>`;
+
+  const menu = document.createElement('div');
+  menu.className = 'langues-menu';
+  menu.hidden = true;
   for (const l of LANGUES) {
     const b = document.createElement('button');
     b.type = 'button';
     b.lang = l;
-    b.title = NOMS[l];
-    b.setAttribute('aria-label', NOMS[l]);
     b.setAttribute('aria-pressed', String(l === langue()));
-    // Dessin constant écrit ci-dessus (aucune donnée extérieure).
-    b.innerHTML = SVG[l];
-    b.addEventListener('click', () => choisirLangue(l));
-    groupe.append(b);
+    b.innerHTML = `${SVG[l]}<span>${NOMS[l]}</span>`;
+    b.addEventListener('click', () => {
+      ouvrir(false);
+      choisirLangue(l);
+    });
+    menu.append(b);
   }
+
+  function ouvrir(oui: boolean): void {
+    menu.hidden = !oui;
+    bouton.setAttribute('aria-expanded', String(oui));
+  }
+
+  bouton.addEventListener('click', () => ouvrir(menu.hidden));
+  // Un clic ailleurs ou Échap referme le menu.
+  document.addEventListener('click', (e) => {
+    if (!groupe.contains(e.target as Node)) ouvrir(false);
+  });
+  groupe.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !menu.hidden) {
+      ouvrir(false);
+      bouton.focus();
+    }
+  });
+
+  groupe.append(bouton, menu);
   return groupe;
 }
