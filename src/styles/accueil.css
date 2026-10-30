@@ -738,30 +738,6 @@ h1 {
   min-width: 0;
 }
 
-.numero {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  font-size: 0.95rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--brume);
-}
-
-.numero::before {
-  content: '';
-  width: 28px;
-  height: 3px;
-  border-radius: 3px;
-  background: var(--accent);
-}
-
-.numero span {
-  color: var(--accent);
-  font-weight: 800;
-}
-
 .vitrine h2 {
   margin: -4px 0 0;
   font-size: clamp(2.1rem, 5.2vw, 3.5rem);
