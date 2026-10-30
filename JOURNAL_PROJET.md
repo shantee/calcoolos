@@ -34,7 +34,8 @@
 
 - **Constat** : dans Brave de Philippe, MULTIRAIL plantait sur une erreur non gérée (`Error creating WebGL context`), page
   vide. Cause côté poste : Brave refuse WebGL (`WebGL1/2 blocklisted`, rendu `llvmpipe`) alors que Chrome, sur la même
-  page, utilise la GTX 1060 sans erreur. Les avertissements `Permissions-Policy` ne viennent pas de l'en-tête du site.
+  page, utilise la GTX 1060 sans erreur (Brave lancé avant l'extension Flatpak du nouveau pilote NVIDIA : à relancer ;
+  détail dans `fedora-poste/2026-09-plantage-gpu-brave`). Les avertissements `Permissions-Policy` ne viennent pas de l'en-tête du site.
 - **Correctif** : écran commun `src/platform/sans3d.ts` (raison, conseil, retour à l'accueil ; fr/en/de). MULTIRAIL teste
   WebGL 2 avant de charger Three.js et intercepte aussi un refus du moteur ; Neon Flight remplace son ancien message.
 - **Tests** : `scripts/sans3d-e2e.mjs`, avec la 3D réellement coupée dans Chromium (`--disable-3d-apis`).
