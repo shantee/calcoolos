@@ -337,7 +337,7 @@ async function showProfile(p: Profile): Promise<void> {
     document.querySelector('#tableau-corps')!.replaceChildren(h('p', { class: 'message erreur' }, r?.data.erreur ?? 'Le serveur ne répond pas.'));
     return;
   }
-  renderDashboard(p.pseudo, r.data.resultats, `Progrès de ${p.pseudo}, enregistrés sur le serveur (visibles seulement dans votre espace famille).`, r.data.totaux);
+  renderDashboard(p.pseudo, r.data.resultats, `Progrès de ${p.pseudo}, enregistrés sur le serveur (visibles seulement depuis ce compte).`, r.data.totaux);
 }
 
 function showGuest(): void {

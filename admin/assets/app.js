@@ -14,7 +14,7 @@ const NIVEAUX = { eveil: 'Doux', explorateur: 'Relevé', stratege: 'Piquant', ma
 const COUL_NIVEAUX = { eveil: '#7fb3f2', explorateur: '#5fd39a', stratege: '#f2b84b', maitre: '#e87ba4' };
 const MODES = { tranquille: 'Tranquille', defi: 'Défi' };
 const APPAREILS = { ordinateur: 'Ordinateur', tablette: 'Tablette', telephone: 'Téléphone' };
-const PAGES = { accueil: 'Accueil', compte: 'Espace parents', tableau: 'Mes progrès', classements: 'Classements', confidentialite: 'Confidentialité', cubes: 'Panique au phare !', meteores: 'Pluie de météores', dragon: 'Le Dragon gourmand', fusee: 'Décollage !', neon: 'Neon Flight', multirail: 'MULTIRAIL', autre: 'Autre page' };
+const PAGES = { accueil: 'Accueil', compte: 'Mon espace', tableau: 'Mes progrès', classements: 'Classements', confidentialite: 'Confidentialité', cubes: 'Panique au phare !', meteores: 'Pluie de météores', dragon: 'Le Dragon gourmand', fusee: 'Décollage !', neon: 'Neon Flight', multirail: 'MULTIRAIL', autre: 'Autre page' };
 const T = { texte: '#e8ecf4', texte2: '#b6c0d6', muet: '#8592ae', ligne: 'rgba(232,236,244,.09)', fond: '#1f2a44', accent: '#ffe14d', bleu: '#3987e5' };
 
 const etat = { vue: 'ensemble', periode: '30', debut: '', fin: '', resume: null, joueurs: null, filtres: { jeu: '', qui: '', profil: '' }, entonnoir: 'tous', tri: { col: 'derniereActivite', sens: 'desc' }, recherche: '' };
@@ -248,7 +248,7 @@ function vueEnsemble(r) {
     carte({ etiquette: 'Parties commencées', ico: '🎮', valeur: nombre(c.partiesCommencees), detail: h('span', {}, h('b', {}, nombre(c.partiesAbandonnees)), ' abandonnées'), teinte: 'rgba(57,135,229,.16)' }),
     carte({ etiquette: 'Parties terminées', ico: '🏁', valeur: nombre(c.partiesTerminees), detail: c.partiesTermineesHistorique ? h('span', {}, 'dont ', h('b', {}, nombre(c.partiesTermineesHistorique)), ' d’avant la mesure') : 'jusqu’à l’écran de fin' }),
     carte({ etiquette: 'Temps total de jeu', ico: '⌛', valeur: duree(c.tempsJeu, true), detail: h('span', {}, 'partie moyenne ', h('b', {}, duree(c.partieMoyenne))), teinte: 'rgba(201,133,0,.16)' }),
-    carte({ etiquette: 'Comptes familiaux', ico: '👨‍👩‍👧', valeur: nombre(c.comptes), detail: h('span', {}, h('b', {}, `+${nombre(c.nouveauxComptes)}`), ' sur la période · ', h('b', {}, nombre(c.profils)), ' profils') }),
+    carte({ etiquette: 'Comptes', ico: '👨‍👩‍👧', valeur: nombre(c.comptes), detail: h('span', {}, h('b', {}, `+${nombre(c.nouveauxComptes)}`), ' sur la période · ', h('b', {}, nombre(c.profils)), ' profils') }),
     carte({ etiquette: 'Jeu préféré (estimation)', ico: '🏆', valeur: prefere ? JEUX[prefere].court : '—', detail: prefere ? h('span', {}, 'indice ', h('b', {}, `${jeux.find((j) => j.jeu === prefere).preference}/100`), ' · voir Jeux') : 'pas encore de parties', teinte: 'rgba(255,225,77,.16)' }),
   ));
 
@@ -422,7 +422,7 @@ function vueVisiteurs(r) {
   const v = r.invites;
   const f = r.fidelite;
   const out = [noteSuivi(r), titre('Visiteurs sans compte', libellePeriode())];
-  out.push(h('p', { class: 'sous-titre' }, 'Visites sans espace famille connecté (et visites qui se terminent par la création d’un compte). Un visiteur est un navigateur reconnu par un numéro aléatoire : une même personne sur deux appareils compte deux fois, et vider les données du navigateur crée un nouveau visiteur.'));
+  out.push(h('p', { class: 'sous-titre' }, 'Visites sans compte connecté (et visites qui se terminent par la création d’un compte). Un visiteur est un navigateur reconnu par un numéro aléatoire : une même personne sur deux appareils compte deux fois, et vider les données du navigateur crée un nouveau visiteur.'));
   out.push(h('div', { class: 'grille g-cartes' },
     carte({ etiquette: 'Sessions d’invités', ico: '🧭', valeur: nombre(v.sessions), detail: h('span', {}, h('b', {}, nombre(v.visiteurs)), ' visiteurs distincts') }),
     carte({ etiquette: 'Temps passé sur le site', ico: '⏱️', valeur: duree(v.dureeMoyenne), detail: h('span', {}, 'par session, médiane ', h('b', {}, duree(v.dureeMediane))) }),
@@ -519,7 +519,7 @@ function definitions() {
 // ------------------------------------------------------------------------------- joueurs
 async function vueJoueurs() {
   const d = etat.joueurs ?? (etat.joueurs = await api('joueurs'));
-  const out = [titre('Joueurs', 'profils des espaces famille')];
+  const out = [titre('Joueurs', 'profils des comptes')];
   out.push(h('p', { class: 'sous-titre' }, 'Totaux depuis le début (toutes périodes). Chaque profil enfant a ses propres statistiques ; les comptes familiaux sont listés à part. Aucune adresse e-mail n’est affichée.'));
   const recherche = h('input', { type: 'search', placeholder: 'Chercher un pseudo…', value: etat.recherche, 'aria-label': 'Chercher un pseudo' });
   const corps = h('tbody');
@@ -562,7 +562,7 @@ async function vueJoueurs() {
   out.push(h('div', { class: 'outils' }, recherche, h('span', { class: 'aide' }, `${d.profils.length} profil(s) · cliquer une ligne pour ouvrir la fiche`)));
   out.push(h('div', { class: 'tableau-defile' }, h('table', {}, h('thead', {}, tete), corps)));
 
-  out.push(titre('Comptes familiaux', `${d.comptes.length} compte(s)`));
+  out.push(titre('Comptes', `${d.comptes.length} compte(s)`));
   out.push(h('div', { class: 'tableau-defile' }, h('table', {},
     h('thead', {}, h('tr', {}, h('th', {}, 'Compte'), h('th', {}, 'Créé le'), h('th', {}, 'Dernière connexion'), h('th', {}, 'Dernière visite'), h('th', {}, 'Connexion'), h('th', { class: 'n' }, 'Parties'), h('th', { class: 'n' }, 'Temps'), h('th', {}, 'Profils'))),
     h('tbody', {}, d.comptes.length ? d.comptes.map((c) => h('tr', {},
@@ -629,7 +629,7 @@ async function ouvrirFiche(id) {
       const rc = p.records[j];
       return h('div', { class: `record c-${j}` }, JEUX[j].nom, rc ? h('b', {}, nombre(rc.score)) : h('b', {}, '—'), rc ? `${NIVEAUX[rc.niveau]} · ${MODES[rc.mode]} · ${jourCourt(rc.date)}` : 'pas encore de record');
     })),
-    p.compte.autresProfils.length ? h('div', {}, titre('Même famille', 'statistiques séparées'), h('div', { class: 'famille' }, p.compte.autresProfils.map((x) => h('button', { type: 'button', class: 'chip', onclick: () => ouvrirFiche(x.id) }, h('img', { src: avatarUrl(x.avatar), alt: '' }), x.pseudo)))) : null,
+    p.compte.autresProfils.length ? h('div', {}, titre('Même compte', 'statistiques séparées'), h('div', { class: 'famille' }, p.compte.autresProfils.map((x) => h('button', { type: 'button', class: 'chip', onclick: () => ouvrirFiche(x.id) }, h('img', { src: avatarUrl(x.avatar), alt: '' }), x.pseudo)))) : null,
     titre('Dernières parties'),
     listeParties(p.dernieres),
   );

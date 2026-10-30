@@ -30,6 +30,20 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-30 : Claude, chantier comptes pour tous
+
+- **Modèle** : `comptes.profil_personnel` (migration 006, colonne vide au départ, aucune donnée réécrite, pas de clé
+  étrangère : lecture par jointure). Le titulaire a son profil ; tous les anciens profils restent des enfants. Les six
+  places d'enfants ne comptent pas le profil personnel (`Api::MAX_PROFILES`). `POST /profils` accepte `personnel: true` ;
+  `POST /profils/{id}/personnel` : désignation manuelle (confirmation), jamais automatique.
+- **Inscription** : e-mail, mot de passe, case « je suis adulte » ; puis étape unique « Mon profil », commune à l'e-mail, à
+  Google et aux anciens comptes (`carteMonProfil`). Les mineurs ne s'inscrivent pas seuls.
+- **Mon espace** (`compte.ts`) : bandeau « qui joue », Mon profil (chiffres réels, favoris), enfants repliés, Mon compte.
+  Un seul profil : aucun choix de joueur nulle part. À la connexion : le titulaire joue (`joueurParDefaut`).
+- **Vérifié** : migration répétée sur une copie de la base de production dans MariaDB 11.8 (compteurs et empreintes
+  identiques, copie effacée) ; API SQLite et MariaDB ; `scripts/comptes-e2e.mjs` (nouveau : vraie API, vraies parties).
+- Limites : favoris toujours sur l'appareil ; historique invité non repris à l'inscription.
+
 ## 2026-10-30 : Claude, chantier accueil et niveaux
 
 - **Cubes de siège → Panique au phare !** partout à l'écran ; identifiants (`cubes`), URL, données et gameplay inchangés.

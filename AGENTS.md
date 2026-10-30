@@ -126,6 +126,7 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
 | `scripts/accueil-e2e.mjs` | accueil (chantier 02) : logo, espace joueur, niveau, 4 jeux au bon niveau, inscription, profils, formats, langues, animations réduites |
+| `scripts/comptes-e2e.mjs` | comptes pour tous, vraie API et vraies parties : adulte seul, enfant ajouté, changement de joueur, reconnexion, six enfants, classements (`[adresse]`, comptes d'essai supprimés) |
 | `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
@@ -223,7 +224,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 ## 8. Plateforme et serveur (résumé ; détails dans `doc/ARCHITECTURE.md` et `doc/DEPLOIEMENT.md`)
 
 - **Invité** : tout dans `localStorage` (`calcoolos.*`), aucun cookie, aucune requête obligatoire.
-- **Compte adulte** (e-mail + mot de passe argon2id, ou « Continuer avec Google » : même compte, `doc/GOOGLE.md`) → jusqu'à 6 **profils** (pseudo, avatar, niveau). Le joueur actif
+- **Compte adulte** (e-mail + mot de passe argon2id, ou « Continuer avec Google » : même compte, `doc/GOOGLE.md`) → un **profil personnel** (`comptes.profil_personnel`, facultatif) et jusqu'à 6 **profils d'enfants** (pseudo, avatar, niveau) ; page « Mon espace » (`compte.html`). Le joueur actif
   est retenu dans le navigateur ; le serveur vérifie à chaque fois que le profil appartient au compte (sinon 404).
 - **Résultats** : forme vérifiée (sinon 422) puis vraisemblance (sinon gardé « non vérifié », hors classements) ;
   débit limité. Hors ligne : file d'attente renvoyée depuis l'accueil.
@@ -287,6 +288,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   doit cliquer la case elle-même (`page.click('input[value="stratege"]')`), l'étiquette est couverte par la case.
   Un nouveau venu n'a **aucun** niveau coché : son premier clic sur « Jouer » ouvre la fenêtre `#choix-niveau` au lieu
   de lancer le jeu. Un script qui part d'un navigateur neuf doit d'abord cocher un niveau (ou choisir dans la fenêtre).
+- **« Mon espace »** : le titre h1 existe aussi sans être connecté ; un script attend `.mon-espace` (connecté). Les enfants sont dans `<details id="ajout-enfant">`, fermé tant qu'il n'y en a pas. Un compte à un seul profil n'a pas de « Qui joue ? ».
 - **Espace joueur** : `.joueur` est un bouton qui ouvre `#panneau-joueur` (plus un lien). Le panneau contient lui
   aussi « Se déconnecter » : dans l'espace parents, viser `#contenu button`.
 - **Logo** : `logo.css` est chargé après `plateforme.css` ; une règle de la barre qui change le logo doit être plus

@@ -1,5 +1,5 @@
 /**
- * Joueur actif sur cet appareil : un profil d'un compte parent, ou l'invité.
+ * Joueur actif sur cet appareil : un profil du compte, ou l'invité.
  * Retenu dans le navigateur (aucun cookie) ; le serveur vérifie toujours que le
  * profil appartient bien au compte connecté.
  */
@@ -32,6 +32,11 @@ export function setActivePlayer(p: Profile | ActivePlayer | null): void {
   } catch {
     /* stockage indisponible : on reste invité */
   }
+}
+
+/** Qui joue juste après la connexion : le titulaire, ou le seul profil du compte ; sinon on laisse choisir. */
+export function joueurParDefaut(profiles: readonly Profile[] | undefined): Profile | null {
+  return profiles?.find((p) => p.personnel) ?? (profiles?.length === 1 ? profiles[0] : null);
 }
 
 /** Remet le joueur actif en accord avec les profils du compte (supprimé, renommé…). */

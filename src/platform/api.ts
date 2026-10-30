@@ -7,6 +7,8 @@ export interface Profile {
   pseudo: string;
   avatar: string;
   niveau: string;
+  /** Profil du titulaire du compte (les autres sont des profils d'enfants). */
+  personnel?: boolean;
 }
 
 export interface AccountState {

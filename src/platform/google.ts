@@ -5,7 +5,7 @@
  * fenêtre de choix du compte ; Google rend alors un jeton d'identité signé, que l'API PHP vérifie
  * (`/api/google`). Aucun accès à Gmail, Drive ou aux contacts : seule l'identité est demandée.
  *
- * Le script de Google n'est chargé que sur l'espace parents, et seulement si le serveur annonce un
+ * Le script de Google n'est chargé que sur Mon espace, et seulement si le serveur annonce un
  * identifiant client (`googleClientId` dans /api/etat). S'il ne se charge pas (Google injoignable,
  * bloqueur), le bouton disparaît simplement : l'e-mail et le mot de passe restent disponibles.
  */

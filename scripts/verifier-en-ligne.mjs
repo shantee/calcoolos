@@ -94,7 +94,8 @@ await signup.locator('input[name="email"]').fill(email);
 await signup.locator('input[name="motDePasse"]').fill(password);
 await signup.locator('input[name="adulte"]').check();
 await signup.locator('button[type="submit"]').click();
-await page.waitForSelector('h1:text-is("Espace famille")');
+await page.waitForSelector('.mon-espace');
+await page.evaluate(() => { document.querySelector('#ajout-enfant').open = true; });
 const form = page.locator('section[aria-labelledby="t-new"] form');
 await form.locator('input[name="pseudo"]').fill('Testeur');
 await form.locator('select[name="niveau"]').selectOption('explorateur');
@@ -106,8 +107,7 @@ check(true, 'compte familial et profil créés');
 // Comme un joueur : accueil → « Qui joue ? » → Jouer. Partie gagnée au Dragon gourmand (≈ 45 s,
 // pour être jugée vraisemblable).
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-await page.locator('#qui-joue button', { hasText: 'Testeur' }).click();
-await page.waitForTimeout(300);
+await page.waitForSelector('.joueur-profil');
 await page.locator('a.jouer[data-jeu][href*="dragon"]').click();
 await page.waitForLoadState('networkidle');
 await page.waitForFunction(() => window.__dragon !== undefined, null, { timeout: 20000 });
@@ -159,7 +159,7 @@ const login = p2.locator('section[aria-labelledby="t-login"] form');
 await login.locator('input[name="email"]').fill(email);
 await login.locator('input[name="motDePasse"]').fill(password);
 await login.locator('button[type="submit"]').click();
-await p2.waitForSelector('h1:text-is("Espace famille")');
+await p2.waitForSelector('.mon-espace');
 const cookie = (await phone.cookies()).find((c) => c.name === 'calcoolos_session');
 check(!!cookie && cookie.secure && cookie.httpOnly && cookie.sameSite === 'Lax', 'cookie de session Secure + HttpOnly + SameSite=Lax');
 const back = await p2.evaluate(async () => {
@@ -171,8 +171,8 @@ const back = await p2.evaluate(async () => {
 check(back.profil && back.n === 1 && back.jeu === 'dragon', 'après reconnexion sur un autre appareil : profil et partie retrouvés');
 check(back.verifie === true, 'partie jugée vraisemblable (comptera dans les classements)');
 await p2.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-await p2.waitForSelector('#qui-joue button');
-check((await p2.textContent('#qui-joue'))?.includes('Testeur'), '« Qui joue ? » propose le profil');
+await p2.waitForSelector('.joueur-profil');
+check((await p2.textContent('.joueur'))?.includes('Testeur'), 'le seul profil du compte joue d’emblée');
 await p2.screenshot({ path: `${out}/telephone-qui-joue.png` });
 await p2.goto(`${base}/tableau.html`, { waitUntil: 'networkidle' });
 await p2.waitForSelector('.chiffre');

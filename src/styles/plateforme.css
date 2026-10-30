@@ -2054,3 +2054,105 @@ table.tableau {
     padding: 8px 12px;
   }
 }
+
+/* --- Mon espace : qui joue, mon profil, les enfants si besoin. --- */
+.mon-espace {
+  display: grid;
+  gap: 18px;
+  margin-top: 16px;
+}
+
+.mon-espace > section > h2 {
+  margin: 0 0 10px;
+}
+
+.bandeau-joueur {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 18px;
+}
+
+.bandeau-qui {
+  display: flex;
+  flex: 1 1 200px;
+  align-items: center;
+  gap: 12px;
+}
+
+.bandeau-qui p {
+  display: grid;
+  margin: 0;
+}
+
+.bandeau-qui strong {
+  font-size: 1.3rem;
+}
+
+.bandeau-joueur .actions {
+  margin: 0;
+}
+
+.bandeau-choix {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bandeau-choix button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 4px 14px 4px 6px;
+  border: 0;
+  border-radius: 99px;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  background: rgb(246 236 216 / 0.1);
+  cursor: pointer;
+}
+
+.bandeau-choix button[aria-pressed='true'] {
+  color: #1d1a2b;
+  background: var(--safran);
+}
+
+.profil-chiffres {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.profil-chiffres li {
+  display: grid;
+  padding: 8px;
+  border-radius: 12px;
+  text-align: center;
+  background: rgb(246 236 216 / 0.08);
+}
+
+.profil-chiffres strong {
+  font-size: 1.25rem;
+}
+
+.profil-chiffres span {
+  font-size: 0.78rem;
+}
+
+.ajout-enfants > summary {
+  min-height: 44px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+@media (max-width: 899px) {
+  .bandeau-joueur .actions {
+    width: 100%;
+  }
+}

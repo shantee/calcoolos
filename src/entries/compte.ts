@@ -5,14 +5,16 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';
 import { api, apiUrl, type AccountState, type Profile } from '../platform/api';
-import { AVATAR_PAR_DEFAUT, AVATARS, avatarId, avatarImg } from '../platform/avatars';
-import { activePlayer, setActivePlayer } from '../platform/player';
-import { TIER_NAMES } from '../platform/stats';
+import { AVATAR_INVITE, AVATAR_PAR_DEFAUT, AVATARS, avatarId, avatarImg } from '../platform/avatars';
+import { activePlayer, joueurParDefaut, setActivePlayer } from '../platform/player';
+import { lireFavoris } from '../platform/favoris';
+import { GAME_NAMES, GAME_PAGES, TIER_NAMES, summarize } from '../platform/stats';
+import type { GameId, StoredResult } from '../platform/results';
 import { field, h, showErrors } from '../platform/dom';
 import { boutonGoogle, oublierGoogle } from '../platform/google';
 import { pseudoAuHasard } from '../platform/pseudos';
 import { demarrerSuivi, etapeParcours } from '../platform/suivi';
-import { NIVEAU_INFOS } from '../platform/niveau';
+import { NIVEAU_INFOS, niveauRetenu, retenirNiveau } from '../platform/niveau';
 import type { TierId } from '../core/difficulty';
 
 demarrerSuivi('compte');
@@ -43,7 +45,7 @@ function pseudoField(value = ''): HTMLElement {
     input.focus();
   });
   return h('div', { class: 'champ-pseudo' },
-    field('Pseudo', input, 'pseudo', 'Un surnom suffit : pas de nom de famille. Il apparaît dans les classements publics.'),
+    field('Pseudo', input, 'pseudo', 'Un surnom suffit, pas besoin de ton vrai nom. Il apparaît dans les classements publics.'),
     aide);
 }
 
@@ -62,8 +64,8 @@ function blocGoogle(clientId: string): HTMLElement {
     zone,
     h('p', { class: 'message', role: 'status' }),
     h('p', { class: 'google-mention' },
-      'Première fois ? Le compte est créé aussitôt : vous confirmez être un adulte responsable et avoir lu la ',
-      h('a', { href: 'confidentialite.html' }, 'page de confidentialité'), '. Calcoolos ne reçoit de Google que votre adresse e-mail.'),
+      'Première fois ? Le compte est créé aussitôt : tu confirmes être adulte et avoir lu la ',
+      h('a', { href: 'confidentialite.html' }, 'page de confidentialité'), '. Calcoolos ne reçoit de Google que ton adresse e-mail.'),
     h('p', { class: 'ou' }, h('span', {}, 'ou avec une adresse e-mail')),
   );
   requestAnimationFrame(() => void boutonGoogle(zone, clientId, connexionGoogle));
@@ -77,13 +79,19 @@ function messagesGoogle(texte: string, classe: 'erreur' | 'ok' | '' = 'erreur'):
   }
 }
 
-/** Jeton reçu de Google (espace parents, non connecté) : connexion, ou création du compte. */
+/** Juste après la connexion : le titulaire (ou le seul profil) joue, sans rien avoir à choisir. */
+function apresConnexion(state: AccountState): void {
+  if (!activePlayer()) setActivePlayer(joueurParDefaut(state.profils));
+}
+
+/** Jeton reçu de Google (Mon espace, non connecté) : connexion, ou création du compte. */
 async function connexionGoogle(jeton: string): Promise<void> {
   messagesGoogle(t('Connexion…'), '');
   const r = await api.post<AccountState>('/google', { credential: jeton, adulte: true }).catch(() => null);
   if (r?.status === 200 || r?.status === 201) {
     if (r.status === 201) etapeParcours('inscription');
     if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+    apresConnexion(r.data);
     return void render(r.data);
   }
   messagesGoogle(r?.data.erreur ?? t('Le serveur ne répond pas.'));
@@ -104,7 +112,10 @@ function renderGuest(googleClientId?: string): void {
     const data = new FormData(login);
     const r = await api.post<AccountState>('/connexion', { email: data.get('email'), motDePasse: data.get('motDePasse') }).catch(() => null);
     busy(login, false);
-    if (r?.status === 200) return void render(r.data);
+    if (r?.status === 200) {
+      apresConnexion(r.data);
+      return void render(r.data);
+    }
     showErrors(login, msgLogin, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
 
@@ -113,10 +124,10 @@ function renderGuest(googleClientId?: string): void {
     field('Adresse e-mail', h('input', { type: 'email', name: 'email', autocomplete: 'email', required: true }), 'email'),
     field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'new-password', minlength: 10, required: true }), 'motDePasse', '10 caractères au moins.'),
     h('label', { class: 'case' }, h('input', { type: 'checkbox', name: 'adulte', required: true }),
-      h('span', {}, 'Je suis un adulte responsable (parent, tuteur ou enseignant) et j’ai lu la ', h('a', { href: 'confidentialite.html' }, 'page de confidentialité'), '.')),
+      h('span', {}, 'Je suis adulte et j’ai lu la ', h('a', { href: 'confidentialite.html' }, 'page de confidentialité'), '.')),
     h('span', { class: 'erreur-champ', 'data-erreur': 'adulte' }),
     msgSignup,
-    h('div', { class: 'actions' }, h('button', { class: 'bouton', type: 'submit' }, 'Créer l’espace famille')),
+    h('div', { class: 'actions' }, h('button', { class: 'bouton', type: 'submit' }, 'Créer mon compte')),
   );
   signup.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -126,7 +137,9 @@ function renderGuest(googleClientId?: string): void {
     busy(signup, false);
     if (r?.status === 201) {
       etapeParcours('inscription');
-      return void render(r.data);
+      render(r.data);
+      window.scrollTo(0, 0);
+      return;
     }
     showErrors(signup, msgSignup, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
@@ -139,16 +152,14 @@ function renderGuest(googleClientId?: string): void {
       login),
     inscription: h('section', { class: 'carte', id: 'inscription', 'aria-labelledby': 't-signup' },
       h('h2', { id: 't-signup' }, 'Créer mon compte'),
-      h('p', { class: 'discret' }, 'Gratuit. Le compte est ouvert par un adulte ; chaque enfant y aura son profil.'),
+      h('p', { class: 'discret' }, 'Gratuit, pour jouer et suivre tes progrès. Les comptes sont ouverts par des adultes : pour un enfant, c’est un adulte qui crée le compte, puis son profil.'),
       googleClientId ? blocGoogle(googleClientId) : null,
       signup),
   };
   const voulu = window.location.hash === '#inscription' ? 'inscription' : window.location.hash === '#connexion' ? 'connexion' : null;
   root.replaceChildren(
-    h('h1', {}, 'Espace parents'),
-    h('p', { class: 'chapeau' }, googleClientId
-      ? 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. Un clic avec Google, ou une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'
-      : 'Un compte pour la famille garde les progrès de chaque enfant sur tous vos appareils. On ne demande qu’une adresse e-mail et un mot de passe ; les enfants n’ont qu’un pseudo. Sans compte, on peut toujours jouer en invité.'),
+    h('h1', {}, 'Mon espace'),
+    h('p', { class: 'chapeau' }, 'Un compte garde tes scores, tes records et tes progrès sur tous tes appareils. Crée ton profil en un instant, et ajoute ceux de tes enfants si tu le souhaites. Sans compte, on peut toujours jouer en invité.'),
     h('div', { class: 'grille' }, ...(voulu === 'inscription' ? [cartes.inscription, cartes.connexion] : [cartes.connexion, cartes.inscription])),
   );
   if (voulu) {
@@ -159,6 +170,28 @@ function renderGuest(googleClientId?: string): void {
 }
 
 // --- Connecté -----------------------------------------------------------------------------------
+/** Chiffres réels et favoris d'un profil, dans sa carte (rien d'affiché tant que le serveur n'a pas répondu). */
+function resumeProfil(p: Profile): HTMLElement {
+  const zone = h('div', { class: 'profil-resume' });
+  void api.get<{ resultats: StoredResult[] }>(`/profils/${p.id}/resultats`).catch(() => null).then((r) => {
+    if (r?.status !== 200) return;
+    const s = summarize(r.data.resultats);
+    const record = s.records.reduce((m, x) => Math.max(m, x.score), 0);
+    const tuile = (valeur: string, texte: string) => h('li', {}, h('strong', {}, valeur), h('span', {}, texte));
+    zone.prepend(h('ul', { class: 'profil-chiffres' },
+      tuile(String(s.games), s.games > 1 ? 'parties jouées' : 'partie jouée'),
+      tuile(`${s.stars} ★`, 'étoiles gagnées'),
+      tuile(record ? String(record) : '–', 'meilleur score')));
+  });
+  const favoris = lireFavoris(p.id).filter((j): j is GameId => j in GAME_NAMES);
+  if (favoris.length) {
+    zone.append(h('p', { class: 'profil-favoris' }, '★ Favoris : ', ...favoris.flatMap((j, i) => [i ? ' · ' : '', h('a', { href: GAME_PAGES[j] }, GAME_NAMES[j])])));
+  } else if (p.personnel) {
+    zone.append(h('p', { class: 'discret' }, 'Pas encore de favori : touche une étoile dans Mes jeux, sur l’accueil.'));
+  }
+  return zone;
+}
+
 function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLElement {
   const msg = h('p', { class: 'message', role: 'status' });
   const playing = activePlayer()?.id === p.id;
@@ -166,6 +199,15 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
   play.addEventListener('click', () => {
     setActivePlayer(p);
     window.location.href = 'index.html';
+  });
+
+  // Le titulaire désigne lui-même son profil : jamais de conversion automatique d'un profil d'enfant.
+  const designer = h('button', { class: 'bouton petit secondaire', type: 'button' }, p.personnel ? 'Ce n’est pas mon profil' : 'C’est mon profil personnel');
+  designer.addEventListener('click', async () => {
+    if (!p.personnel && !window.confirm(t(`« ${p.pseudo} » est bien ton propre profil, et non celui d’un enfant ?`))) return;
+    const r = await api.post<{ profils: Profile[] }>(`/profils/${p.id}/personnel`, { personnel: !p.personnel }).catch(() => null);
+    if (r?.status === 200) return refresh(r.data.profils);
+    showErrors(edit, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
 
   const edit = h('form', { class: 'formulaire', novalidate: true },
@@ -197,12 +239,69 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
   });
 
   return h('article', { class: 'carte profil' },
-    h('div', { class: 'profil-tete' }, avatarImg(p.avatar, 64, ''), h('div', {}, h('h3', {}, p.pseudo), h('span', { class: 'discret' }, TIER_NAMES[p.niveau] ?? p.niveau))),
-    h('div', { class: 'actions' }, play, h('a', { class: 'bouton petit secondaire', href: `tableau.html?profil=${p.id}` }, 'Voir ses progrès')),
-    h('details', {}, h('summary', {}, 'Modifier'), edit),
-    h('div', { class: 'actions' }, del),
+    h('div', { class: 'profil-tete' }, avatarImg(p.avatar, 64, ''), h('div', {}, h('h3', {}, p.pseudo), h('span', { class: 'discret' }, `Niveau ${TIER_NAMES[p.niveau] ?? p.niveau}`))),
+    resumeProfil(p),
+    h('div', { class: 'actions' }, play, h('a', { class: 'bouton petit secondaire', href: `tableau.html?profil=${p.id}` }, p.personnel ? 'Mes progrès' : 'Voir ses progrès')),
+    h('details', {}, h('summary', {}, 'Modifier le pseudo, l’avatar ou le niveau'), edit),
+    h('details', {}, h('summary', {}, 'Autres réglages'), h('div', { class: 'actions' }, designer, del)),
     msg,
   );
+}
+
+/** « Mon profil » : la même étape après une inscription (e-mail ou Google) et pour un ancien compte familial. */
+function carteMonProfil(enfants: number): HTMLElement {
+  const msg = h('p', { class: 'message', role: 'status' });
+  const form = h('form', { class: 'formulaire', novalidate: true },
+    pseudoField(),
+    field('Niveau', tierSelect('niveau', niveauRetenu() ?? 'explorateur'), 'niveau'),
+    h('details', {}, h('summary', {}, 'Choisir mon avatar'), avatarPicker('avatar-perso')),
+    msg,
+    h('div', { class: 'actions' }, h('button', { class: 'bouton', type: 'submit' }, 'Créer mon profil et jouer')),
+  );
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    busy(form, true);
+    const d = new FormData(form);
+    const r = await api.post<{ profils: Profile[] }>('/profils', { pseudo: d.get('pseudo'), niveau: d.get('niveau'), avatar: d.get('avatar-perso'), personnel: true }).catch(() => null);
+    busy(form, false);
+    if (r?.status === 201) {
+      const moi = r.data.profils.find((p) => p.personnel);
+      if (moi) {
+        setActivePlayer(moi);
+        retenirNiveau(moi.niveau as TierId);
+      }
+      window.location.href = 'index.html';
+      return;
+    }
+    showErrors(form, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
+  });
+  return h('section', { class: 'carte carte-mon-profil', 'aria-labelledby': 't-moi' },
+    h('h2', { id: 't-moi' }, enfants ? 'Toi aussi, tu peux jouer !' : 'Bienvenue ! Crée ton profil'),
+    h('p', { class: 'discret' }, enfants
+      ? 'Crée ton propre profil : tes scores restent séparés de ceux de tes enfants, et il ne compte pas dans leurs six places.'
+      : 'Un pseudo, et c’est parti. Tu pourras tout changer ensuite.'),
+    form);
+}
+
+/** Qui joue, toujours visible ; le changement de joueur n'apparaît que s'il y a plusieurs profils. */
+function bandeauJoueur(profiles: Profile[], refresh: (profiles: Profile[]) => void): HTMLElement | null {
+  if (profiles.length === 0) return null;
+  const actif = profiles.find((p) => p.id === activePlayer()?.id) ?? null;
+  const choix = profiles.length > 1 ? h('div', { class: 'bandeau-choix', role: 'group', 'aria-label': 'Qui joue ?' }) : null;
+  for (const p of profiles) {
+    const b = h('button', { type: 'button', 'aria-pressed': String(actif?.id === p.id) }, avatarImg(p.avatar, 32, ''), p.personnel ? `${p.pseudo} (moi)` : p.pseudo);
+    b.addEventListener('click', () => {
+      setActivePlayer(p);
+      refresh(profiles);
+    });
+    choix?.append(b);
+  }
+  return h('section', { class: 'carte bandeau-joueur', 'aria-label': 'Qui joue ?' },
+    h('div', { class: 'bandeau-qui' },
+      avatarImg(actif?.avatar ?? AVATAR_INVITE, 56, ''),
+      h('p', {}, h('small', {}, actif ? 'Joue en ce moment' : 'Personne n’est choisi'), h('strong', {}, actif?.pseudo ?? 'Choisis qui joue'))),
+    actif ? h('div', { class: 'actions' }, h('a', { class: 'bouton', href: 'index.html' }, 'Jouer'), h('a', { class: 'bouton secondaire', href: `tableau.html?profil=${actif.id}` }, 'Voir les progrès')) : null,
+    choix);
 }
 
 function newProfileCard(refresh: (profiles: Profile[]) => void): HTMLElement {
@@ -227,18 +326,18 @@ function newProfileCard(refresh: (profiles: Profile[]) => void): HTMLElement {
     }
     showErrors(form, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
   });
-  return h('section', { class: 'carte', 'aria-labelledby': 't-new' }, h('h2', { id: 't-new' }, 'Nouveau profil de joueur'), form);
+  return h('section', { class: 'carte', 'aria-labelledby': 't-new' }, h('h2', { id: 't-new' }, 'Nouveau profil d’enfant'), form);
 }
 
-/** Connexion avec Google depuis l'espace famille : associer (ou dissocier) un compte Google. */
+/** Connexion avec Google depuis Mon espace : associer (ou dissocier) un compte Google. */
 function blocGoogleCompte(state: AccountState): HTMLElement | null {
   if (state.google) {
     if (!state.motDePasse) {
-      return h('div', { class: 'google-compte' }, h('p', {}, 'Ce compte a été créé avec Google : connectez-vous avec « Continuer avec Google ».'));
+      return h('div', { class: 'google-compte' }, h('p', {}, 'Ce compte a été créé avec Google : connecte-toi avec « Continuer avec Google ».'));
     }
     const msg = h('p', { class: 'message', role: 'status' });
     const form = h('form', { class: 'formulaire', novalidate: true },
-      h('p', {}, 'Vous pourrez toujours vous connecter avec votre adresse e-mail et votre mot de passe.'),
+      h('p', {}, 'Tu pourras toujours te connecter avec ton adresse e-mail et ton mot de passe.'),
       field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'current-password' }), 'motDePasse'),
       msg,
       h('div', { class: 'actions' }, h('button', { class: 'bouton petit secondaire', type: 'submit' }, 'Dissocier Google')),
@@ -250,7 +349,7 @@ function blocGoogleCompte(state: AccountState): HTMLElement | null {
       showErrors(form, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
     });
     return h('div', { class: 'google-compte' },
-      h('p', {}, h('span', { class: 'google-pastille', 'aria-hidden': 'true' }, 'G'), 'Compte Google associé : un clic sur « Continuer avec Google » suffit pour vous connecter.'),
+      h('p', {}, h('span', { class: 'google-pastille', 'aria-hidden': 'true' }, 'G'), 'Compte Google associé : un clic sur « Continuer avec Google » suffit pour te connecter.'),
       h('details', {}, h('summary', {}, 'Dissocier Google'), form));
   }
   if (!state.googleClientId) return null;
@@ -267,7 +366,7 @@ function blocGoogleCompte(state: AccountState): HTMLElement | null {
   }));
   return h('div', { class: 'google-compte google-bloc-compte' },
     h('h3', {}, 'Se connecter plus vite'),
-    h('p', {}, 'Associez votre compte Google : la prochaine fois, un clic suffira, sans mot de passe. Vos profils et leurs résultats restent les mêmes.'),
+    h('p', {}, 'Associe ton compte Google : la prochaine fois, un clic suffira, sans mot de passe. Tes profils et leurs résultats restent les mêmes.'),
     zone,
     h('p', { class: 'message', role: 'status' }));
 }
@@ -298,7 +397,7 @@ function accountCard(state: AccountState): HTMLElement {
   const del = h('form', { class: 'formulaire', novalidate: true },
     h('p', {}, 'Supprime le compte, tous les profils et tous les résultats. C’est immédiat et définitif.'),
     state.motDePasse === false
-      ? field('Recopiez l’adresse du compte pour confirmer', h('input', { type: 'email', name: 'confirmation', autocomplete: 'off' }), 'confirmation')
+      ? field('Recopie l’adresse du compte pour confirmer', h('input', { type: 'email', name: 'confirmation', autocomplete: 'off' }), 'confirmation')
       : field('Mot de passe', h('input', { type: 'password', name: 'motDePasse', autocomplete: 'current-password' }), 'motDePasse'),
     msgDel,
     h('div', { class: 'actions' }, h('button', { class: 'bouton petit danger', type: 'submit' }, 'Supprimer mon compte')),
@@ -325,9 +424,9 @@ function accountCard(state: AccountState): HTMLElement {
   });
 
   return h('section', { class: 'carte', 'aria-labelledby': 't-account' },
-    h('h2', { id: 't-account' }, 'Le compte'),
+    h('h2', { id: 't-account' }, 'Mon compte'),
     h('p', {}, 'Connecté avec ', h('b', {}, email), '.'),
-    h('div', { class: 'actions' }, logout, h('a', { class: 'bouton secondaire', href: apiUrl('/export'), download: 'calcoolos-mes-donnees.json' }, 'Télécharger nos données')),
+    h('div', { class: 'actions' }, logout, h('a', { class: 'bouton secondaire', href: apiUrl('/export'), download: 'calcoolos-mes-donnees.json' }, 'Télécharger mes données')),
     blocGoogleCompte(state),
     state.motDePasse === false ? null : h('details', {}, h('summary', {}, 'Changer le mot de passe'), pw),
     h('details', {}, h('summary', {}, 'Supprimer le compte'), del),
@@ -335,10 +434,21 @@ function accountCard(state: AccountState): HTMLElement {
 }
 
 function renderAccount(state: AccountState): void {
-  const grid = h('div', { class: 'grille' });
+  const zone = h('div', { class: 'mon-espace' });
   const refresh = (profiles: Profile[]) => {
-    grid.replaceChildren(...profiles.map((p) => profileCard(p, refreshAll)));
-    if (profiles.length < 6) grid.append(newProfileCard(refreshAll));
+    const moi = profiles.find((p) => p.personnel);
+    const enfants = profiles.filter((p) => !p.personnel);
+    const grille = h('div', { class: 'grille' }, ...enfants.map((p) => profileCard(p, refreshAll)));
+    if (enfants.length < 6) grille.append(newProfileCard(refreshAll));
+    const ajout = h('details', { class: 'ajout-enfants', id: 'ajout-enfant', open: enfants.length > 0 },
+      h('summary', {}, enfants.length ? `Profils de mes enfants (${enfants.length} sur 6)` : 'Souhaites-tu aussi créer des profils pour tes enfants ?'),
+      h('p', { class: 'discret' }, 'Tu gères leurs réglages et tu suis leurs progrès. Ils jouent sous un simple pseudo, sans adresse e-mail ; leur meilleur score apparaît dans les classements publics sous ce pseudo.'),
+      grille);
+    zone.replaceChildren(...[
+      bandeauJoueur(profiles, refreshAll),
+      moi ? h('section', { 'aria-labelledby': 't-profil' }, h('h2', { id: 't-profil' }, 'Mon profil'), profileCard(moi, refreshAll)) : carteMonProfil(enfants.length),
+      ajout,
+    ].filter((x): x is HTMLElement => x !== null));
   };
   const refreshAll = (profiles: Profile[]) => {
     refresh(profiles);
@@ -346,9 +456,8 @@ function renderAccount(state: AccountState): void {
   };
   refresh(state.profils ?? []);
   root.replaceChildren(
-    h('h1', {}, 'Espace famille'),
-    h('p', { class: 'chapeau' }, 'Chaque enfant a son profil : un pseudo, un avatar, un niveau. Ses meilleurs scores apparaissent dans les classements publics sous son pseudo ; le reste de ses résultats n’est visible que dans cet espace.'),
-    grid,
+    h('h1', {}, 'Mon espace'),
+    zone,
     h('div', { style: 'height: 22px' }),
     accountCard(state),
   );
@@ -364,8 +473,8 @@ function render(state: AccountState | null, refreshBar = true): void {
   dernierEtat = state;
   if (!state) {
     root.replaceChildren(
-      h('h1', {}, 'Espace parents'),
-      h('section', { class: 'carte' }, h('h2', {}, 'Serveur indisponible'), h('p', {}, 'L’espace famille n’est pas joignable pour le moment (ou ce site fonctionne sans serveur). On peut toujours jouer en invité : les résultats restent sur cet appareil.')),
+      h('h1', {}, 'Mon espace'),
+      h('section', { class: 'carte' }, h('h2', {}, 'Serveur indisponible'), h('p', {}, 'Mon espace n’est pas joignable pour le moment (ou ce site fonctionne sans serveur). On peut toujours jouer en invité : les résultats restent sur cet appareil.')),
     );
     return;
   }

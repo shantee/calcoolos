@@ -84,7 +84,7 @@ function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): void {
   apply();
   const p = activePlayer();
   if (source === 'joueur' && p && p.niveau !== value && etat?.connecte) {
-    // Le niveau suit l'enfant d'un appareil à l'autre : on l'enregistre sur son profil.
+    // Le niveau suit le joueur d'un appareil à l'autre : on l'enregistre sur son profil.
     setActivePlayer({ ...p, niveau: value });
     rafraichirJoueur();
     void api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { niveau: value }).catch(() => null);
@@ -186,12 +186,13 @@ function choisirJoueur(p: Profile | null): void {
   void renderCarnet();
 }
 
-/** « Qui joue ? » : un bouton par profil de la famille, plus l'invité. */
+/** « Qui joue ? » : un bouton par profil du compte, plus l'invité. */
 function renderPlayers(profiles: Profile[]): void {
   const zone = document.querySelector<HTMLElement>('#qui-joue-zone');
   const list = document.querySelector<HTMLElement>('#qui-joue');
   if (!zone || !list) return;
-  zone.hidden = false;
+  // Un seul profil : aucune question à poser.
+  zone.hidden = profiles.length === 1;
   list.replaceChildren();
   const current = activePlayer();
   const add = (label: string, avatar: string, pressed: boolean, onPick: () => void) => {
@@ -202,7 +203,7 @@ function renderPlayers(profiles: Profile[]): void {
   for (const p of profiles) add(p.pseudo, p.avatar, current?.id === p.id, () => choisirJoueur(p));
   add('Invité', AVATAR_INVITE, !current, () => choisirJoueur(null));
   if (profiles.length === 0) {
-    list.append(h('p', { class: 'discret' }, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-en un dans l’espace famille'), '.'));
+    list.append(h('p', { class: 'discret' }, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-le dans Mon espace'), '.'));
   }
 }
 
@@ -238,7 +239,7 @@ async function renderCarnet(): Promise<void> {
       const etoiles = parties.reduce((a, r) => a + r.etoiles, 0);
       chapeau.replaceChildren(
         `Tu as déjà joué ${parties.length} ${parties.length > 1 ? 'parties' : 'partie'} sur cet appareil (${etoiles} ★). `,
-        'Avec un compte gratuit, ouvert par un parent, tes prochaines parties te suivront partout. Ce n’est pas obligatoire : on peut toujours jouer en invité.',
+        'Avec un compte gratuit, tes prochaines parties te suivront partout. Ce n’est pas obligatoire : on peut toujours jouer en invité.',
       );
     }
     return;
@@ -251,17 +252,17 @@ async function renderCarnet(): Promise<void> {
   if (!p) {
     titre.textContent = 'Qui joue aujourd’hui ?';
     chapeau.textContent = (etat.profils?.length ?? 0) > 0
-      ? 'Choisis un joueur dans « Qui joue ? » : ses parties seront gardées dans l’espace famille.'
-      : 'Ajoute un profil pour chaque enfant (un pseudo et un avatar suffisent) : ses parties seront gardées.';
-    actions.replaceChildren(h('a', { class: 'bouton-creer', href: 'compte.html' }, (etat.profils?.length ?? 0) > 0 ? 'Espace famille' : 'Ajouter un profil'));
+      ? 'Choisis un joueur dans « Qui joue ? » : ses parties seront gardées dans le compte.'
+      : 'Crée ton profil : un pseudo et un avatar suffisent, et tes parties seront gardées.';
+    actions.replaceChildren(h('a', { class: 'bouton-creer', href: 'compte.html' }, (etat.profils?.length ?? 0) > 0 ? 'Mon espace' : 'Créer mon profil'));
     avantages.hidden = false;
     return;
   }
   titre.textContent = `Le carnet de ${p.pseudo}`;
-  chapeau.textContent = 'Ses parties sont gardées dans l’espace famille, sur tous vos appareils.';
+  chapeau.textContent = 'Ces parties sont gardées dans le compte, sur tous les appareils.';
   actions.replaceChildren(
-    h('a', { class: 'bouton-creer', href: `tableau.html?profil=${p.id}` }, 'Voir tous ses progrès'),
-    h('a', { class: 'lien-connexion', href: 'compte.html' }, 'Espace famille'),
+    h('a', { class: 'bouton-creer', href: `tableau.html?profil=${p.id}` }, 'Voir tous les progrès'),
+    h('a', { class: 'lien-connexion', href: 'compte.html' }, 'Mon espace'),
   );
   const r = await api.get<{ resultats: StoredResult[] }>(`/profils/${p.id}/resultats`).catch(() => null);
   if (activePlayer()?.id !== p.id) return;

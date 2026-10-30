@@ -10,9 +10,10 @@ use PDO;
  * L'API JSON de la plateforme.
  *
  * - Les invités n'ont besoin de rien ici (tout reste dans leur navigateur).
- * - Un adulte (parent) crée un compte : e-mail + mot de passe, ou « Continuer avec Google »
+ * - Un adulte crée un compte : e-mail + mot de passe, ou « Continuer avec Google »
  *   (même compte, mêmes profils : seul le moyen de se connecter change).
- * - Il crée des profils de joueurs privés : pseudo, avatar, niveau. Rien d'autre.
+ * - Il a son propre profil de joueur (comptes.profil_personnel) et, s'il le souhaite, des profils
+ *   d'enfants qu'il gère : pseudo, avatar, niveau. Rien d'autre.
  * - Les résultats sont rattachés à un profil ; seul le compte propriétaire les voit.
  * - Classements publics : tous les profils, sous leur pseudo (jamais l'e-mail), avec
  *   seulement les scores vérifiés.
@@ -23,6 +24,7 @@ use PDO;
  */
 final class Api
 {
+    /** Profils d'enfants par compte ; le profil personnel du titulaire n'entre pas dans ce compte. */
     public const MAX_PROFILES = 6;
     /** Même liste, même ordre que src/platform/avatars.ts (vignettes de src/images/avatars/). */
     public const AVATARS = [
@@ -125,11 +127,12 @@ final class Api
         if ($m === 'POST' && $p === '/profils') {
             return $this->createProfile($r, $account);
         }
-        if (preg_match('#^/profils/(\d+)/(modifier|supprimer|resultats)$#', $p, $mm)) {
+        if (preg_match('#^/profils/(\d+)/(modifier|supprimer|resultats|personnel)$#', $p, $mm)) {
             $profile = $this->ownedProfile($account, (int) $mm[1]);
             return match ([$m, $mm[2]]) {
                 ['POST', 'modifier'] => $this->updateProfile($r, $profile),
                 ['POST', 'supprimer'] => $this->deleteProfile($profile),
+                ['POST', 'personnel'] => $this->setPersonalProfile($r, $profile),
                 ['GET', 'resultats'] => $this->results($profile),
                 default => throw new HttpError(405, 'Méthode non permise.'),
             };
@@ -434,7 +437,7 @@ final class Api
         $q = $this->db->prepare('SELECT 1 FROM comptes WHERE email = ?');
         $q->execute([$g['email']]);
         if ($q->fetch()) {
-            throw new HttpError(409, 'Un compte Calcoolos existe déjà avec cette adresse. Connecte-toi une fois avec ton mot de passe, puis associe Google dans l’espace famille.');
+            throw new HttpError(409, 'Un compte Calcoolos existe déjà avec cette adresse. Connecte-toi une fois avec ton mot de passe, puis associe Google dans Mon espace.');
         }
         if (!$g['emailVerifie']) {
             throw new HttpError(422, 'Ce compte Google n’a pas d’adresse e-mail vérifiée.');
@@ -569,14 +572,28 @@ final class Api
      */
     private function profiles(array $account): array
     {
+        $personnel = $this->personalProfile((int) $account['id']);
         $q = $this->db->prepare('SELECT id, pseudo, avatar, niveau FROM profils WHERE compte_id = ? ORDER BY id');
         $q->execute([$account['id']]);
-        return array_map(static fn (array $p): array => [
+        $list = array_map(static fn (array $p): array => [
             'id' => (int) $p['id'],
             'pseudo' => (string) $p['pseudo'],
             'avatar' => (string) $p['avatar'],
             'niveau' => (string) $p['niveau'],
+            'personnel' => (int) $p['id'] === $personnel,
         ], $q->fetchAll());
+        // Le profil du titulaire d'abord, puis les enfants dans l'ordre de création.
+        usort($list, static fn (array $a, array $b): int => [$b['personnel'], $a['id']] <=> [$a['personnel'], $b['id']]);
+        return $list;
+    }
+
+    /** Numéro du profil personnel du compte, s'il existe encore. */
+    private function personalProfile(int $account): ?int
+    {
+        $q = $this->db->prepare('SELECT p.id FROM comptes c JOIN profils p ON p.id = c.profil_personnel AND p.compte_id = c.id WHERE c.id = ?');
+        $q->execute([$account]);
+        $id = $q->fetchColumn();
+        return $id === false ? null : (int) $id;
     }
 
     /**
@@ -630,12 +647,41 @@ final class Api
         $pseudo = self::pseudo($in['pseudo'] ?? null);
         $avatar = self::avatar($in['avatar'] ?? null);
         $tier = self::tier($in['niveau'] ?? null);
-        if (count($this->profiles($account)) >= self::MAX_PROFILES) {
-            throw new HttpError(422, 'Six profils au maximum par compte.');
+        $personal = ($in['personnel'] ?? false) === true;
+        $owner = $this->personalProfile((int) $account['id']);
+        if ($personal && $owner !== null) {
+            throw new HttpError(422, 'Tu as déjà ton profil personnel.');
         }
+        $children = count($this->profiles($account)) - ($owner === null ? 0 : 1);
+        if (!$personal && $children >= self::MAX_PROFILES) {
+            throw new HttpError(422, 'Six profils d’enfants au maximum par compte.');
+        }
+        $this->db->beginTransaction();
         $this->db->prepare('INSERT INTO profils (compte_id, pseudo, avatar, niveau, classement_public, nom_public, cree_le) VALUES (?, ?, ?, ?, 0, ?, ?)')
             ->execute([$account['id'], $pseudo, $avatar, $tier, Names::publicName(), $this->stamp()]);
+        if ($personal) {
+            $this->db->prepare('UPDATE comptes SET profil_personnel = ? WHERE id = ?')->execute([(int) $this->db->lastInsertId(), $account['id']]);
+        }
+        $this->db->commit();
         return new Response(201, ['profils' => $this->profiles($account)]);
+    }
+
+    /**
+     * Le titulaire désigne lui-même son profil parmi ceux du compte (jamais automatiquement), ou se ravise.
+     * @param array{id: int, compte_id: int} $profile
+     */
+    private function setPersonalProfile(Request $r, array $profile): Response
+    {
+        $owner = $this->personalProfile($profile['compte_id']);
+        if (($r->json()['personnel'] ?? false) === true) {
+            if ($owner !== null && $owner !== $profile['id']) {
+                throw new HttpError(422, 'Tu as déjà ton profil personnel.');
+            }
+            $this->db->prepare('UPDATE comptes SET profil_personnel = ? WHERE id = ?')->execute([$profile['id'], $profile['compte_id']]);
+        } elseif ($owner === $profile['id']) {
+            $this->db->prepare('UPDATE comptes SET profil_personnel = NULL WHERE id = ?')->execute([$profile['compte_id']]);
+        }
+        return new Response(200, ['profils' => $this->profiles(['id' => $profile['compte_id'], 'email' => ''])]);
     }
 
     /** @param array{id: int, compte_id: int} $profile */
@@ -666,6 +712,7 @@ final class Api
     /** @param array{id: int, compte_id: int} $profile */
     private function deleteProfile(array $profile): Response
     {
+        $this->db->prepare('UPDATE comptes SET profil_personnel = NULL WHERE id = ? AND profil_personnel = ?')->execute([$profile['compte_id'], $profile['id']]);
         $this->db->prepare('DELETE FROM profils WHERE id = ?')->execute([$profile['id']]);
         return new Response(200, ['profils' => $this->profiles(['id' => $profile['compte_id'], 'email' => ''])]);
     }

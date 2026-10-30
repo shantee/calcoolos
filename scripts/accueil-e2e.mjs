@@ -119,8 +119,9 @@ await page.fill('#inscription input[name="email"]', email);
 await page.fill('#inscription input[name="motDePasse"]', mdp);
 await page.check('#inscription input[name="adulte"]');
 await page.click('#inscription button[type="submit"]');
-await page.waitForSelector('h1:has-text("Espace famille")');
+await page.waitForSelector('.mon-espace');
 const ajouter = async (pseudo, avatar, niveau) => {
+  await page.evaluate(() => { document.querySelector('#ajout-enfant').open = true; });
   const form = page.locator('section:has(h2:has-text("Nouveau profil")) form');
   await form.locator('input[name="pseudo"]').fill(pseudo);
   await form.locator('select[name="niveau"]').selectOption(niveau);
@@ -141,7 +142,7 @@ check((await page.textContent('.joueur'))?.includes('Niveau Doux'), 'barre : niv
 check(await niveauCoche() === 'eveil', 'accueil : niveau du profil de Lina (Éveil)');
 await page.waitForFunction(() => document.querySelector('#carnet-titre')?.textContent?.includes('Lina'));
 check(true, 'carnet : « Le carnet de Lina »');
-check(await page.locator('.barre .lien-compte', { hasText: 'Espace famille' }).isVisible(), 'barre : « Espace famille » pour un compte connecté');
+check(await page.locator('.barre .lien-compte', { hasText: 'Mon espace' }).isVisible(), 'barre : « Espace famille » pour un compte connecté');
 check(await page.locator('#statut-invite').isHidden(), 'accueil : plus de message « invité »');
 await page.evaluate(() => (window.__sansRechargement = true));
 await page.click('.joueur');
@@ -254,7 +255,7 @@ for (const [loc, attendu] of [['en-GB', 'Create my account'], ['de-DE', 'Konto a
   await p.fill('#connexion input[name="email"]', email);
   await p.fill('#connexion input[name="motDePasse"]', mdp);
   await p.click('#connexion button[type="submit"]');
-  await p.waitForSelector('h1:has-text("Espace famille")');
+  await p.waitForSelector('.mon-espace');
   p.on('dialog', (d) => d.accept());
   await p.locator('summary', { hasText: 'Supprimer le compte' }).click();
   await p.fill('form:has(button:has-text("Supprimer mon compte")) input[name="motDePasse"]', mdp);

@@ -151,7 +151,7 @@ assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astrona
 $r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'explorateur']);
 assert_status($r, 201, 'profil créé');
 $lina = $r->data['profils'][0];
-assert_true(array_keys($lina) === ['id', 'pseudo', 'avatar', 'niveau'], 'profil : pseudo, avatar, niveau, rien d\'autre');
+assert_true(array_keys($lina) === ['id', 'pseudo', 'avatar', 'niveau', 'personnel'], 'profil : pseudo, avatar, niveau, rien d\'autre');
 $r = $alice->post('/profils', ['pseudo' => 'Noé', 'avatar' => 'robot', 'niveau' => 'eveil']);
 $noe = $r->data['profils'][1];
 for ($i = 0; $i < 4; $i++) {
@@ -600,6 +600,37 @@ $track($dad, ['v' => $V2, 's' => 'visitePAPAAAAAAAAAAA2', 'profil' => $lea['id']
 assert_status($dad->post('/supprimer-compte', ['motDePasse' => 'mot-de-passe-papa']), 200, 'suppression du compte');
 assert_true((int) $db->query("SELECT COUNT(*) FROM parties WHERE cle = 'partiePAPAAAAAAAAAAA3'")->fetchColumn() === 0, 'ses parties suivies sont effacées');
 assert_true($db->query("SELECT compte_id FROM visites WHERE cle = 'visitePAPAAAAAAAAAAA2'")->fetchColumn() === null, 'ses visites deviennent anonymes');
+
+section('Profil personnel du titulaire');
+$solo = $aClient('192.0.2.70');
+assert_status($solo->post('/inscription', ['email' => 'solo@exemple.fr', 'motDePasse' => 'mot-de-passe-solo', 'adulte' => false]), 422, 'compte réservé à un adulte');
+$r = $solo->post('/inscription', ['email' => 'solo@exemple.fr', 'motDePasse' => 'mot-de-passe-solo', 'adulte' => true]);
+assert_true($r->data['profils'] === [], 'compte neuf sans profil imposé');
+$r = $solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]);
+assert_status($r, 201, 'profil personnel créé');
+assert_true($r->data['profils'][0]['personnel'] === true, 'profil marqué personnel');
+$moi = $r->data['profils'][0];
+assert_status($solo->post('/profils', ['pseudo' => 'Solo2', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]), 422, 'un seul profil personnel');
+for ($i = 1; $i <= 6; $i++) {
+    assert_status($solo->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'robot', 'niveau' => 'eveil']), 201, "enfant $i : le profil personnel ne compte pas dans les six");
+}
+assert_status($solo->post('/profils', ['pseudo' => 'Enfant 7', 'avatar' => 'robot', 'niveau' => 'eveil']), 422, 'sept enfants refusés');
+$r = $solo->get('/etat');
+assert_true(count($r->data['profils']) === 7 && $r->data['profils'][0]['id'] === $moi['id'], 'titulaire en premier');
+$enfant = $r->data['profils'][1];
+assert_true($enfant['personnel'] === false, 'les autres restent des enfants');
+assert_status($solo->post("/profils/{$enfant['id']}/personnel", ['personnel' => true]), 422, 'pas de second profil personnel par désignation');
+$autre = $aClient('192.0.2.72');
+$autre->post('/inscription', ['email' => 'voisin@exemple.fr', 'motDePasse' => 'mot-de-passe-voisin', 'adulte' => true]);
+assert_status($autre->post("/profils/{$moi['id']}/personnel", ['personnel' => true]), 404, 'le profil d’un autre compte reste invisible');
+$solo->post("/profils/{$moi['id']}/personnel", ['personnel' => false]);
+$r = $solo->post("/profils/{$enfant['id']}/personnel", ['personnel' => true]);
+assert_true($r->data['profils'][0]['id'] === $enfant['id'], 'le titulaire peut désigner son profil lui-même');
+$r = $solo->post("/profils/{$enfant['id']}/supprimer");
+assert_true(array_filter($r->data['profils'], static fn ($p) => $p['personnel']) === [], 'profil personnel supprimé : le compte peut en recréer un');
+assert_true($db->query("SELECT profil_personnel FROM comptes WHERE email = 'solo@exemple.fr'")->fetchColumn() === null, 'lien remis à zéro');
+assert_status($solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]), 201, 'nouveau profil personnel');
+assert_true($solo->get('/export')->data['profils'][0]['personnel'] === true, 'export complet avec le profil personnel');
 
 echo "\n" . ($failures === 0 ? "OK : $count vérifications ($dsn)\n" : "$failures échec(s) sur $count vérifications\n");
 exit($failures === 0 ? 0 : 1);

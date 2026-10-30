@@ -119,12 +119,13 @@ check((await signup.textContent())?.includes('10 caractères'), 'erreur affiché
 await signup.locator('input[name="motDePasse"]').fill('un-mot-de-passe-solide');
 await signup.locator('input[name="adulte"]').check();
 await signup.locator('button[type="submit"]').click();
-await page.waitForSelector('h1:text-is("Espace famille")');
+await page.waitForSelector('.mon-espace');
 const cookies = await ctx.cookies();
 const session = cookies.find((c) => c.name === 'calcoolos_session');
 check(!!session && session.httpOnly && session.sameSite === 'Lax', 'cookie de session HttpOnly + SameSite=Lax après connexion');
 
 const addProfile = async (pseudo, avatar, niveau) => {
+  await page.evaluate(() => { document.querySelector('#ajout-enfant').open = true; });
   const form = page.locator('section[aria-labelledby="t-new"] form');
   await form.locator('input[name="pseudo"]').fill(pseudo);
   await form.locator('select[name="niveau"]').selectOption(niveau);
@@ -197,7 +198,7 @@ await s2.locator('input[name="email"]').fill(`autre-${Date.now()}@exemple.fr`);
 await s2.locator('input[name="motDePasse"]').fill('encore-un-mot-de-passe');
 await s2.locator('input[name="adulte"]').check();
 await s2.locator('button[type="submit"]').click();
-await other.waitForSelector('h1:text-is("Espace famille")');
+await other.waitForSelector('.mon-espace');
 const status = await other.evaluate(async (id) => (await fetch(`api/profils/${id}/resultats`)).status, saved.id);
 check(status === 404, `une autre famille ne lit pas les résultats de Lina (HTTP ${status})`);
 const exp = await other.evaluate(async () => (await fetch('api/export')).text());

@@ -53,7 +53,11 @@ export async function topbar(current: PageId): Promise<AccountState | null> {
   const state = await accountState();
   etat = state;
   // Déconnecté : on redevient invité ; hors ligne : on garde le joueur (envoi différé).
-  if (state?.connecte) syncActivePlayer(state.profils);
+  if (state?.connecte) {
+    syncActivePlayer(state.profils);
+    // Un seul profil : pas de choix à faire, c'est lui qui joue.
+    if (!activePlayer() && state.profils?.length === 1) setActivePlayer(state.profils[0]);
+  }
   else if (state) setActivePlayer(null);
   rafraichirJoueur();
   return state;
@@ -110,7 +114,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     h('div', {},
       h('p', { class: 'panneau-nom' }, joueur ? joueur.pseudo : connecte ? 'Personne n’est choisi' : 'Tu joues en invité'),
       h('p', { class: 'panneau-sous' },
-        joueur ? 'Ses parties sont gardées dans l’espace famille.'
+        joueur ? 'Les parties de ce profil sont gardées dans ton compte.'
           : connecte ? 'Choisis qui joue pour garder ses parties.'
           : state === null ? 'Serveur injoignable : tes parties restent sur cet appareil.'
           : 'Tes parties restent dans ce navigateur.')),
@@ -123,8 +127,10 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
   }
 
   if (connecte) {
+    // Le choix n'apparaît que s'il y a vraiment plusieurs joueurs possibles.
+    const profils = state?.profils ?? [];
     const liste = h('div', { class: 'panneau-profils', role: 'group', 'aria-label': 'Qui joue ?' });
-    for (const p of state?.profils ?? []) {
+    for (const p of profils) {
       const b = h('button', { type: 'button', 'aria-pressed': String(joueur?.id === p.id) }, avatarImg(p.avatar, 36, ''), p.pseudo);
       b.addEventListener('click', () => choisir(p));
       liste.append(b);
@@ -132,7 +138,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     const inv = h('button', { type: 'button', 'aria-pressed': String(!joueur) }, avatarImg(AVATAR_INVITE, 36, ''), 'Invité');
     inv.addEventListener('click', () => choisir(null));
     liste.append(inv);
-    panneau.append(h('p', { class: 'panneau-titre' }, 'Qui joue ?'), liste);
+    if (profils.length !== 1) panneau.append(h('p', { class: 'panneau-titre' }, 'Qui joue ?'), liste);
     const sortir = h('button', { type: 'button', class: 'panneau-lien' }, 'Se déconnecter');
     sortir.addEventListener('click', async () => {
       await api.post('/deconnexion').catch(() => null);
@@ -141,7 +147,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     });
     panneau.append(h('div', { class: 'panneau-actions' },
       h('a', { class: 'bouton petit', href: joueur ? `tableau.html?profil=${joueur.id}` : 'tableau.html' }, 'Voir les progrès'),
-      h('a', { class: 'bouton petit secondaire', href: 'compte.html' }, 'Espace famille')),
+      h('a', { class: 'bouton petit secondaire', href: 'compte.html' }, 'Mon espace')),
     h('p', { class: 'panneau-compte' }, h('span', {}, state?.email ?? ''), sortir));
   } else {
     const parties = localHistory();
@@ -180,9 +186,9 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     }
   };
 
-  // --- À droite : inscription et connexion pour un visiteur, espace famille pour un compte.
+  // --- À droite : inscription et connexion pour un visiteur, Mon espace pour un compte.
   if (connecte) {
-    compte.replaceChildren(h('a', { class: 'lien-compte', href: 'compte.html', 'aria-current': page === 'compte' ? 'page' : undefined }, 'Espace famille'));
+    compte.replaceChildren(h('a', { class: 'lien-compte', href: 'compte.html', 'aria-current': page === 'compte' ? 'page' : undefined }, 'Mon espace'));
   } else if (state === null) {
     compte.replaceChildren();
   } else {
