@@ -6,7 +6,7 @@
 import type { GameId, StoredResult } from './results';
 
 export const GAME_NAMES: Record<GameId, string> = {
-  cubes: 'Cubes de siège',
+  cubes: 'Panique au phare !',
   meteores: 'Pluie de météores',
   dragon: 'Le Dragon gourmand',
   fusee: 'Décollage !',
@@ -25,10 +25,10 @@ export const GAME_PAGES: Record<GameId, string> = {
 };
 
 export const TIER_NAMES: Record<string, string> = {
-  eveil: 'Éveil',
-  explorateur: 'Explorateur',
-  stratege: 'Stratège',
-  maitre: 'Maître',
+  eveil: 'Doux',
+  explorateur: 'Relevé',
+  stratege: 'Piquant',
+  maitre: 'Explosif',
 };
 
 export const MODE_NAMES: Record<string, string> = { tranquille: 'Tranquille', defi: 'Défi' };
@@ -129,7 +129,7 @@ export function summarize(results: readonly StoredResult[], now = new Date()): S
   const badges: Badge[] = [
     { id: 'premiere', name: 'Première partie', hint: 'Jouer une partie', earned: games >= 1 },
     { id: 'dix', name: 'Dix parties', hint: 'Jouer dix parties', earned: games >= 10 },
-    { id: 'phare', name: 'Gardien du phare', hint: 'Gagner à Cubes de siège', earned: wonGame('cubes') },
+    { id: 'phare', name: 'Gardien du phare', hint: 'Gagner à Panique au phare !', earned: wonGame('cubes') },
     { id: 'station', name: 'Pilote de la station', hint: 'Gagner à Pluie de météores', earned: wonGame('meteores') },
     { id: 'dragon', name: 'Ami du dragon', hint: 'Gagner au Dragon gourmand', earned: wonGame('dragon') },
     { id: 'fusee', name: 'Astronaute', hint: 'Atteindre le royaume de la confiserie', earned: wonGame('fusee') },

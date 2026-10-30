@@ -24,7 +24,7 @@ final class Games
      * maxPerSecond : points par seconde au-delà desquels c'est invraisemblable.
      */
     public const CATALOG = [
-        'cubes' => ['nom' => 'Cubes de siège', 'maxScore' => 60000, 'minWin' => 40, 'maxPerSecond' => 400],
+        'cubes' => ['nom' => 'Panique au phare !', 'maxScore' => 60000, 'minWin' => 40, 'maxPerSecond' => 400],
         'meteores' => ['nom' => 'Pluie de météores', 'maxScore' => 40000, 'minWin' => 60, 'maxPerSecond' => 300],
         'dragon' => ['nom' => 'Le Dragon gourmand', 'maxScore' => 40000, 'minWin' => 40, 'maxPerSecond' => 300],
         'fusee' => ['nom' => 'Décollage !', 'maxScore' => 30000, 'minWin' => 60, 'maxPerSecond' => 200],

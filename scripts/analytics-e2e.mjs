@@ -150,7 +150,7 @@ const ymd = `${auj.getFullYear()}-${String(auj.getMonth() + 1).padStart(2, '0')}
 const res = await lire('resume', { debut: ymd, fin: ymd });
 const parJeu = Object.fromEntries(res.jeux.liste.map((g) => [g.jeu, g]));
 for (const j of JEUX) verifier(parJeu[j.id].commencees >= 1, `${j.id} : au moins une partie commencée dans les statistiques`);
-verifier(parJeu.cubes.abandons >= 1, 'abandon compté (Cubes de siège quitté en pleine partie)');
+verifier(parJeu.cubes.abandons >= 1, 'abandon compté (Panique au phare ! quitté en pleine partie)');
 const fiche = await lire('joueur', { id: profil.id });
 verifier(fiche.pseudo === 'SuperChat42' && fiche.parties === 1 && fiche.parJeu.fusee.temps === finP?.actif, `fiche joueur : 1 partie, ${fiche.parJeu?.fusee?.temps} s sur Décollage ! (résultat relié, pas compté deux fois)`);
 verifier(res.chiffres.visiteursAujourdhui >= 1 && res.chiffres.sessions >= 1, 'visiteurs et sessions');

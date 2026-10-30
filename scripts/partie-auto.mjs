@@ -1,5 +1,5 @@
 /**
- * Joue une partie complète de « Cubes de siège » dans Chromium et prend des captures.
+ * Joue une partie complète de « Panique au phare ! » dans Chromium et prend des captures.
  * Usage : node scripts/partie-auto.mjs [urlDeBase] [dossier] [mode] [niveau]
  * Vérifie aussi l'absence d'erreur de console et de fichier manquant.
  */

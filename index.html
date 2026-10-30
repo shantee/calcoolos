@@ -20,14 +20,16 @@
     <header id="barre"></header>
 
     <main>
-      <!-- Ouverture : logo, préparation de la partie (qui joue, niveau), et les quatre jeux en vignettes. -->
+      <!-- L'univers du joueur : rempli par accueil.ts pour un joueur connecté ou un invité qui revient. -->
+      <section class="univers" id="univers" aria-labelledby="univers-titre" hidden></section>
+
+      <!-- Ouverture : logo, préparation de la partie (qui joue, niveau), et les jeux en vignettes. -->
       <section class="ouverture" aria-labelledby="titre">
         <div class="ouverture-texte">
           <h1 id="titre" class="titre-logo" translate="no">%BRAND_NAME%</h1>
           <p class="accroche">%BRAND_TAGLINE%</p>
           <p class="intro">
-            Jeux de calcul mental pour les enfants et les grands : ici, le calcul est l’action du jeu.
-            Six jeux, aucun questionnaire.
+            Des mondes à explorer, des personnages attachants, des aventures à finir : ce sont de vrais jeux vidéo. Sauf qu’ici, ton meilleur coup, c’est ton calcul mental. On vient pour jouer, à tout âge, et on repart plus vif.
           </p>
 
           <!-- La table de lancement : qui joue, à quel niveau. -->
@@ -44,21 +46,21 @@
             </div>
 
             <fieldset class="niveau" id="niveau">
-              <legend>Choisis ton niveau <span class="niveau-alerte">avant de jouer</span></legend>
+              <legend>Choisis ta difficulté <span class="niveau-alerte">avant de jouer</span></legend>
               <div class="niveaux">
-                <label data-niveau="eveil"><input type="radio" name="niveau" value="eveil" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Éveil</span><small>7-8 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
-                <label data-niveau="explorateur"><input type="radio" name="niveau" value="explorateur" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Explorateur</span><small>9-10 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
-                <label data-niveau="stratege"><input type="radio" name="niveau" value="stratege" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Stratège</span><small>11-12 ans</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
-                <label data-niveau="maitre"><input type="radio" name="niveau" value="maitre" /><span class="niveau-perso" aria-hidden="true"></span><span class="niveau-nom">Maître</span><small>ados et adultes</small><span class="niveau-crans" aria-hidden="true"><i></i><i></i><i></i><i></i></span></label>
+                <label data-niveau="eveil"><input type="radio" name="niveau" value="eveil" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Doux</span><span class="niveau-exemple">8 + 5</span><small>+ − jusqu’à 20</small></label>
+                <label data-niveau="explorateur"><input type="radio" name="niveau" value="explorateur" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Relevé</span><span class="niveau-exemple">27 + 15</span><small>+ − jusqu’à 50, × faciles</small></label>
+                <label data-niveau="stratege"><input type="radio" name="niveau" value="stratege" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Piquant</span><span class="niveau-exemple">7 × 8</span><small>+ − jusqu’à 100, × ÷ des tables</small></label>
+                <label data-niveau="maitre"><input type="radio" name="niveau" value="maitre" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Explosif</span><span class="niveau-exemple">84 ÷ 7</span><small>+ − jusqu’à 200, × ÷ jusqu’à 12</small></label>
               </div>
-              <p class="niveau-detail" id="niveau-detail" aria-live="polite">Choisis le niveau qui te correspond : tu pourras en changer à tout moment.</p>
+              <p class="niveau-detail" id="niveau-detail" aria-live="polite">Plus il y a de piments, plus les calculs sont corsés. Tu peux changer à tout moment.</p>
             </fieldset>
 
             <a class="explorer" href="#jeu-fusee">Choisis ton jeu <span class="fleche" aria-hidden="true">↓</span></a>
           </div>
         </div>
 
-        <nav class="mosaique" aria-label="Les six jeux">
+        <nav class="mosaique" aria-label="Les jeux">
           <a class="vignette" href="#jeu-fusee" style="--i: 0">
             <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
             <span>Décollage !</span>
@@ -69,7 +71,7 @@
           </a>
           <a class="vignette" href="#jeu-cubes" style="--i: 2">
             <img src="/src/images/accueil/cubes-de-siege-480.webp" width="480" height="360" alt="" />
-            <span>Cubes de siège</span>
+            <span>Panique au phare !</span>
           </a>
           <a class="vignette" href="#jeu-dragon" style="--i: 3">
             <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
@@ -132,7 +134,7 @@
       <nav class="reperes" aria-label="Aller à un jeu">
         <a href="#jeu-fusee" data-repere="jeu-fusee"><span class="visuel-masque">Décollage !</span></a>
         <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
-        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Cubes de siège</span></a>
+        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Panique au phare !</span></a>
         <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
         <a href="#jeu-neon" data-repere="jeu-neon"><span class="visuel-masque">Neon Flight</span></a>
         <a href="#jeu-multirail" data-repere="jeu-multirail"><span class="visuel-masque">MULTIRAIL</span></a>
@@ -160,7 +162,7 @@
             <p class="surtitre">Du village jusqu’aux étoiles</p>
             <h2 id="fusee-titre">Décollage !</h2>
             <p class="accroche-jeu">Chaque bonne réponse propulse ta fusée : pose-toi sur les plateformes et monte jusqu’aux étoiles&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Calcul rapide</li><li>Additions et soustractions</li><li>Tables (dès Explorateur)</li></ul>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Calcul rapide</li><li>Additions et soustractions</li><li>Tables (dès Relevé)</li></ul>
             <p class="pitch">
               Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
               Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’au royaume de la confiserie !
@@ -233,7 +235,7 @@
           <div class="vitrine-texte">
             <p class="numero"><span>03</span> / 06</p>
             <p class="surtitre">L’Atelier des Cubes</p>
-            <h2 id="cubes-titre">Cubes de siège</h2>
+            <h2 id="cubes-titre">Panique au phare !</h2>
             <p class="accroche-jeu">Additionne les bons cubes pour repousser les monstres et protéger ton phare&nbsp;!</p>
             <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Décomposer un nombre</li><li>Stratégie</li></ul>
             <p class="pitch">
@@ -245,7 +247,7 @@
               <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
             </p>
             <div class="actions">
-              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Cubes de siège</span></a>
+              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Panique au phare !</span></a>
               <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
             </div>
           </div>
@@ -273,7 +275,7 @@
             <p class="surtitre">Dans le ciel du soir</p>
             <h2 id="dragon-titre">Le Dragon gourmand</h2>
             <p class="accroche-jeu">Guide ton dragon vers les bons nombres : il doit avaler exactement le total demandé&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Compléments</li><li>Multiplications (Stratège, Maître)</li></ul>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Compléments</li><li>Multiplications (Piquant, Explosif)</li></ul>
             <p class="pitch">
               Guide le dragon et fais-lui avaler des lanternes.
               <strong>Ensemble, elles doivent faire exactement le nombre demandé.</strong>

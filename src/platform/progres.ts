@@ -425,3 +425,20 @@ export function synthese(results: readonly StoredResult[], now = new Date()): Me
   let bravos = 0;
   return out.filter((m) => m.ton !== 'bravo' || ++bravos <= 3);
 }
+
+/**
+ * Deux à trois conseils courts pour l'accueil, seulement à partir de chiffres réels :
+ * une table en progrès, un fait qui résiste, sinon ce qui manque encore pour juger.
+ */
+export function conseilsAccueil(results: readonly StoredResult[], now = new Date()): Message[] {
+  const out: Message[] = [];
+  const tables = progresTables(results).filter((p) => p.plusRapide || p.plusJuste);
+  const meilleure = [...tables].sort((a, b) => b.apres.reussite - b.avant.reussite - (a.apres.reussite - a.avant.reussite))[0];
+  if (meilleure) out.push({ ton: 'bravo', texte: `Tu progresses sur la table de ${meilleure.table} !` });
+  const [fait] = aReviser(faits(results), 1);
+  if (fait) out.push({ ton: 'conseil', texte: `Attention, ${fait.a} × ${fait.b} te pose encore quelques difficultés (réussi ${fait.justes} fois sur ${essais(fait)}).` });
+  for (const m of synthese(results, now)) {
+    if (out.length < 3 && !m.texte.startsWith('À réviser') && !m.texte.includes('table de')) out.push(m);
+  }
+  return out;
+}

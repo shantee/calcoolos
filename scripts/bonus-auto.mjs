@@ -1,5 +1,5 @@
 /**
- * Bonus volants de « Cubes de siège » dans Chromium, avec captures.
+ * Bonus volants de « Panique au phare ! » dans Chromium, avec captures.
  * Usage : node scripts/bonus-auto.mjs [urlDeBase] [dossier]
  *  1. engins forcés : réponse au clavier (Super Poussée), au doigt sur le pavé (Gel), Méga-tir,
  *     échec (deux erreurs), emplacements pleins, bonus inutilisable ;

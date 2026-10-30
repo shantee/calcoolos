@@ -1699,3 +1699,357 @@ h1 {
 .calme .reperes a {
   transition: none;
 }
+
+/* --- Échelle de difficulté : piments, couleur et nom se complètent (chantier du 30/10/2026). --- */
+[data-niveau='eveil'] { --piment: #58cf7c; }
+[data-niveau='explorateur'] { --piment: #f4d03f; }
+[data-niveau='stratege'] { --piment: #ff9838; }
+[data-niveau='maitre'] { --piment: #ff5a4f; }
+
+.niveaux {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.niveaux label {
+  align-content: start;
+  gap: 3px;
+  padding: 10px 6px 9px;
+  border-top: 5px solid var(--piment);
+  text-align: center;
+}
+
+.niveau-piments {
+  display: flex;
+  justify-content: center;
+  min-height: 20px;
+  color: var(--piment);
+}
+
+.niveau-piments svg,
+.rappel-piments svg {
+  width: 20px;
+  height: 20px;
+  margin-inline: -2px;
+}
+
+.niveau-exemple {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--piment);
+}
+
+.niveaux small {
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+
+.niveaux label:has(input:checked) {
+  border-color: var(--piment);
+  color: var(--creme);
+  background: color-mix(in srgb, var(--piment) 20%, #101a30);
+  box-shadow: 0 0 0 2px var(--piment), 0 8px 20px rgb(0 0 0 / 0.3);
+}
+
+.niveaux label:has(input:checked) small {
+  color: var(--creme);
+}
+
+.rappel-niveau > .rappel-piments {
+  display: inline-flex;
+  flex: none;
+  flex-flow: row nowrap;
+  color: var(--piment, var(--creme));
+}
+
+.vignette-tags {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vignette-tags li {
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--creme);
+  background: rgb(13 10 28 / 0.78);
+}
+
+.choix-niveau-option .niveau-piments {
+  order: -1;
+}
+
+/* --- L'univers du joueur. --- */
+.univers {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 14px;
+  max-width: 1232px;
+  margin: 18px auto;
+  padding: 22px;
+  border-radius: 24px;
+  color: var(--creme);
+  background: rgb(14 24 44 / 0.72);
+  box-shadow: inset 0 0 0 1px rgb(246 236 216 / 0.12);
+}
+
+.univers[hidden] {
+  display: none;
+}
+
+.univers h2,
+.univers h3 {
+  margin: 0;
+}
+
+.univers-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.univers-tete > div {
+  flex: 1 1 160px;
+}
+
+.lien-progres {
+  color: var(--ciel);
+  font-weight: 600;
+}
+
+.univers-haut {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.univers-reprise {
+  display: grid;
+  grid-template-columns: 44% 1fr;
+  overflow: hidden;
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+  background: rgb(246 236 216 / 0.08);
+}
+
+.univers-reprise img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.reprise-texte {
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 4px;
+  padding: 14px;
+}
+
+.reprise-texte strong {
+  font-size: 1.3rem;
+}
+
+.reprise-bouton {
+  margin-top: 6px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  color: var(--encre);
+  background: var(--safran);
+}
+
+.univers-reprise:hover .reprise-bouton,
+.univers-reprise:focus-visible .reprise-bouton {
+  filter: brightness(1.12);
+}
+
+.univers-conseils {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgb(246 236 216 / 0.08);
+}
+
+.univers-conseils ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.univers-conseils li {
+  padding-left: 12px;
+  border-left: 4px solid var(--ciel);
+}
+
+.univers-conseils .ton-bravo {
+  border-color: var(--sarcelle);
+}
+
+.univers-conseils .ton-conseil {
+  border-color: var(--safran);
+}
+
+.univers-aide {
+  margin: -10px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.univers-jeux {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tuile-jeu {
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: rgb(246 236 216 / 0.08);
+  transition: transform 0.15s;
+}
+
+.tuile-jeu:hover {
+  transform: translateY(-3px);
+}
+
+.tuile-jeu a {
+  display: grid;
+  gap: 2px;
+  height: 100%;
+  padding-bottom: 10px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tuile-jeu img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+}
+
+.tuile-jeu strong,
+.tuile-jeu small,
+.tuile-tags {
+  padding-inline: 10px;
+}
+
+.tuile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.tuile-tags span {
+  padding: 1px 7px;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  background: rgb(127 214 255 / 0.16);
+}
+
+.favori {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  color: var(--creme);
+  background: rgb(13 10 28 / 0.75);
+  cursor: pointer;
+}
+
+.favori[aria-pressed='true'] {
+  color: var(--safran);
+}
+
+.univers-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.accueil-perso .accroche,
+.accueil-perso .intro,
+.accueil-perso .titre-logo,
+.accueil-perso .mosaique,
+.accueil-perso .explorer {
+  display: none;
+}
+
+.accueil-perso .ouverture {
+  display: block;
+  min-height: 0;
+  padding-block: 0;
+}
+
+.accueil-perso .ouverture-texte {
+  max-width: none;
+}
+
+@media (min-width: 761px) {
+  .accueil-perso .niveaux {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .univers {
+    margin-inline: 8px;
+    padding: 16px;
+  }
+
+  .univers-haut {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .niveaux {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .univers-jeux {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .tuile-tags {
+    display: none;
+  }
+
+  .tuile-jeu strong {
+    font-size: 0.95rem;
+    line-height: 1.15;
+  }
+
+  .tuile-jeu small {
+    font-size: 0.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tuile-jeu {
+    transition: none;
+  }
+}

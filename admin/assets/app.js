@@ -2,7 +2,7 @@
 // Toutes les données viennent de /calcoolos/api/… (relais du portail, session obligatoire).
 
 const JEUX = {
-  cubes: { nom: 'Cubes de siège', court: 'Cubes', couleur: '#3987e5', ico: '🧊' },
+  cubes: { nom: 'Panique au phare !', court: 'Phare', couleur: '#3987e5', ico: '🧊' },
   dragon: { nom: 'Le Dragon gourmand', court: 'Dragon', couleur: '#d95926', ico: '🐉' },
   meteores: { nom: 'Pluie de météores', court: 'Météores', couleur: '#199e70', ico: '☄️' },
   fusee: { nom: 'Décollage !', court: 'Décollage', couleur: '#c98500', ico: '🚀' },
@@ -10,11 +10,11 @@ const JEUX = {
   multirail: { nom: 'MULTIRAIL', court: 'Multirail', couleur: '#2fa597', ico: '🚂' },
 };
 const ORDRE = ['cubes', 'dragon', 'meteores', 'fusee', 'neon', 'multirail'];
-const NIVEAUX = { eveil: 'Éveil', explorateur: 'Explorateur', stratege: 'Stratège', maitre: 'Maître' };
+const NIVEAUX = { eveil: 'Doux', explorateur: 'Relevé', stratege: 'Piquant', maitre: 'Explosif' };
 const COUL_NIVEAUX = { eveil: '#7fb3f2', explorateur: '#5fd39a', stratege: '#f2b84b', maitre: '#e87ba4' };
 const MODES = { tranquille: 'Tranquille', defi: 'Défi' };
 const APPAREILS = { ordinateur: 'Ordinateur', tablette: 'Tablette', telephone: 'Téléphone' };
-const PAGES = { accueil: 'Accueil', compte: 'Espace parents', tableau: 'Mes progrès', classements: 'Classements', confidentialite: 'Confidentialité', cubes: 'Cubes de siège', meteores: 'Pluie de météores', dragon: 'Le Dragon gourmand', fusee: 'Décollage !', neon: 'Neon Flight', multirail: 'MULTIRAIL', autre: 'Autre page' };
+const PAGES = { accueil: 'Accueil', compte: 'Espace parents', tableau: 'Mes progrès', classements: 'Classements', confidentialite: 'Confidentialité', cubes: 'Panique au phare !', meteores: 'Pluie de météores', dragon: 'Le Dragon gourmand', fusee: 'Décollage !', neon: 'Neon Flight', multirail: 'MULTIRAIL', autre: 'Autre page' };
 const T = { texte: '#e8ecf4', texte2: '#b6c0d6', muet: '#8592ae', ligne: 'rgba(232,236,244,.09)', fond: '#1f2a44', accent: '#ffe14d', bleu: '#3987e5' };
 
 const etat = { vue: 'ensemble', periode: '30', debut: '', fin: '', resume: null, joueurs: null, filtres: { jeu: '', qui: '', profil: '' }, entonnoir: 'tous', tri: { col: 'derniereActivite', sens: 'desc' }, recherche: '' };

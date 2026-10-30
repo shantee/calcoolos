@@ -27,10 +27,10 @@ export interface ZenProblem {
 export type ZenLevel = TierId;
 
 export const ZEN_LEVELS: Record<ZenLevel, { label: string; hint: string; base: number; time: number }> = {
-  eveil: { label: 'Éveil', hint: 'Petits calculs', base: 1, time: 1.4 },
-  explorateur: { label: 'Explorateur', hint: 'Calculs simples', base: 1.8, time: 1.25 },
-  stratege: { label: 'Stratège', hint: 'Un peu de tout', base: 2.6, time: 1.1 },
-  maitre: { label: 'Maître', hint: 'Pour les têtes bien faites', base: 3.5, time: 1 },
+  eveil: { label: 'Doux', hint: 'Petits calculs', base: 1, time: 1.4 },
+  explorateur: { label: 'Relevé', hint: 'Calculs simples', base: 1.8, time: 1.25 },
+  stratege: { label: 'Piquant', hint: 'Un peu de tout', base: 2.6, time: 1.1 },
+  maitre: { label: 'Explosif', hint: 'Pour les têtes bien faites', base: 3.5, time: 1 },
 };
 
 // ---------------------------------------------------------------- évaluation et écriture

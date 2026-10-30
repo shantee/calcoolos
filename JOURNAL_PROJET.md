@@ -30,6 +30,18 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-10-30 : Claude, chantier accueil et niveaux
+
+- **Cubes de siège → Panique au phare !** partout à l'écran ; identifiants (`cubes`), URL, données et gameplay inchangés.
+- **Niveaux** : Doux, Relevé, Piquant, Explosif (couleur + piments + nom + exemple), plus aucun âge. Identifiants
+  (`eveil`…) inchangés, réglages des profils conservés. Quatre niveaux gardés : le coût d'un 5e est dans `doc/NIVEAUX.md`.
+- **Univers du joueur** (`#univers`, `accueil.ts`) : avatar, pseudo, dernier jeu, meilleurs scores, conseils
+  (`conseilsAccueil`, chiffres réels), favoris et option « grandes présentations » (`favoris.ts`).
+- Nouvelle accroche (`brand.json`) et introduction, compétences sur les vignettes.
+- Tests : Vitest 176, API 225, plateforme 21/21, CSP ok, accueil 66/68 (les 2 échecs : textes Neon Flight et MULTIRAIL
+  non traduits en anglais/allemand, antérieurs au chantier). Captures dans `CAPTURES/accueil-30-10/`, avec API simulée.
+- Limites : favoris et option retenus sur l'appareil seulement (pas de synchronisation) ; `verifier-en-ligne` à relire.
+
 ## 2026-10-30 : Claude, menu déroulant des langues
 
 - Barre du haut : un seul drapeau (langue en cours) qui ouvre un menu déroulant English / Deutsch / Français ;

@@ -12,6 +12,8 @@ import { field, h, showErrors } from '../platform/dom';
 import { boutonGoogle, oublierGoogle } from '../platform/google';
 import { pseudoAuHasard } from '../platform/pseudos';
 import { demarrerSuivi, etapeParcours } from '../platform/suivi';
+import { NIVEAU_INFOS } from '../platform/niveau';
+import type { TierId } from '../core/difficulty';
 
 demarrerSuivi('compte');
 
@@ -19,8 +21,7 @@ const root = document.querySelector<HTMLElement>('#contenu')!;
 
 function tierSelect(name: string, value = 'explorateur'): HTMLSelectElement {
   const s = h('select', { name });
-  const publics: Record<string, string> = { eveil: '7-8 ans', explorateur: '9-10 ans', stratege: '11-12 ans', maitre: 'ados et adultes' };
-  for (const [id, label] of Object.entries(TIER_NAMES)) s.append(h('option', { value: id, selected: id === value }, `${label} · ${publics[id]}`));
+  for (const [id, label] of Object.entries(TIER_NAMES)) s.append(h('option', { value: id, selected: id === value }, `${label} · ${NIVEAU_INFOS[id as TierId].public}`));
   return s;
 }
 

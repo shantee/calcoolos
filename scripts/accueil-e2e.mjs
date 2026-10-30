@@ -81,13 +81,13 @@ check(true, 'premier « Jouer » : la fenêtre « Quel est ton niveau ? » s’o
 await page.waitForTimeout(400); // fin du fondu d'ouverture
 await page.screenshot({ path: `${out}/ordinateur-choix-niveau.png` });
 await Promise.all([page.waitForURL(/cubes-de-siege\.html/), page.click('.choix-niveau-option[data-niveau="stratege"]')]);
-check(new URL(page.url()).searchParams.get('niveau') === 'stratege', 'Cubes de siège lancé au niveau Stratège');
+check(new URL(page.url()).searchParams.get('niveau') === 'stratege', 'Panique au phare ! lancé au niveau Piquant');
 
 // Retour : le niveau est retenu, plus de fenêtre.
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-check(await niveauCoche() === 'stratege', 'retour à l’accueil : niveau Stratège retenu');
+check(await niveauCoche() === 'stratege', 'retour à l’accueil : niveau Piquant retenu');
 check((await page.textContent('#niveau-detail'))?.includes('Calculs jusqu’à 100'), 'détail du niveau affiché');
-check((await page.textContent('#jeu-dragon .rappel-niveau'))?.includes('Stratège'), 'rappel près de « Jouer » : Stratège');
+check((await page.textContent('#jeu-dragon .rappel-niveau'))?.includes('Piquant'), 'rappel près de « Jouer » : Stratège');
 
 // Les quatre jeux reçoivent le niveau choisi (ici Éveil, choisi par un clic).
 await page.click('input[value="eveil"]');
@@ -137,7 +137,7 @@ console.log('• Accueil connecté');
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
 check((await page.textContent('.joueur'))?.includes('Lina'), 'barre : Lina joue (premier profil)');
-check((await page.textContent('.joueur'))?.includes('Niveau Éveil'), 'barre : niveau du profil affiché');
+check((await page.textContent('.joueur'))?.includes('Niveau Doux'), 'barre : niveau du profil affiché');
 check(await niveauCoche() === 'eveil', 'accueil : niveau du profil de Lina (Éveil)');
 await page.waitForFunction(() => document.querySelector('#carnet-titre')?.textContent?.includes('Lina'));
 check(true, 'carnet : « Le carnet de Lina »');
@@ -158,10 +158,10 @@ await page.click('input[value="stratege"]');
 await page.waitForTimeout(600);
 const profils = await page.evaluate(async () => (await (await fetch('api/etat')).json()).profils);
 check(profils.find((p) => p.pseudo === 'Noé')?.niveau === 'stratege', 'niveau changé à l’accueil : enregistré sur le profil de Noé');
-check((await page.textContent('.joueur'))?.includes('Niveau Stratège'), 'barre : niveau mis à jour');
+check((await page.textContent('.joueur'))?.includes('Niveau Piquant'), 'barre : niveau mis à jour');
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
-check((await page.textContent('.joueur'))?.includes('Noé') && (await niveauCoche()) === 'stratege', 'après rechargement : Noé, niveau Stratège');
+check((await page.textContent('.joueur'))?.includes('Noé') && (await niveauCoche()) === 'stratege', 'après rechargement : Noé, niveau Piquant');
 await page.screenshot({ path: `${out}/ordinateur-accueil-connecte.png` });
 // « Qui joue ? » sur l'accueil.
 await page.locator('#qui-joue button', { hasText: 'Lina' }).click();

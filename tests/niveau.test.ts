@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { NIVEAUX, NIVEAU_INFOS, estNiveau, niveauDepart } from '../src/platform/niveau';
 import { TIERS } from '../src/core/difficulty';
-import { AVATARS } from '../src/platform/avatars';
 
 describe('niveau de départ de l’accueil', () => {
   it('le niveau du profil actif l’emporte sur celui retenu sur l’appareil', () => {
@@ -38,7 +37,8 @@ describe('fiches des niveaux', () => {
     for (const id of NIVEAUX) expect(NIVEAU_INFOS[id].exemple).toMatch(/^\d+ [+−×÷] \d+$/);
   });
 
-  it('chaque niveau a un personnage existant', () => {
-    for (const id of NIVEAUX) expect(AVATARS[NIVEAU_INFOS[id].avatar]).toBeDefined();
+  it('chaque niveau a son échelle de piments, sans mention d’âge', () => {
+    expect(NIVEAUX.map((id) => NIVEAU_INFOS[id].piments)).toEqual([1, 2, 3, 4]);
+    for (const id of NIVEAUX) expect(NIVEAU_INFOS[id].public).not.toMatch(/ans|adulte/);
   });
 });

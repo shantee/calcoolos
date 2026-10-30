@@ -217,7 +217,7 @@ Phaser qui ne fait que montrer et animer. La scène, en fin de partie, appelle `
   planète Bonbon (5 étages). Plateformes mobiles et fragiles (qui se reforment), bonus, étoiles, montgolfière de
   secours. Chaque plateforme est à portée d'une poussée (testé sur 200 mondes).
 
-Paliers (`src/core/difficulty.ts`) : Éveil 7-8 ans, Explorateur 9-10, Stratège 11-12, Maître ados/adultes.
+Paliers (`src/core/difficulty.ts`, `doc/NIVEAUX.md`) : Doux (`eveil`), Relevé (`explorateur`), Piquant (`stratege`), Explosif (`maitre`), décrits par leurs calculs, jamais par un âge. **Cubes de siège s'appelle Panique au phare ! depuis le 30/10/2026** (identifiant `cubes` inchangé).
 Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jamais de négatif).
 
 ## 8. Plateforme et serveur (résumé ; détails dans `doc/ARCHITECTURE.md` et `doc/DEPLOIEMENT.md`)
@@ -255,7 +255,7 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   courte (« {*} sur {*} » avalerait toute phrase contenant « sur »). Les textes à plusieurs lignes, ou coupés par
   « · » ou trois espaces, sont traduits morceau par morceau.
 - **Choix de la langue** : `localStorage['calcoolos.langue']`, sinon `navigator.languages` (fr, de, en), sinon
-  anglais. Un clic sur un drapeau enregistre et recharge la page. Les pseudos proposés
+  français. Un clic sur un drapeau enregistre et recharge la page. Les pseudos proposés
   et la page de confidentialité restent en français.
 - **Oublis** : `window.__tradManquantes` (console) liste les textes restés en français sur la page.
 - **Largeur** : l'allemand est plus long ; les textes des jeux ont été vérifiés sur captures (début, partie, fin des

@@ -1,5 +1,5 @@
 /**
- * « Cubes de siège » — le jeu complet (direction B, 2D illustrée).
+ * « Panique au phare ! » — le jeu complet (direction B, 2D illustrée).
  *
  * Écran d'accueil du jeu (règle en deux phrases, choix du mode), vagues de
  * monstres, cœurs du phare, écran de fin avec statistiques et record local.
@@ -567,7 +567,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private showIntro(): void {
     const c = this.openOverlay(470);
     const top = H / 2 - 235;
-    c.add(this.add.text(W / 2, top + 60, 'Cubes de siège', style(48, B.C.saffron, 800, 7)).setOrigin(0.5));
+    c.add(this.add.text(W / 2, top + 60, 'Panique au phare !', style(48, B.C.saffron, 800, 7)).setOrigin(0.5));
     c.add(this.add.text(W / 2, top + 150, [
       'Un monstre approche du phare avec un nombre sur sa pancarte.',
       'Additionne des cubes pour obtenir exactement ce nombre :',

@@ -266,7 +266,7 @@ export class DragonScene extends Phaser.Scene {
     this.add.image(0, SEA_Y, this.tex('d-sea', () => D.sea(W, H - SEA_Y))).setOrigin(0).setDepth(7);
     const path = this.add.image(1078, SEA_Y, this.tex('d-moonpath', () => D.moonPath(160, H - SEA_Y))).setOrigin(0.5, 0).setDepth(7.2).setBlendMode(Phaser.BlendModes.ADD);
     if (!this.reducedMotion) this.tweens.add({ targets: path, scaleX: 1.15, alpha: 0.7, duration: 1800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    // Le phare de Cubes de siège, sur son île, balaie le ciel.
+    // Le phare de Panique au phare !, sur son île, balaie le ciel.
     const isle = this.add.graphics().setDepth(8);
     isle.fillStyle(0x1e1636, 1);
     isle.fillEllipse(120, SEA_Y + 6, 230, 46);

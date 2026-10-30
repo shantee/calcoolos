@@ -35,7 +35,7 @@ describe('traduction', () => {
   it('remplit les modèles et traduit les morceaux', async () => {
     const { t } = await avecLangue('de');
     expect(t('Vague 2 / 4')).toBe('Welle 2 / 4');
-    expect(t('Niveau Explorateur · 9-10 ans')).toBe('Level Entdecker · 9-10 Jahre');
+    expect(t('Niveau Relevé · + − jusqu’à 50, × faciles')).toBe('Level Mittel · + − bis 50, leichte ×');
     expect(t('Résultat enregistré pour Lina : nouveau record !')).toBe('Ergebnis für Lina gespeichert: neuer Rekord!');
   });
   it('traduit ligne par ligne et morceau par morceau', async () => {
