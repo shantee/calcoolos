@@ -54,6 +54,10 @@ jeux 2D et Neon Flight équilibrés (effort moyen 2,81 contre 2,22 en Piquant, c
 écartait aussi tous les `× 5` : plancher abaissé de 0,3 à 0,25, 24 % de `× 5` revenus. Plateforme 21/21 et Google 33/33
 refaits sur le manège final, sur une base jetable (`DB_DSN=sqlite:/tmp/e2e.sqlite` dans le conteneur).
 
+**Publié** le 02/11/2026 à 12:45 (`calcoolos-20261102-124450-cd1648e`), après accord de Philippe sur les captures. En ligne :
+`verifier-en-ligne.mjs` 24/24 (seule alerte : règle `report-only` du cadre de Google, sans blocage), relevé des six jeux
+aux quatre niveaux 103/103. Philippe doit encore essayer sur une vraie tablette.
+
 **Limites** : pas d'essai sur vraie tablette ni sur un vrai processeur graphique de téléphone ; MULTIRAIL relevé sur
 peu de calculs par niveau (GPU logiciel) ; Brave jamais piloté, Edge non testé ; ressenti d'équilibrage d'Explosif à
 juger par des joueurs.
