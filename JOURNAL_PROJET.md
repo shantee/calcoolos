@@ -49,6 +49,11 @@ minimal de 3 en Explosif. La fenêtre décrit des tables pour Neon Flight et MUL
 13/13 (relevé avant le plancher d'Explosif, qui ne le concerne pas), Firefox et WebKit réels aux trois formats. Fluidité : environ
 60 images/s sans tâche longue, processeur simulé jusqu'à 6 fois plus lent.
 
+**Explosif vérifié après validation de Philippe** (« sans éliminer artificiellement toutes les multiplications faciles ») :
+jeux 2D et Neon Flight équilibrés (effort moyen 2,81 contre 2,22 en Piquant, calculs faciles conservés). MULTIRAIL
+écartait aussi tous les `× 5` : plancher abaissé de 0,3 à 0,25, 24 % de `× 5` revenus. Plateforme 21/21 et Google 33/33
+refaits sur le manège final, sur une base jetable (`DB_DSN=sqlite:/tmp/e2e.sqlite` dans le conteneur).
+
 **Limites** : pas d'essai sur vraie tablette ni sur un vrai processeur graphique de téléphone ; MULTIRAIL relevé sur
 peu de calculs par niveau (GPU logiciel) ; Brave jamais piloté, Edge non testé ; ressenti d'équilibrage d'Explosif à
 juger par des joueurs.

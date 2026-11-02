@@ -46,8 +46,10 @@ describe('difficulté des calculs selon le niveau', () => {
   };
   const toutes = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-  it('Explosif : jamais de 2 × 2, ni de × 1, × 2, × 5 ou × 10, dès le premier calcul', () => {
-    for (const f of pose('maitre', toutes)) for (const n of [f.a, f.b]) expect([1, 2, 5, 10]).not.toContain(n);
+  it('Explosif : jamais de 2 × 2, ni de × 1, × 2 ou × 10, dès le premier calcul, mais des × 5 pour respirer', () => {
+    const explosif = pose('maitre', toutes);
+    for (const f of explosif) for (const n of [f.a, f.b]) expect([1, 2, 10]).not.toContain(n);
+    expect(factsDuNiveau(toutes.flatMap((t) => factPool([t])), 'maitre').some((f) => f.a === 5 || f.b === 5)).toBe(true);
   });
 
   it('Explosif commence par des calculs plus durs que Doux', () => {

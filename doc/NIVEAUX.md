@@ -10,7 +10,9 @@ La fenêtre `#choix-niveau` de l'accueil s'ouvre à chaque lancement et propose 
 relance directement au niveau de la dernière partie. Neon Flight et MULTIRAIL ne posent que des tables : la fenêtre
 le dit (`NIVEAU_TABLES`) au lieu de promettre des additions.
 
-Explosif ne pose jamais de `× 2` ni de `÷ 2`, y compris dans l'autre sens (`MENUS`, `FACTEUR_MIN` de Neon Flight).
+Explosif ne pose jamais de `× 2` ni de `÷ 2`, y compris dans l'autre sens (`MENUS`, `FACTEUR_MIN` de Neon Flight), mais
+garde volontairement des calculs faciles pour respirer : relevé du 02/11 sur 20 000 tirages, 27 % de calculs verts dans
+Décollage !, 39 % de `× 5` ou `× 10` dans Neon Flight, 24 % de `× 5` dans MULTIRAIL (sans `× 10`). Ne pas les retirer.
 Chaque niveau garde ses propres tables mémorisées (`tablesParNiveau`). `scripts/niveaux-e2e.mjs` relève les vrais
 calculs des six jeux aux quatre niveaux, en passant par la fenêtre.
 

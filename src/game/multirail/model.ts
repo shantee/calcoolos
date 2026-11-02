@@ -63,13 +63,13 @@ export function tablesDuNiveau(memoire: Partial<Record<TierId, number[]>> | unde
 
 /**
  * Calculs de chaque niveau : `depart` plafonne la difficulté des premiers calculs (elle monte ensuite avec la
- * distance), `plancher` écarte ce qui est trop simple pour le niveau (× 1 dès Relevé ; × 2, × 5 et × 10 en Explosif).
+ * distance), `plancher` écarte ce qui est trop simple pour le niveau (× 1 dès Relevé ; × 2 et × 10 en Explosif, les × 5 y restent pour respirer).
  */
 export const TIER_FACTS: Record<TierId, { depart: number; plancher: number }> = {
   eveil: { depart: 0.35, plancher: -1 },
   explorateur: { depart: 0.45, plancher: 0 },
   stratege: { depart: 0.7, plancher: 0.1 },
-  maitre: { depart: 1, plancher: 0.3 },
+  maitre: { depart: 1, plancher: 0.25 },
 };
 /** en dessous, le plancher est relâché : il respecte les tables choisies à la main */
 const MIN_FACTS = 6;
