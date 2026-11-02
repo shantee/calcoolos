@@ -50,8 +50,8 @@
   d'échec : navigateur, WebGL, WebGPU, profils essayés, erreurs. Bouton Copier ; rien n'est envoyé au serveur.
 - **Tests** : Vitest 179, CSP ok, `scripts/neon-compat-e2e.mjs` 12/12 sous Chromium avec WebGPU actif ; partie
   complète et MULTIRAIL dans de vrais Firefox et WebKit (image `mcr.microsoft.com/playwright`, voir AGENTS.md).
-- **Limites** : Brave, Chrome Android, Edge et Safari réels non essayés ; rendu logiciel seulement. À confirmer sur la
-  tablette avec `?diag`.
+- **Limites** : Chrome Android, Edge et Safari réels non essayés par l'agent ; rendu logiciel seulement.
+- **Confirmé** : Philippe a vérifié le 02/11/2026 que Neon Flight fonctionne désormais sur la tablette.
 
 ## 2026-10-30 : Claude, jeux 3D sans WebGL
 
