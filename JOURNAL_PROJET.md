@@ -69,6 +69,11 @@ convenu pour les nouveaux textes.
   `niveaux-e2e.mjs` MULTIRAIL 18/18 par la vraie fenêtre, retour à Doux compris. Captures `CAPTURES/multirail/explosif-*`.
 - **Corrigé en route** : une réponse au sommet aurait pu valoir 4 000 points pour une borne serveur de 3 000 ; le sommet
   vaut donc 36 % de plus et non le double. Le seuil fixe de 3 s rendait la série inatteignable.
+- **En ligne** (`95101f7`) : `multirail-explosif-e2e.mjs` 29/29 et `niveaux-e2e.mjs` MULTIRAIL 18/18 sur la version
+  `7f0e222` ; le relevé réel a montré `240 − 50`, écarté ensuite (opération seule sur deux nombres ronds).
+  `verifier-en-ligne.mjs` 23/24 : même échec que l'autre session ce jour, « partie jugée vraisemblable » sur la partie
+  automatique du Dragon, sans lien avec MULTIRAIL, non relancé (limite d'inscriptions). Une fausse manœuvre a republié
+  `7a4d404`, déjà en ligne, avant la bonne version : sans effet sur le site.
 - **Limites** : réglage jamais joué par un humain ; temps et paliers viennent d'une estimation, à confirmer en vraie
   partie. Les anciens records d'Explosif (tables seules) restent dans les classements, à côté des nouveaux. Coopération :
   travail mené dans un worktree séparé pendant que l'autre session publiait l'accroche de l'accueil.

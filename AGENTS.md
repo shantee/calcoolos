@@ -357,6 +357,9 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
   (`git archive HEAD` dans le scratchpad + `tsc`). Ne jamais annuler, remiser (`stash`) ni commiter le travail de
   l'autre. `deploy/publier.sh` refuse tant qu'il reste des changements non commités : attendre que l'autre ait
   commité (ou lui écrire : `ListAgents` puis `SendMessage`), sa publication emportera aussi nos commits.
+  Pour ne bloquer personne, travailler dans un worktree séparé (`git worktree add -b ma-branche <dossier> dev`, puis un
+  lien vers `node_modules`) et fusionner en avance rapide à la fin. Enchaîner fusion et publication sans `| tail` :
+  le 02/11, un `git merge --ff-only … | tail` a caché un échec et publié le mauvais commit (sans dégât).
 
 ## 10. Méthode de travail qui a bien marché
 
