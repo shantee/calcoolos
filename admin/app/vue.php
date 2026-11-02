@@ -26,7 +26,10 @@ header('Content-Type: text/html; charset=utf-8');
       <span><b>Calcoolos</b> Analytics</span>
     </a>
     <div class="direct" id="direct" role="status" aria-live="polite"><span class="pastille-direct"></span><span id="direct-texte">Activité en direct…</span></div>
-    <a class="retour-portail" href="/" title="Retour au portail tool.zfx.fr">Portail</a>
+    <div class="liens-entete">
+      <a class="lien-entete" href="/" title="Retour au portail tool.zfx.fr"><span aria-hidden="true">←</span> Portail</a>
+      <a class="lien-entete" href="https://calculos.zfx.fr/" target="_blank" rel="noopener" title="Ouvrir le site Calcoolos dans un nouvel onglet">Le site de jeux <span aria-hidden="true">↗</span></a>
+    </div>
   </div>
   <nav class="onglets" id="onglets" aria-label="Rubriques">
     <button type="button" data-vue="ensemble" aria-current="page">Vue d’ensemble</button>
