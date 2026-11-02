@@ -45,8 +45,8 @@ miniatures des jeux sur petit écran ; fenêtre de difficulté à chaque lanceme
 Flight. Le relevé a montré que Décollage !, les autres jeux 2D et Neon posaient encore `6 × 2` en Explosif : facteur
 minimal de 3 en Explosif. La fenêtre décrit des tables pour Neon Flight et MULTIRAIL.
 
-**Vérifié** : accueil 110/110, plateforme 21/21, 187 tests, CSP, relevé par niveau 90/90 + MULTIRAIL 13/13 (avant
-le plancher d'Explosif, couvert ensuite par les tests), Firefox et WebKit réels aux trois formats. Fluidité : environ
+**Vérifié** : accueil 110/110, plateforme 21/21, 187 tests, CSP, relevé par niveau 90/90 sur la version finale, MULTIRAIL
+13/13 (relevé avant le plancher d'Explosif, qui ne le concerne pas), Firefox et WebKit réels aux trois formats. Fluidité : environ
 60 images/s sans tâche longue, processeur simulé jusqu'à 6 fois plus lent.
 
 **Limites** : pas d'essai sur vraie tablette ni sur un vrai processeur graphique de téléphone ; MULTIRAIL relevé sur
