@@ -3,7 +3,7 @@ import { assert, test } from "vitest";
 import sourceWorld from "../src/game/neon/world.ts?raw";
 import sourceApp from "../src/game/neon/app.ts?raw";
 import { PROFILS_3D, essayerProfils } from "../src/game/neon/moteur3d";
-import { Flight, defaults, seriesOf, starsFor } from "../src/game/neon/model";
+import { Flight, defaults, seriesOf, starsFor, tablesDuNiveau } from "../src/game/neon/model";
 import { hitsRoof } from "../src/game/neon/collision";
 function game() {
   const f = new Flight({ ...defaults, difficulty: "eveil", tables: [7] }, () => 0.1);
@@ -237,4 +237,25 @@ test("démarrage 3D : sans aucun profil possible, l'erreur remonte et tout est n
 });
 test("Neon Flight n'utilise pas WebGPU : importé sans ses extensions, il plantait partout où il fonctionne", () => {
   for (const source of [sourceWorld, sourceApp]) assert.notMatch(source, /from "[^"]*webgpu/i);
+});
+test("chaque niveau garde ses tables : celles de Doux ne suivent pas en Explosif", () => {
+  assert.deepEqual(tablesDuNiveau({ eveil: [2, 3] }, "maitre"), [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  assert.deepEqual(tablesDuNiveau({ maitre: [7, 8] }, "maitre"), [7, 8]);
+  assert.deepEqual(tablesDuNiveau({ maitre: ["x", 99] }, "eveil"), [2, 3, 4, 5]);
+});
+
+test("Explosif ne pose plus de × 2, sauf si le joueur n'a gardé que cette table", () => {
+  const vol = (tables: number[]) => {
+    const f = new Flight({ ...defaults, difficulty: "maitre", tables });
+    f.start();
+    return f;
+  };
+  const f = vol([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  for (let i = 0; i < 300; i++) {
+    f.next();
+    assert.isAtLeast(Math.min(f.a, f.b), 3, `${f.a} × ${f.b}`);
+  }
+  const seule = vol([2]);
+  seule.next();
+  assert.equal(seule.a, 2);
 });

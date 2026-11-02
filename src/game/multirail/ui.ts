@@ -10,6 +10,8 @@ const isZen = (f: Shown): f is ZenProblem => 'text' in f;
 
 export interface Prefs {
   tables: number[];
+  /** tables retenues pour chaque niveau */
+  tablesParNiveau?: Partial<Record<TierId, number[]>>;
   mode: Mode;
   /** niveau Calcoolos : il règle la vitesse des tables et les calculs du Voyage Zen */
   niveau: TierId;

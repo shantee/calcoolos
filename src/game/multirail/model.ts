@@ -52,6 +52,28 @@ export function seriesOf(tables: readonly number[]): SeriesId | 'perso' {
 /** série proposée d'office selon le niveau */
 export const TIER_SERIES: Record<TierId, SeriesId> = { eveil: 'petites', explorateur: 'petites', stratege: 'toutes', maitre: 'toutes' };
 
+/**
+ * Tables retenues pour un niveau : chaque niveau garde les siennes. Une seule liste commune laissait les tables
+ * d'une partie en Doux (2 à 5) à un joueur passé en Explosif.
+ */
+export function tablesDuNiveau(memoire: Partial<Record<TierId, number[]>> | undefined, niveau: TierId): number[] {
+  const retenues = memoire?.[niveau];
+  return retenues?.length ? [...retenues] : [...SERIES[TIER_SERIES[niveau]].tables];
+}
+
+/**
+ * Calculs de chaque niveau : `depart` plafonne la difficulté des premiers calculs (elle monte ensuite avec la
+ * distance), `plancher` écarte ce qui est trop simple pour le niveau (× 1 dès Relevé ; × 2, × 5 et × 10 en Explosif).
+ */
+export const TIER_FACTS: Record<TierId, { depart: number; plancher: number }> = {
+  eveil: { depart: 0.35, plancher: -1 },
+  explorateur: { depart: 0.45, plancher: 0 },
+  stratege: { depart: 0.7, plancher: 0.1 },
+  maitre: { depart: 1, plancher: 0.3 },
+};
+/** en dessous, le plancher est relâché : il respecte les tables choisies à la main */
+const MIN_FACTS = 6;
+
 /** étoiles : 2, 4 puis 7 régions traversées (la première région compte) */
 export const STAR_REGIONS = [2, 4, 7];
 export const starsFor = (regions: number): number => STAR_REGIONS.filter((n) => regions >= n).length;
@@ -155,6 +177,14 @@ export function factPool(tables: readonly number[]): Fact[] {
   return out;
 }
 
+/** faits gardés pour un niveau, parmi ceux des tables choisies */
+export function factsDuNiveau(pool: readonly Fact[], niveau: TierId): Fact[] {
+  const durs = pool.filter((f) => factDifficulty(f.a, f.b) > TIER_FACTS[niveau].plancher);
+  if (durs.length >= MIN_FACTS) return durs;
+  const sansUn = pool.filter((f) => factDifficulty(f.a, f.b) > 0);
+  return sansUn.length >= MIN_FACTS ? sansUn : [...pool];
+}
+
 export interface FactStat {
   n: number;
   ok: number;
@@ -209,8 +239,9 @@ export class QuestionDeck {
     private rng: Rng,
     private mastery: Mastery,
     private fastLimit: number,
+    private niveau: TierId = 'eveil',
   ) {
-    this.pool = factPool(tables.length ? tables : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    this.pool = factsDuNiveau(factPool(tables.length ? tables : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), niveau);
   }
 
   /** le fait raté reviendra après deux autres calculs */
@@ -236,7 +267,7 @@ export class QuestionDeck {
 
   private pickWeighted(progress: number): Fact {
     // les calculs difficiles arrivent progressivement
-    const allowed = 0.35 + progress * 1.2 + this.asked * 0.035;
+    const allowed = TIER_FACTS[this.niveau].depart + progress * 1.2 + this.asked * 0.035;
     // un fait en attente de retour ne sort pas avant son tour
     const pending = this.retry.map((r) => factKey(r.fact.a, r.fact.b));
     const avoid = this.pool.length > 5 ? [...this.recent, ...pending] : this.recent.slice(-1);

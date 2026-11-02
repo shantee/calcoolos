@@ -16,7 +16,7 @@ import { Flock, Motes, VIGNETTES, Vignette } from './life';
 import { MAX_LIGHTS, Rain, makeWaterMaterial, shadowMaterial, signAtlas, type StationInfo } from './mer';
 import {
   CRACKS_PER_GAP, DIFFICULTIES, QuestionDeck, Run, START_WAGONS, answerOf, comboMultiplier, cruiseSpeed,
-  SERIES, TIER_SERIES, TIER_SPEED, factKey, factMissed, mulberry32, seriesOf, starsFor, progressAt, recordAnswer, referenceTime, type Difficulty, type Fact, type Mastery,
+  SERIES, TIER_SERIES, TIER_SPEED, tablesDuNiveau, factKey, factMissed, mulberry32, seriesOf, starsFor, progressAt, recordAnswer, referenceTime, type Difficulty, type Fact, type Mastery,
   type Missed,
 } from './model';
 import { PRESSURE_MAX, PRESSURE_WAIT, ZenDeck, travelPoints, zenPoints, type ZenProblem } from './zen';
@@ -73,6 +73,8 @@ const prefs: Prefs = store.get<Prefs>(PREFS_KEY, {
 });
 // le niveau vient toujours de Calcoolos (il peut être changé sur l'écran titre, pour cette page)
 prefs.niveau = niveau0;
+prefs.tables = tablesDuNiveau(prefs.tablesParNiveau, niveau0);
+let niveauDesTables = niveau0;
 /** Le son est commun à tous les jeux de Calcoolos. */
 const SOUND_KEY = 'calcoolos.son';
 try {
@@ -409,7 +411,7 @@ function syncWorld(s: number): void {
 
 let state: State = 'title';
 let run = new Run(prefs.mode, diffOf());
-let deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo);
+let deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo, prefs.niveau);
 let zenDeck = new ZenDeck(prefs.niveau, Math.random);
 /** relevé commun à Calcoolos : calculs, justes, fausses, temps, série, faits de multiplication */
 let releve = new Releve();
@@ -515,6 +517,11 @@ const ui = new UI(prefs, {
   },
   prefs: (p) => {
     Object.assign(prefs, p);
+    if (prefs.niveau !== niveauDesTables) {
+      prefs.tables = tablesDuNiveau(prefs.tablesParNiveau, prefs.niveau);
+      niveauDesTables = prefs.niveau;
+    }
+    prefs.tablesParNiveau = { ...prefs.tablesParNiveau, [prefs.niveau]: prefs.tables };
     store.set(PREFS_KEY, prefs);
     try {
       localStorage.setItem(SOUND_KEY, prefs.sound ? 'on' : 'off');
@@ -575,7 +582,7 @@ function startRun(): void {
     resetWorld(Number(params.get('graine')) || Math.floor(Math.random() * 1e9));
     const zen = prefs.game === 'zen';
     run = new Run(prefs.mode, diffOf(), prefs.game);
-    deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo);
+    deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo, prefs.niveau);
     zenDeck = new ZenDeck(prefs.niveau, Math.random);
     releve = new Releve();
     opsTally = {};

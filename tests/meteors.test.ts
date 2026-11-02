@@ -7,6 +7,15 @@ import type { TierId } from '../src/core/difficulty';
 const TIERS: TierId[] = ['eveil', 'explorateur', 'stratege', 'maitre'];
 
 describe('générateur de calculs', () => {
+  it('Explosif ne pose jamais de × 2 ni de ÷ 2, dans un sens comme dans l’autre', () => {
+    const rng = createRng(11);
+    for (let k = 0; k < 3000; k++) {
+      const e = pickExpression('maitre', rng);
+      if (e.op === '×') expect(Math.min(e.a, e.b), e.text).toBeGreaterThanOrEqual(3);
+      if (e.op === '÷') expect(Math.min(e.b, e.answer), e.text).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   for (const tier of TIERS) {
     it(`${tier} : 2 000 calculs justes, entiers, positifs`, () => {
       const rng = createRng(tier.length * 31);

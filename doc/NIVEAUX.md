@@ -4,6 +4,16 @@ Quatre niveaux, décrits par leurs calculs et non par un âge : **Doux** (vert, 
 **Piquant** (orange, 3), **Explosif** (rouge, 4). Les identifiants techniques `eveil`, `explorateur`, `stratege`,
 `maitre` ne changent pas : profils, résultats et classements existants restent valables.
 
+## Le niveau se choisit au lancement (02/11/2026)
+
+La fenêtre `#choix-niveau` de l'accueil s'ouvre à chaque lancement et propose le dernier niveau choisi ; « Reprendre »
+relance directement au niveau de la dernière partie. Neon Flight et MULTIRAIL ne posent que des tables : la fenêtre
+le dit (`NIVEAU_TABLES`) au lieu de promettre des additions.
+
+Explosif ne pose jamais de `× 2` ni de `÷ 2`, y compris dans l'autre sens (`MENUS`, `FACTEUR_MIN` de Neon Flight).
+Chaque niveau garde ses propres tables mémorisées (`tablesParNiveau`). `scripts/niveaux-e2e.mjs` relève les vrais
+calculs des six jeux aux quatre niveaux, en passant par la fenêtre.
+
 ## Pourquoi pas un cinquième palier (étude du 30/10/2026)
 
 Un palier réel n'est pas qu'une étiquette. Il faudrait :

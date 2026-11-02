@@ -41,22 +41,22 @@ const sub = (max: number): OpRule => ({
   },
 });
 
-const mul = (tables: number[], maxFactor: number): OpRule => ({
+const mul = (tables: number[], maxFactor: number, minFactor = 2): OpRule => ({
   op: '×',
   weight: 4,
   make: (rng) => {
     const t = rng.pick(tables);
-    const k = rng.int(2, maxFactor);
+    const k = rng.int(minFactor, maxFactor);
     return rng.next() < 0.5 ? [t, k] : [k, t];
   },
 });
 
-const div = (tables: number[], maxQuotient: number): OpRule => ({
+const div = (tables: number[], maxQuotient: number, minQuotient = 2): OpRule => ({
   op: '÷',
   weight: 2,
   make: (rng) => {
     const t = rng.pick(tables);
-    const q = rng.int(2, maxQuotient);
+    const q = rng.int(minQuotient, maxQuotient);
     return [t * q, t];
   },
 });
@@ -65,7 +65,8 @@ export const MENUS: Record<TierId, OpRule[]> = {
   eveil: [add(20), sub(20)],
   explorateur: [add(50, 2), sub(50), mul([2, 5, 10], 10)],
   stratege: [add(100, 5), sub(100), mul([2, 3, 4, 5, 6, 7, 8, 9], 9), div([2, 3, 4, 5, 6, 7, 8, 9], 9)],
-  maitre: [add(200, 10), sub(200), mul([3, 4, 6, 7, 8, 9, 11, 12], 12), div([3, 4, 6, 7, 8, 9, 11, 12], 12)],
+  // Explosif : ni table de 2 ni « 6 × 2 », dans un sens comme dans l'autre.
+  maitre: [add(200, 10), sub(200), mul([3, 4, 6, 7, 8, 9, 11, 12], 12, 3), div([3, 4, 6, 7, 8, 9, 11, 12], 12, 3)],
 };
 
 export function evaluate(a: number, op: Op, b: number): number {

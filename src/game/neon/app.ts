@@ -4,7 +4,7 @@
  * le son commun, l'enregistrement du résultat (reportResult) et la mesure du temps de jeu actif.
  */
 import "./style.css";
-import { CEILING, COMBO_TIME, Flight, RECORD_KEY, SERIES, SETTINGS_KEY, TIME_LIMIT, loadSettings, parJoueur, readRecord, save, seriesOf, starsFor, type SeriesId, type Settings } from "./model";
+import { CEILING, COMBO_TIME, Flight, RECORD_KEY, SERIES, SETTINGS_KEY, TIME_LIMIT, loadSettings, tablesDuNiveau, parJoueur, readRecord, save, seriesOf, starsFor, type SeriesId, type Settings } from "./model";
 import { Fx } from "./fx";
 import { dangerAltitude, placeAt } from "./stages";
 import { World } from "./world";
@@ -91,6 +91,7 @@ function syncSettings() {
   $("#sound").textContent = settings.sound ? "♫ SON" : "♫ MUET";
   $("#sound").setAttribute("aria-pressed", String(settings.sound));
   audio.set(settings.sound);
+  settings.tablesParNiveau = { ...settings.tablesParNiveau, [settings.difficulty]: settings.tables };
   save(settingsKey, settings);
   try {
     localStorage.setItem(SOUND_KEY, settings.sound ? "on" : "off");
@@ -112,6 +113,7 @@ $("#difficulty").addEventListener("change", (e) => {
   const v = (e.target as HTMLSelectElement).value;
   if (!estNiveau(v)) return;
   tier = settings.difficulty = v;
+  settings.tables = tablesDuNiveau(settings.tablesParNiveau, v);
   // Le niveau choisi ici vaut pour cette page (l'adresse le garde au rechargement).
   const url = new URL(location.href);
   url.searchParams.set("niveau", v);

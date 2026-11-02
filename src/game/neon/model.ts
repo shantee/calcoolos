@@ -5,6 +5,8 @@ export type Mode = "arcade" | "training";
 export type Quality = "low" | "medium" | "high";
 export interface Settings {
   tables: number[];
+  /** Tables retenues pour chaque niveau. */
+  tablesParNiveau?: Partial<Record<TierId, number[]>>;
   /** Niveau Calcoolos : il fixe le temps par calcul. */
   difficulty: TierId;
   mode: Mode;
@@ -19,6 +21,7 @@ export const defaults: Settings = {
   sound: true,
 };
 /** Temps par calcul (s) selon le niveau, en Arcade ; il raccourcit un peu au fil des bonnes réponses. */
+const FACTEUR_MIN: Record<TierId, number> = { eveil: 2, explorateur: 2, stratege: 2, maitre: 3 };
 export const TIME_LIMIT: Record<TierId, number> = { eveil: 16, explorateur: 13, stratege: 10, maitre: 7 };
 /**
  * Séries de tables qui ont un classement : on ne compare que des joueurs qui révisent les mêmes tables.
@@ -158,7 +161,10 @@ export class Flight {
       const pool = this.settings.tables
         .flatMap((a) => Array.from({ length: 9 }, (_, i) => ({ a, b: i + 2 })))
         .filter((q) => !this.recent.includes(`${q.a}:${q.b}`));
-      const q = pool[Math.floor(this.random() * pool.length)] ?? { a: 2, b: 3 };
+      // En Explosif, plus de × 2, sauf si le joueur n'a gardé que des tables qui n'offrent rien d'autre.
+      const corses = pool.filter((q) => Math.min(q.a, q.b) >= FACTEUR_MIN[this.settings.difficulty]);
+      const choix = corses.length ? corses : pool;
+      const q = choix[Math.floor(this.random() * choix.length)] ?? { a: 2, b: 3 };
       this.a = q.a;
       this.b = q.b;
     }
@@ -283,6 +289,12 @@ export const SETTINGS_KEY = "calcoolos.neon.reglages";
 export const RECORD_KEY = "calcoolos.neon.records";
 /** Réglages et records propres à chaque profil (deux enfants sur la même tablette ne se mélangent pas). */
 export const parJoueur = (key: string, profil?: number) => `${key}.${profil ?? "invite"}`;
+/** Tables d'un niveau : chaque niveau garde les siennes, sinon la série d'office du niveau. */
+export function tablesDuNiveau(memoire: unknown, niveau: TierId): number[] {
+  const retenues = (memoire as Record<string, unknown> | null | undefined)?.[niveau];
+  const valides = Array.isArray(retenues) ? retenues.filter((n: number) => Number.isInteger(n) && n >= 2 && n <= 12) : [];
+  return valides.length ? valides : [...SERIES[TIER_SERIES[niveau]].tables];
+}
 /** Réglages retenus sur l'appareil ; le niveau, lui, vient de Calcoolos (et la série d'office du niveau). */
 export function loadSettings(tier: TierId = defaults.difficulty, key = SETTINGS_KEY): Settings {
   try {
@@ -291,16 +303,7 @@ export function loadSettings(tier: TierId = defaults.difficulty, key = SETTINGS_
       ...defaults,
       ...s,
       difficulty: tier,
-      tables:
-        Array.isArray(s.tables) &&
-        s.tables.some(
-          (n: unknown) =>
-            Number.isInteger(n) && Number(n) >= 2 && Number(n) <= 12,
-        )
-          ? s.tables.filter(
-              (n: number) => Number.isInteger(n) && n >= 2 && n <= 12,
-            )
-          : [...SERIES[TIER_SERIES[tier]].tables],
+      tables: tablesDuNiveau(s.tablesParNiveau, tier),
       quality: ["low", "medium", "high"].includes(s.quality)
         ? s.quality
         : defaults.quality,
