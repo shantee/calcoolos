@@ -9,7 +9,7 @@ import { motsVifs } from '../platform/mots-vifs';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { flushQueue, lastGame, localHistory, type StoredResult } from '../platform/results';
-import { NIVEAU_INFOS, NIVEAU_TABLES, estNiveau, niveauDepart, niveauRetenu, pimentsHtml, retenirNiveau } from '../platform/niveau';
+import { EXPLOSIF_MULTIRAIL, NIVEAU_INFOS, NIVEAU_TABLES, estNiveau, niveauDepart, niveauRetenu, pimentsHtml, retenirNiveau } from '../platform/niveau';
 import { monterManege, type Manege } from '../platform/manege';
 import { basculerFavori, lireFavoris, masquerPresentations, ordonnerJeux, presentationsMasquees } from '../platform/favoris';
 import { conseilsAccueil } from '../platform/progres';
@@ -123,7 +123,7 @@ document.addEventListener('click', (e) => {
   dialogue.querySelector('#choix-niveau-jeu')?.replaceChildren(nom);
   const tables = /neon-flight|multirail/.test(a.href);
   for (const [id, b] of options) {
-    const { exemple, detail } = tables ? NIVEAU_TABLES[id] : NIVEAU_INFOS[id];
+    const { exemple, detail } = id === 'maitre' && /multirail/.test(a.href) ? EXPLOSIF_MULTIRAIL : tables ? NIVEAU_TABLES[id] : NIVEAU_INFOS[id];
     b.querySelector('.choix-niveau-exemple')?.replaceChildren(exemple);
     b.querySelector('small')?.replaceChildren(detail);
     b.classList.toggle('choisi', id === niveauActuel);

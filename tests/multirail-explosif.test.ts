@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { BANDES, ExplosifDeck, PALIER_MAX, PLATEAU, TEMPS_MAX, TEMPS_MIN, TEMPS_ZEN, TEXTE_MAX, charge, niveauDuVoyage, poidsDuPalier, tempsAccorde, type CalculExplosif } from '../src/game/multirail/explosif';
 import { QuestionDeck, Run, TIER_SPEED, calculMental, mulberry32 } from '../src/game/multirail/model';
 import type { Expr } from '../src/game/multirail/zen';
-import { NIVEAUX } from '../src/platform/niveau';
+import { EXPLOSIF_MULTIRAIL, NIVEAUX } from '../src/platform/niveau';
 
 const TOUTES = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 /** une région se traverse en neuf calculs environ */
@@ -76,6 +76,12 @@ describe('Explosif : qui joue à quoi', () => {
     expect(calculMental('maitre', 'entrainement', 'tables')).toBe(false);
     expect(calculMental('maitre', 'aventure', 'zen')).toBe(false);
     for (const n of NIVEAUX.filter((x) => x !== 'maitre')) expect(calculMental(n, 'aventure', 'tables')).toBe(false);
+  });
+
+  it('la fenêtre de lancement annonce un exemple vrai de ce niveau', () => {
+    const { valeur, ops } = relire(EXPLOSIF_MULTIRAIL.exemple);
+    expect(valeur).toBe(79);
+    expect(ops.length).toBeGreaterThan(1);
   });
 
   it("l'Entraînement garde les tables simples, y compris en Explosif", () => {

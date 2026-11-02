@@ -25,6 +25,9 @@ export const NIVEAU_TABLES: Record<TierId, { exemple: string; detail: string }> 
   maitre: { exemple: '3 × 8 + 12', detail: 'Grandes tables et calculs à trois nombres, à toute vitesse.' },
 };
 
+/** MULTIRAIL à Explosif : plus de tables isolées, un vrai calcul mental qui monte au fil du voyage. */
+export const EXPLOSIF_MULTIRAIL = { exemple: '(7 × 8) + 23', detail: 'Vrai calcul mental : plusieurs opérations, de plus en plus élaborées au fil du voyage.' };
+
 export const NIVEAU_INFOS: Record<TierId, { nom: string; public: string; exemple: string; detail: string; piments: number }> = {
   eveil: { nom: TIERS.eveil.label, public: TIERS.eveil.public, exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', piments: 1 },
   explorateur: { nom: TIERS.explorateur.label, public: TIERS.explorateur.public, exemple: '27 + 15', detail: 'Additions et soustractions jusqu’à 50, tables de 2, 5 et 10.', piments: 2 },

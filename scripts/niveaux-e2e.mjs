@@ -30,13 +30,37 @@ const check = (cond, what) => {
 };
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
+/** Calcul mental d'Explosif : (7 × 8) + 23, 250 − (9 × 8) + 17. Les parenthèses d'abord, puis de gauche à droite. */
+const lireParentheses = (texte) => {
+  const jetons = texte.match(/\d+|[()+−×÷]/g) ?? [];
+  let i = 0;
+  const terme = () => {
+    const j = jetons[i++];
+    if (j !== '(') return Number(j);
+    const v = suite();
+    i++;
+    return v;
+  };
+  const suite = () => {
+    let v = terme();
+    while (i < jetons.length && jetons[i] !== ')') {
+      const op = jetons[i++];
+      const b = terme();
+      v = op === '+' ? v + b : op === '−' ? v - b : op === '×' ? v * b : v / b;
+    }
+    return v;
+  };
+  const valeur = suite();
+  return Number.isInteger(valeur) ? { texte, valeur, combine: true } : { texte };
+};
+
 /** Un calcul relevé : { a, b, op, texte }. Les nombres viennent du jeu, jamais du niveau demandé. */
 const lireCalcul = (texte) => {
   const m = String(texte).replace(/\s+/g, ' ').trim().match(/^(\d+) ([+\-−×÷]) (\d+)$/);
   if (m) return { a: +m[1], op: m[2], b: +m[3], texte: `${m[1]} ${m[2]} ${m[3]}` };
   // calcul à trois nombres de Neon Flight et MULTIRAIL : les produits d'abord, puis de gauche à droite
   const t = String(texte).replace(/\s+/g, ' ').trim().match(/^(\d+) ([+−×]) (\d+) ([+−×]) (\d+)$/);
-  if (!t) return { texte: String(texte) };
+  if (!t) return lireParentheses(String(texte));
   const nombres = [+t[1], +t[3], +t[5]];
   const ops = [t[2], t[4]];
   for (let i = ops.indexOf('×'); i >= 0; i = ops.indexOf('×')) {
@@ -177,6 +201,11 @@ for (const jeu of JEUX) {
       const trois = calculs.filter((c) => c.troisNombres);
       if (niveau === 'eveil') check(trois.length === 0, `Doux : que des tables (${trois.map((c) => c.texte).join(', ') || 'aucun autre calcul'})`);
       if (niveau === 'maitre') check(trois.length > 0, `Explosif : des calculs à trois nombres (${trois.map((c) => c.texte).join(', ')})`);
+    }
+    if (jeu.nom === 'MULTIRAIL') {
+      const mental = calculs.filter((c) => c.combine || c.op !== '×').length;
+      if (niveau === 'maitre') check(mental === calculs.length, `Explosif : que du calcul mental (${calculs.map((c) => c.texte).join(' ; ')})`);
+      else check(calculs.every((c) => !c.combine), `${niveau} : pas de calcul d'Explosif`);
     }
     if (niveau === 'maitre') {
       const trop = calculs.filter((c) => c.op === '×' && (Math.min(c.a, c.b) <= 1 || Math.max(c.a, c.b) <= 3));
