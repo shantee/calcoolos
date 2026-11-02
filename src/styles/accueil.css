@@ -172,8 +172,87 @@ h1 {
 
 .accroche {
   margin: 0;
-  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/*
+ * « Ici, tu joues. » : les lettres arrivent sur des rouleaux de compteur, chacune précédée d'un chiffre qui
+ * défile. Tout se joue en transformations dans une fenêtre de taille fixe, réservée par le mot le plus long :
+ * rien ne bouge autour. Les inclinaisons reprennent celles des lettres du logo.
+ */
+.mots-vifs {
+  margin: 0;
+  font-size: clamp(1.1rem, 2.1vw, 1.35rem);
   font-weight: 700;
+  line-height: 1.35;
+  color: var(--texte);
+}
+
+.mot {
+  position: relative;
+  display: inline-block;
+  vertical-align: bottom;
+  color: var(--safran);
+  font-weight: 800;
+  text-shadow: 0 0.07em 0 #5c2c0e;
+  /* Un découpage rectangulaire : le moins coûteux pour le rendu. La marge laisse la place aux lettres inclinées. */
+  overflow: hidden;
+  padding-inline: 0.3em;
+  margin-inline: -0.3em;
+}
+
+.mot-reserve {
+  visibility: hidden;
+}
+
+.mot-couche {
+  position: absolute;
+  inset: 0 auto auto 0.3em;
+  white-space: nowrap;
+}
+
+.mot-lettre {
+  display: inline-block;
+  transform: rotate(var(--pente, 0deg));
+}
+
+.mot-rouleau {
+  position: relative;
+  display: inline-block;
+}
+
+.mot-chiffre {
+  position: absolute;
+  left: 50%;
+  bottom: 125%;
+  translate: -50% 0;
+  color: var(--ciel, #7fd0ff);
+}
+
+.mot-couche.entre .mot-rouleau {
+  animation: mot-entre 0.74s cubic-bezier(0.22, 1.28, 0.36, 1) backwards;
+  animation-delay: calc(170ms + var(--i) * 48ms);
+}
+
+.mot-couche.sort .mot-rouleau {
+  animation: mot-sort 0.42s cubic-bezier(0.55, 0, 0.8, 0.4) forwards;
+  animation-delay: calc(var(--i) * 34ms);
+}
+
+@keyframes mot-entre {
+  from {
+    transform: translateY(300%);
+  }
+}
+
+@keyframes mot-sort {
+  to {
+    transform: translateY(-130%);
+  }
 }
 
 .intro {
@@ -1318,6 +1397,7 @@ h1 {
 }
 
 .accueil-perso .accroche,
+.accueil-perso .mots-vifs,
 .accueil-perso .intro,
 .accueil-perso .titre-logo {
   display: none;
@@ -1686,6 +1766,22 @@ h1 {
 
   .titre-logo {
     font-size: 2.5rem;
+  }
+}
+
+/* Téléphone : le slogan tient sur une ligne et laisse « Jouer » dans le premier écran. */
+@media (max-width: 520px) {
+  .accroche {
+    font-size: min(1.4rem, 6.2vw);
+  }
+
+  .ouverture-texte {
+    gap: 0;
+  }
+
+  .mots-vifs {
+    font-size: 1rem;
+    line-height: 1.25;
   }
 }
 

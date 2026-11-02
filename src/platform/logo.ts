@@ -25,7 +25,7 @@ export interface LogoOptions {
 /** Inclinaisons fixes des lettres : une ligne de base qui sautille légèrement, sans hasard. */
 const PENTES = [-3, 2, -2, 3, 0, 0, -2, 2, -3];
 
-const calme = (): boolean =>
+export const calme = (): boolean =>
   new URLSearchParams(window.location.search).has('calme') || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const sleep = (ms: number) => new Promise<void>((r) => window.setTimeout(r, ms));

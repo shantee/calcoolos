@@ -28,9 +28,12 @@
         <h1 id="titre" class="titre-logo" translate="no">%BRAND_NAME%</h1>
         <div class="ouverture-texte">
           <p class="accroche">%BRAND_TAGLINE%</p>
-          <p class="intro">
-            Des mondes à explorer, des personnages attachants, des aventures à finir : ce sont de vrais jeux vidéo. Sauf qu’ici, ton meilleur coup, c’est ton calcul mental.
+          <!-- Les mots qui roulent (src/platform/mots-vifs.ts). Sans animation, la phrase reste « Ici, tu joues. » -->
+          <p class="mots-vifs" id="mots-vifs" translate="no">
+            <span class="visuel-masque">Ici, tu joues, explores, voyages, réfléchis, progresses, apprends et découvres.</span>
+            <span aria-hidden="true">Ici, tu <span class="mot"><span class="mot-reserve">progresses.</span><span class="mot-couche">joues.</span></span></span>
           </p>
+          <p class="intro">Des jeux pour faire travailler ses méninges.</p>
         </div>
         <div class="lancement-joueur" id="lancement-joueur">
           <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">

@@ -30,6 +30,26 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-02 : Claude, nouvelle accroche animée
+
+**Demande** : un slogan plus court et des mots qui changent, sans toucher au fonctionnement de l'accueil ni au manège.
+
+**Fait**
+- Slogan « Un calcul, mille aventures. » (`brand.json`), phrase « Des jeux pour faire travailler ses méninges. »
+  (remplace le paragraphe « Des mondes à explorer… »).
+- `src/platform/mots-vifs.ts` : « Ici, tu joues. », puis explores, voyages, réfléchis, progresses, apprends, découvres.
+  Chaque lettre arrive sur un rouleau de compteur, précédée d'un chiffre. Deux tours puis arrêt sur « joues », pause
+  sous le pointeur, onglet caché ou hors écran ; rien ne bouge avec les animations réduites ou `?calme`.
+- `scripts/accueil-e2e.mjs` : contrôles de l'accroche.
+
+**Vérifié** : 0 pixel de décalage sur cinq formats, 60 images/s sur processeur ralenti 4 fois.
+
+**Piège trouvé** : `accueil-e2e` expirait au hasard. Une trace a montré `DestroyCommandBuffer` pendant 27 s à la sortie
+de l'accueil, seulement en rendu logiciel : 0,5 s sur la GTX 1060, avec ou sans accroche.
+
+**Limites** : à 320 × 568, « Jouer » reste 42 px sous le pli. Sous-titre non traduit en anglais et en allemand, comme
+convenu pour les nouveaux textes.
+
 ## 2026-11-02 : Claude, calculs à trois nombres dans Neon Flight et MULTIRAIL
 
 **Demande** : des calculs du style `3 × 8 + 2` ou `15 + 27 + 22`, avec additions, soustractions et multiplications.

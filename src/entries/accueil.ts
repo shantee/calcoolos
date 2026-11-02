@@ -5,6 +5,7 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { EVT_JOUEUR, rafraichirJoueur, topbar } from '../platform/topbar';
 import { logo } from '../platform/logo';
+import { motsVifs } from '../platform/mots-vifs';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { flushQueue, lastGame, localHistory, type StoredResult } from '../platform/results';
@@ -33,6 +34,7 @@ let leManege: Manege | null = null;
 
 // --- Logo ---------------------------------------------------------------------------------------
 document.querySelector('#titre')?.replaceChildren(logo('grand', { niveau: level }));
+motsVifs(document.querySelector<HTMLElement>('#mots-vifs'));
 
 // --- Niveau -------------------------------------------------------------------------------------
 function level(): TierId | null {

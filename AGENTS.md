@@ -267,6 +267,10 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 
 ## 9. Pièges connus (déjà rencontrés, ne pas retomber dedans)
 
+- **Rendu logiciel et vraie carte graphique** : en SwiftShader, quitter l'accueil peut figer le navigateur jusqu'à 30 s
+  (`DestroyCommandBuffer`, visible avec `browser.startTracing`). Sur le poste, la GTX 1060 répond en 0,5 s : pour juger
+  une lenteur graphique, lancer `chromium.launch({ channel: 'chromium', args: ['--ignore-gpu-blocklist',
+  '--use-angle=vulkan', '--enable-features=Vulkan'] })` et vérifier `UNMASKED_RENDERER_WEBGL` avant de conclure.
 - **SwiftShader / Phaser 4** : au-delà de 2 textures par lot, Phaser mélangeait les textures → `maxTextures: 1`
   (`src/game/render-config.ts`, retester sur vrai GPU avec `?textures=16`).
 - **Texture manquante** = carré sombre barré dans le jeu : toujours créer la texture via `tx(key, make)` avant usage.

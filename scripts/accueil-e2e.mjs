@@ -34,6 +34,9 @@ const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--ena
 const ordinateur = { viewport: { width: 1440, height: 900 }, locale: 'fr-FR' };
 const ctx = await browser.newContext(ordinateur);
 const page = await ctx.newPage();
+// En rendu logiciel, quitter l'accueil peut figer le navigateur jusqu'à 30 s (DestroyCommandBuffer) ; 0,5 s sur une
+// vraie carte graphique. Ce délai évite une fausse alerte, il ne mesure rien.
+page.setDefaultNavigationTimeout(90000);
 const erreurs = [];
 page.on('pageerror', (e) => erreurs.push(e.message));
 // Le niveau retenu est celui qu'emportent les liens de lancement.
@@ -78,6 +81,31 @@ await page.screenshot({ path: `${out}/ordinateur-panneau-invite.png` });
 await page.keyboard.press('Escape');
 check(await page.locator('#panneau-joueur').isHidden(), 'panneau joueur : Échap le ferme');
 check(await page.evaluate(() => document.activeElement?.classList.contains('joueur')), 'panneau joueur : le focus revient au bouton');
+
+// --- L'accroche ------------------------------------------------------------------------------------
+console.log('• Accroche');
+check((await page.textContent('.accroche')) === 'Un calcul, mille aventures.', 'accroche : le slogan');
+const motAffiche = () => page.evaluate(() => [...document.querySelectorAll('.mot-couche:not(.sort)')].map((c) => [...c.children].map((l) => l.lastChild.lastChild.textContent).join('')).join('|'));
+const reperes = () => page.evaluate(() => [document.querySelector('#jeux').getBoundingClientRect().top, document.documentElement.scrollHeight].join('/'));
+const reperesAvant = await reperes();
+// La page note elle-même chaque mot qui arrive : lu de l'extérieur, un mot en pleine transition tromperait le test.
+await page.evaluate(() => {
+  window.__mots = [];
+  new MutationObserver((l) => {
+    for (const m of l) for (const n of m.addedNodes) if (n.classList?.contains('entre')) window.__mots.push([...n.children].map((x) => x.lastChild.lastChild.textContent).join(''));
+  }).observe(document.querySelector('.mot'), { childList: true });
+});
+await page.waitForFunction(() => window.__mots.length >= 2, null, { timeout: 9000 });
+const motsVus = await page.evaluate(() => window.__mots);
+check(motsVus[0] !== motsVus[1], `accroche : le mot change (${motsVus.join(', ')})`);
+await page.waitForFunction(() => !document.querySelector('.mot-couche.sort'), null, { timeout: 3000 });
+check(await page.locator('.mot-couche').count() === 1, 'accroche : un seul mot à la fois, l’ancien a disparu');
+check((await reperes()) === reperesAvant, 'accroche : la page ne bouge pas quand le mot change');
+await page.hover('#mots-vifs');
+const motSurvole = await motAffiche();
+await page.waitForTimeout(4200);
+check((await motAffiche()) === motSurvole, 'accroche : le mot s’arrête sous le pointeur');
+await page.mouse.move(0, 0);
 
 // --- Le manège --------------------------------------------------------------------------------------
 console.log('• Manège');
@@ -395,6 +423,8 @@ for (const [nom, opts] of [
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(3000);
   check(await p.locator('.pensee').count() === 0, 'animations réduites : pas de bulle animée');
+  await p.waitForTimeout(1000);
+  check((await p.textContent('.mot-couche')) === 'joues.' && (await p.locator('.mot-lettre').count()) === 0, 'animations réduites : la phrase reste « Ici, tu joues. »');
   const anims = await p.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length);
   check(anims === 0, `animations réduites : aucune animation en cours (${anims})`);
   check(await p.locator('#titre .oeil').count() === 2, 'animations réduites : logo complet (yeux présents)');
