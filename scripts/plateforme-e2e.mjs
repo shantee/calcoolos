@@ -151,15 +151,17 @@ await page.waitForSelector('#qui-joue button');
 check((await page.textContent('.joueur'))?.includes('Lina'), 'le premier profil devient le joueur actif');
 await page.locator('#qui-joue button', { hasText: 'Noé' }).click();
 await page.waitForTimeout(300);
-check((await page.inputValue('input[name="niveau"]:checked')) === 'eveil', 'choisir Noé règle le niveau sur Éveil');
+check((await page.textContent('.joueur'))?.includes('Niveau Doux'), 'choisir Noé règle le niveau sur Éveil');
 await page.locator('#qui-joue button', { hasText: 'Lina' }).click();
 await page.waitForTimeout(300);
-check((await page.inputValue('input[name="niveau"]:checked')) === 'explorateur', 'choisir Lina règle le niveau sur Explorateur');
+check((await page.textContent('.joueur'))?.includes('Niveau Relevé'), 'choisir Lina règle le niveau sur Explorateur');
 await shot('6-accueil-lina', true);
 
 // --- 4. Partie enregistrée ------------------------------------------------------------------------
 console.log('• Partie de Lina (≈ 45 s, pour être vraisemblable)');
-await page.locator('a.jouer[data-jeu][href*="dragon"]').click();
+await page.locator('.manege-noms button', { hasText: 'Dragon' }).click();
+await page.locator('.vitrine-texte.devant a.jouer').click();
+await page.locator('.choix-niveau-option[data-niveau="explorateur"]').click();
 await page.waitForLoadState('networkidle');
 await winDragon(42);
 await shot('7-fin-lina');

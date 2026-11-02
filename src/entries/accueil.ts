@@ -7,8 +7,9 @@ import { EVT_JOUEUR, rafraichirJoueur, topbar } from '../platform/topbar';
 import { logo } from '../platform/logo';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
-import { flushQueue, localHistory, type StoredResult } from '../platform/results';
-import { NIVEAU_INFOS, estNiveau, niveauDepart, niveauRetenu, pimentsHtml, retenirNiveau } from '../platform/niveau';
+import { flushQueue, lastGame, localHistory, type StoredResult } from '../platform/results';
+import { NIVEAU_INFOS, NIVEAU_TABLES, estNiveau, niveauDepart, niveauRetenu, pimentsHtml, retenirNiveau } from '../platform/niveau';
+import { monterManege, type Manege } from '../platform/manege';
 import { basculerFavori, lireFavoris, masquerPresentations, ordonnerJeux, presentationsMasquees } from '../platform/favoris';
 import { conseilsAccueil } from '../platform/progres';
 import { summarize } from '../platform/stats';
@@ -19,7 +20,6 @@ import { demarrerSuivi, etapeParcours } from '../platform/suivi';
 
 demarrerSuivi('accueil');
 
-const radios = [...document.querySelectorAll<HTMLInputElement>('input[name="niveau"]')];
 /** Liens de lancement : y compris ceux de l'univers du joueur, ajoutés plus tard. */
 const links = () => document.querySelectorAll<HTMLAnchorElement>('a[data-jeu]');
 // ?calme (comme « réduire les animations ») vaut pour l'accueil et suit dans les jeux.
@@ -27,79 +27,51 @@ const calmeUrl = new URLSearchParams(window.location.search).has('calme');
 const calme = calmeUrl || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let etat: AccountState | null | undefined;
-/** Faux tant qu'un nouveau venu n'a pas choisi : le premier « Jouer » lui demande alors son niveau. */
-let confirme = false;
+/** Dernier niveau choisi : proposé d'office au lancement d'un jeu. Rien pour un nouveau venu. */
+let niveauActuel: TierId | null = null;
+let leManege: Manege | null = null;
 
 // --- Logo ---------------------------------------------------------------------------------------
 document.querySelector('#titre')?.replaceChildren(logo('grand', { niveau: level }));
 
 // --- Niveau -------------------------------------------------------------------------------------
 function level(): TierId | null {
-  const v = radios.find((r) => r.checked)?.value;
-  return estNiveau(v) ? v : null;
+  return niveauActuel;
 }
 
-/** Les liens « Jouer » emportent le niveau ; les rappels près des boutons l'affichent. */
+/** Les liens de lancement emportent le dernier niveau (si la fenêtre n'est pas disponible) et le mode calme. */
 function apply(): void {
-  const lv = level();
   for (const a of links()) {
     const url = new URL(a.getAttribute('href') ?? '', window.location.href);
-    if (lv) url.searchParams.set('niveau', lv);
-    else url.searchParams.delete('niveau');
+    if (!a.hasAttribute('data-sans-choix')) {
+      if (niveauActuel) url.searchParams.set('niveau', niveauActuel);
+      else url.searchParams.delete('niveau');
+    }
     if (calmeUrl) url.searchParams.set('calme', '');
     a.href = url.toString();
-  }
-  const info = lv ? NIVEAU_INFOS[lv] : null;
-  const detail = document.querySelector('#niveau-detail');
-  if (detail) {
-    detail.replaceChildren(
-      ...(info
-        ? [h('b', {}, info.nom), ' : ', h('span', {}, info.detail)]
-        : ['Plus il y a de piments, plus les calculs sont corsés. Tu peux changer à tout moment.']),
-    );
-  }
-  document.querySelector('#niveau')?.classList.toggle('a-choisir', !lv);
-  for (const r of document.querySelectorAll<HTMLElement>('.rappel-niveau')) {
-    const piments = h('span', { class: 'rappel-piments' });
-    piments.innerHTML = lv ? pimentsHtml(lv) : '';
-    r.dataset.niveau = lv ?? '';
-    r.replaceChildren(
-      piments,
-      h('span', {}, info ? h('span', {}, 'Niveau ', h('b', {}, info.nom)) : h('b', {}, 'Niveau à choisir'), h('small', {}, info ? 'changer' : 'avant de jouer')),
-    );
   }
 }
 
 /**
- * source : « joueur » (un clic : retenu sur l'appareil, et sur le profil actif s'il y en a un),
+ * source : « joueur » (retenu sur l'appareil, et sur le profil actif s'il y en a un),
  * « profil » (niveau du profil choisi), « retenu » (retrouvé au chargement).
+ * La promesse se termine quand le profil est enregistré.
  */
-function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): void {
-  const radio = radios.find((r) => r.value === value);
-  if (!radio) return;
-  radio.checked = true;
-  confirme = true;
+async function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): Promise<void> {
+  niveauActuel = value;
   if (source !== 'retenu') retenirNiveau(value);
   if (source === 'joueur') etapeParcours('niveau');
   apply();
   const p = activePlayer();
-  if (source === 'joueur' && p && p.niveau !== value && etat?.connecte) {
+  if (source !== 'joueur') return;
+  if (p && p.niveau !== value && etat?.connecte) {
     // Le niveau suit le joueur d'un appareil à l'autre : on l'enregistre sur son profil.
     setActivePlayer({ ...p, niveau: value });
     rafraichirJoueur();
-    void api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { niveau: value }).catch(() => null);
-  } else if (source === 'joueur') {
+    await api.post<{ profils: Profile[] }>(`/profils/${p.id}/modifier`, { niveau: value }).catch(() => null);
+  } else {
     rafraichirJoueur();
   }
-}
-
-for (const r of radios) r.addEventListener('change', () => estNiveau(r.value) && setLevel(r.value, 'joueur'));
-
-// Les piments de chaque niveau, et le rappel du niveau près de chaque bouton « Jouer ».
-for (const label of document.querySelectorAll<HTMLElement>('.niveaux label')) {
-  const id = label.dataset.niveau;
-  const zone = label.querySelector('.niveau-piments');
-  if (estNiveau(id) && zone) zone.innerHTML = pimentsHtml(id);
 }
 
 function piments(id: TierId): HTMLElement {
@@ -108,49 +80,17 @@ function piments(id: TierId): HTMLElement {
   return zone;
 }
 
-function rappelNiveau(): HTMLElement {
-  const rappel = h('a', { class: 'rappel-niveau', href: '#niveau', title: 'Changer de niveau' });
-  rappel.addEventListener('click', (e) => {
-    e.preventDefault();
-    allerAuNiveau();
-  });
-  return rappel;
-}
-
-for (const actions of document.querySelectorAll<HTMLElement>('.vitrine .actions')) {
-  const rappel = rappelNiveau();
-  const jouer = actions.querySelector('.jouer');
-  if (jouer) jouer.after(rappel);
-  else actions.append(rappel);
-}
-
-// Les compétences de chaque jeu, aussi sur ses vignettes (une seule source : la vitrine).
-for (const v of document.querySelectorAll<HTMLAnchorElement>('.vignette')) {
-  const tags = [...document.querySelectorAll(`${v.getAttribute('href')} .competences li`)].slice(0, 2);
-  v.append(h('ul', { class: 'vignette-tags', 'aria-hidden': 'true' }, ...tags.map((li) => h('li', {}, li.textContent ?? ''))));
-}
-
-function allerAuNiveau(): void {
-  const fs = document.querySelector<HTMLElement>('#niveau');
-  if (!fs) return;
-  fs.scrollIntoView({ behavior: calme ? 'auto' : 'smooth', block: 'center' });
-  (radios.find((r) => r.checked) ?? radios[0])?.focus({ preventScroll: true });
-  if (!calme) {
-    fs.classList.remove('signale');
-    void fs.offsetWidth;
-    fs.classList.add('signale');
-  }
-}
-
 {
   const depart = niveauDepart(activePlayer()?.niveau, niveauRetenu());
-  if (depart.niveau) setLevel(depart.niveau, 'retenu');
-  confirme = depart.confirme;
+  if (depart.niveau) void setLevel(depart.niveau, 'retenu');
   apply();
 }
 
-// --- Première partie sans niveau : on le demande une fois -----------------------------------------
+// --- La difficulté se choisit au lancement de chaque jeu ------------------------------------------
+/** Laisse le temps d'enregistrer le niveau sur le profil, sans jamais retarder le jeu davantage. */
+const ATTENTE_PROFIL_MS = 400;
 const dialogue = document.querySelector<HTMLDialogElement>('#choix-niveau');
+const options = new Map<TierId, HTMLButtonElement>();
 let cible: HTMLAnchorElement | null = null;
 if (dialogue) {
   const liste = dialogue.querySelector<HTMLElement>('#choix-niveau-liste');
@@ -158,29 +98,42 @@ if (dialogue) {
     const b = h('button', { type: 'button', class: 'choix-niveau-option', 'data-niveau': id },
       piments(id),
       h('span', { class: 'niveau-nom' }, info.nom),
-      h('small', {}, info.public),
-      h('span', { class: 'choix-niveau-exemple', 'aria-hidden': 'true' }, info.exemple));
-    b.addEventListener('click', () => {
-      setLevel(id, 'joueur');
-      dialogue.close();
+      h('span', { class: 'choix-niveau-exemple', 'aria-hidden': 'true' }),
+      h('small'));
+    b.addEventListener('click', async () => {
+      await Promise.race([setLevel(id, 'joueur'), new Promise((fini) => setTimeout(fini, ATTENTE_PROFIL_MS))]);
       if (cible) window.location.href = cible.href;
     });
+    options.set(id, b);
     liste?.append(b);
   }
+  // Un clic à côté de la fenêtre l'annule.
+  dialogue.addEventListener('click', (e) => {
+    if (e.target === dialogue) dialogue.close();
+  });
 }
 document.addEventListener('click', (e) => {
-  const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-jeu]');
-  if (!a || (confirme && level())) return;
+  const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-jeu]:not([data-sans-choix])');
+  if (!a || !dialogue?.showModal) return;
   e.preventDefault();
   cible = a;
-  if (dialogue?.showModal) dialogue.showModal();
-  else allerAuNiveau();
+  const nom = a.closest('.vitrine')?.querySelector('h2')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
+  dialogue.querySelector('#choix-niveau-jeu')?.replaceChildren(nom);
+  const tables = /neon-flight|multirail/.test(a.href);
+  for (const [id, b] of options) {
+    const { exemple, detail } = tables ? NIVEAU_TABLES[id] : NIVEAU_INFOS[id];
+    b.querySelector('.choix-niveau-exemple')?.replaceChildren(exemple);
+    b.querySelector('small')?.replaceChildren(detail);
+    b.classList.toggle('choisi', id === niveauActuel);
+  }
+  dialogue.showModal();
+  options.get(niveauActuel ?? 'eveil')?.focus();
 });
 
 // --- Qui joue ? (compte connecté) ---------------------------------------------------------------
 function choisirJoueur(p: Profile | null): void {
   setActivePlayer(p);
-  if (p && estNiveau(p.niveau)) setLevel(p.niveau, 'profil');
+  if (p && estNiveau(p.niveau)) void setLevel(p.niveau, 'profil');
   rafraichirJoueur();
   if (etat?.connecte) renderPlayers(etat.profils ?? []);
   void renderCarnet();
@@ -297,7 +250,8 @@ function jeuxDeLaPage(): JeuVitrine[] {
     id: v.id.replace('jeu-', ''),
     nom: v.querySelector('h2')?.textContent ?? '',
     href: v.querySelector('a.jouer')?.getAttribute('href') ?? '',
-    image: document.querySelector<HTMLImageElement>(`.vignette[href="#${v.id}"] img`)?.src ?? '',
+    // Première entrée du srcset : la plus petite image, assez grande pour une tuile.
+    image: v.querySelector('img')?.srcset.split(' ')[0] ?? '',
     tags: [...v.querySelectorAll('.competences li')].map((li) => li.textContent ?? ''),
   }));
 }
@@ -314,9 +268,9 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
   zone.hidden = resultats === null;
   document.querySelector<HTMLElement>('#jeux')?.toggleAttribute('hidden', resultats !== null && presentationsMasquees(profil));
   if (resultats === null) return;
-  // Le joueur retrouve son univers tout en haut ; l'invité qui revient, juste après l'ouverture.
+  // Le joueur retrouve son univers tout en haut ; l'invité qui revient, juste après le manège.
   if (perso) ouverture.before(zone);
-  else ouverture.after(zone);
+  else document.querySelector('#jeux')?.after(zone);
 
   const jeux = jeuxDeLaPage();
   const parId = new Map(jeux.map((j) => [j.id, j]));
@@ -329,13 +283,17 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
     avatarImg(p?.avatar ?? AVATAR_INVITE, 72, ''),
     h('div', {},
       h('h2', { id: 'univers-titre' }, p ? `Salut ${p.pseudo} !` : 'Content de te revoir !'),
-      h('a', { class: 'lien-progres', href: p ? `tableau.html?profil=${p.id}` : 'tableau.html' }, 'Voir mes progrès')),
-    rappelNiveau());
+      h('a', { class: 'lien-progres', href: p ? `tableau.html?profil=${p.id}` : 'tableau.html' }, 'Voir mes progrès')));
 
   const blocs: HTMLElement[] = [];
   if (reprise) {
     const record = records.get(reprise.id) ?? 0;
-    blocs.push(h('a', { class: 'univers-reprise', 'data-jeu': '', href: reprise.href },
+    // « Reprendre » relance au niveau de la dernière partie, sans repasser par le choix.
+    // Sur un autre appareil, seul le serveur connaît le dernier jeu : le manège s'y place aussi.
+    if (!window.location.hash) leManege?.aller(jeux.indexOf(reprise));
+    const lien = new URL(reprise.href, window.location.href);
+    lien.searchParams.set('niveau', estNiveau(dernier.niveau) ? dernier.niveau : (niveauActuel ?? 'explorateur'));
+    blocs.push(h('a', { class: 'univers-reprise', 'data-jeu': '', 'data-sans-choix': '', href: lien.toString() },
       h('img', { src: reprise.image, alt: '', width: 480, height: 360 }),
       h('span', { class: 'reprise-texte' },
         h('small', {}, 'Ton dernier jeu'),
@@ -384,62 +342,46 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
     h('h3', {}, 'Mes jeux'),
     h('p', { class: 'univers-aide' }, 'Touche l’étoile : tes favoris passent en premier.'),
     grille,
-    h('label', { class: 'univers-option' }, choix, ' Afficher les grandes présentations des jeux'));
+    h('label', { class: 'univers-option' }, choix, ' Afficher le manège des jeux'));
   apply();
 }
 
+/** Le manège : il s'ouvre sur le jeu de l'adresse (#jeu-neon), sinon sur le dernier joué. */
+function manege(): Manege | null {
+  const racine = document.querySelector<HTMLElement>('#jeux');
+  if (!racine) return null;
+  const vitrines = [...racine.querySelectorAll<HTMLElement>('.vitrine')];
+  const indexDe = (id: string) => vitrines.findIndex((v) => v.id === id);
+  const voulu = indexDe(window.location.hash.slice(1));
+  return monterManege(racine, {
+    calme,
+    leger: appareilModeste(),
+    depart: voulu >= 0 ? voulu : Math.max(indexDe(`jeu-${lastGame()?.jeu ?? ''}`), 0),
+    surChangement: (v) => changerAmbiance(v.dataset.univers ?? ''),
+  });
+}
+
+/** Appareil qui annonce peu de mémoire ou de cœurs (`?leger` pour l'essayer). Le manège repère aussi seul un appareil lent. */
+function appareilModeste(): boolean {
+  const memoire = (navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8;
+  return new URLSearchParams(window.location.search).has('leger') || memoire <= 2 || navigator.hardwareConcurrency <= 2;
+}
+
 /**
- * Mise en scène de la page : l'ambiance du fond suit le jeu en cours de lecture, le repère de progression
- * s'allume, les vitrines apparaissent en douceur. Sans IntersectionObserver ou en mode calme, tout reste
- * simplement affiché.
+ * Le fond prend l'ambiance du jeu de face. Recolorer la page entière la ferait repeindre à chaque image, pendant que
+ * les cartes tournent : on pose l'ancienne couleur sur un calque, qui s'efface sans rien redessiner.
  */
-function stage(): void {
+function changerAmbiance(univers: string): void {
   const root = document.documentElement;
-  const vitrines = [...document.querySelectorAll<HTMLElement>('.vitrine')];
-  const reperes = document.querySelector<HTMLElement>('.reperes');
-  root.classList.toggle('calme', calme);
-  if (!('IntersectionObserver' in window)) return;
-
-  // Ligne de lecture au milieu de l'écran : la vitrine qui la traverse donne l'ambiance.
-  const lecture = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        const el = e.target as HTMLElement;
-        root.dataset.univers = el.dataset.univers ?? 'ouverture';
-        for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-repere]')) {
-          if (a.dataset.repere === el.id) a.setAttribute('aria-current', 'true');
-          else a.removeAttribute('aria-current');
-        }
-      }
-    },
-    { rootMargin: '-50% 0px -50% 0px' },
-  );
-  const ouverture = document.querySelector<HTMLElement>('.ouverture');
-  if (ouverture) lecture.observe(ouverture);
-  for (const v of vitrines) lecture.observe(v);
-
-  // Le repère n'apparaît qu'une fois les jeux atteints.
-  const jeux = document.querySelector('#jeux');
-  if (reperes && jeux) {
-    new IntersectionObserver(([e]) => reperes.classList.toggle('visible', e.isIntersecting), {
-      rootMargin: '-40% 0px -40% 0px',
-    }).observe(jeux);
-  }
-
+  if (root.dataset.univers === univers) return;
+  const avant = getComputedStyle(document.body).backgroundColor;
+  root.dataset.univers = univers;
   if (calme) return;
-  root.classList.add('anime');
-  const apparition = new IntersectionObserver(
-    (entries, obs) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        e.target.classList.add('visible');
-        obs.unobserve(e.target);
-      }
-    },
-    { rootMargin: '0px 0px -12% 0px' },
-  );
-  for (const v of [...vitrines, ...document.querySelectorAll<HTMLElement>('.carnet')]) apparition.observe(v);
+  document.querySelector('.ambiance-fondu')?.remove();
+  const fondu = h('div', { class: 'ambiance-fondu', 'aria-hidden': 'true' });
+  fondu.style.backgroundColor = avant;
+  document.body.prepend(fondu);
+  void fondu.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 900, easing: 'ease' }).finished.finally(() => fondu.remove()).catch(() => {});
 }
 
 /** Petits effets au pointeur (souris seulement) : l'illustration suit le regard, « Jouer » attire le curseur. */
@@ -466,7 +408,12 @@ function pointer(): void {
   }
 }
 
-stage();
+document.documentElement.classList.toggle('calme', calme);
+leManege = manege();
+window.addEventListener('hashchange', () => {
+  const i = [...document.querySelectorAll('.vitrine')].findIndex((v) => `#${v.id}` === window.location.hash);
+  if (i >= 0) leManege?.aller(i);
+});
 pointer();
 
 void (async () => {
@@ -474,7 +421,7 @@ void (async () => {
   if (etat?.connecte) {
     renderPlayers(etat.profils ?? []);
     const p = activePlayer();
-    if (p && estNiveau(p.niveau)) setLevel(p.niveau, 'profil');
+    if (p && estNiveau(p.niveau)) void setLevel(p.niveau, 'profil');
     if (window.location.hash === '#qui-joue') document.querySelector('#qui-joue-zone')?.scrollIntoView();
   }
   await renderCarnet();

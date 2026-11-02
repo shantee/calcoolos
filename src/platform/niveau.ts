@@ -17,6 +17,14 @@ export const estNiveau = (v: unknown): v is TierId => typeof v === 'string' && (
  * difficulté des calculs, jamais à l'âge : couleur, nombre de piments et nom se complètent. Les identifiants
  * (eveil…) restent ceux des profils et des résultats enregistrés.
  */
+/** Neon Flight et MULTIRAIL ne posent que des tables : les niveaux y changent la série et le rythme. */
+export const NIVEAU_TABLES: Record<TierId, { exemple: string; detail: string }> = {
+  eveil: { exemple: '3 × 4', detail: 'Tables de 2 à 5, avec tout ton temps.' },
+  explorateur: { exemple: '4 × 6', detail: 'Tables de 2 à 5, un peu plus vite.' },
+  stratege: { exemple: '7 × 8', detail: 'Tables de 2 à 10, le rythme monte.' },
+  maitre: { exemple: '9 × 7', detail: 'Les grandes tables, à toute vitesse.' },
+};
+
 export const NIVEAU_INFOS: Record<TierId, { nom: string; public: string; exemple: string; detail: string; piments: number }> = {
   eveil: { nom: TIERS.eveil.label, public: TIERS.eveil.public, exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', piments: 1 },
   explorateur: { nom: TIERS.explorateur.label, public: TIERS.explorateur.public, exemple: '27 + 15', detail: 'Additions et soustractions jusqu’à 50, tables de 2, 5 et 10.', piments: 2 },

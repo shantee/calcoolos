@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 29/10/2026 (Calcoolos Analytics, voir `doc/ANALYTICS.md` ; 27/10/2026 session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
+Dernière mise à jour : 02/11/2026 (accueil en manège, difficulté choisie au lancement ; 29/10/2026 : Calcoolos Analytics, voir `doc/ANALYTICS.md` ; 27/10/2026 session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
 
 ---
 
@@ -80,6 +80,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
 | Plateforme (invité, espace famille, profils, progrès, classements, succès) | faite, API PHP + MariaDB |
 | Accueil (chantier 01) | refait : 4 grandes vitrines illustrées, une par jeu, boutons lecture au survol ; en ligne |
+| Accueil en manège (02/11/2026) | six cartes sur un anneau en CSS (`src/platform/manege.ts`), description du jeu de face, difficulté choisie à chaque lancement ; remplace les vitrines, les vignettes et le sélecteur global |
 | Accueil (chantier 02, 26/10/2026) | logo animé « qui calcule de tête », espace joueur dans la barre, carnet (avantages du compte ou vrais progrès), choix du niveau en cartes + fenêtre au premier « Jouer » + rappel près de chaque « Jouer » ; en ligne |
 | « Continuer avec Google » (26/10/2026) | code publié (Google Identity Services, jeton vérifié en PHP, `comptes.google_sub`, association à un compte existant) ; **bouton masqué tant que l'ID client n'est pas configuré** : étapes dans `doc/GOOGLE.md` |
 | Mise en ligne | **faite le 25/10/2026** : https://calculos.zfx.fr (site CloudPanel du Dell, MariaDB, tunnel Cloudflare) ; guide `doc/DEPLOIEMENT.md` |
@@ -125,7 +126,8 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/dragon-auto.mjs` | Dragon gourmand, gagner / perdre (le dragon vole vraiment vers les lanternes) |
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
-| `scripts/accueil-e2e.mjs` | accueil (chantier 02) : logo, espace joueur, niveau, 4 jeux au bon niveau, inscription, profils, formats, langues, animations réduites |
+| `scripts/accueil-e2e.mjs` | accueil : logo, espace joueur, manège (souris, clavier, doigt, défilement, carte de côté, `?leger`), difficulté au lancement, inscription, profils, formats, animations réduites |
+| `scripts/niveaux-e2e.mjs` | six jeux × quatre niveaux, par la vraie fenêtre : relève les calculs réellement posés (`JEU=MULTIRAIL`, `SAUF=MULTIRAIL` : MULTIRAIL est très lent en GPU logiciel) |
 | `scripts/comptes-e2e.mjs` | comptes pour tous, vraie API et vraies parties : adulte seul, enfant ajouté, changement de joueur, reconnexion, six enfants, classements (`[adresse]`, comptes d'essai supprimés) |
 | `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
@@ -150,8 +152,8 @@ réduites), `?accelere=N`, `?textures=N`. Chaque jeu expose des crochets de test
 
 ```
 brand.json                 nom, slogan (seul endroit à modifier pour renommer)
-index.html                 accueil : ouverture (logo, table de lancement « Qui joue ? » + niveau, vignettes), carnet
-                           (compte), une vitrine par jeu, fenêtre <dialog> du premier niveau
+index.html                 accueil : ouverture (logo, « Qui joue ? »), une vitrine par jeu (repli sans script, le manège
+                           les reprend), carnet (compte), fenêtre <dialog> de la difficulté
 src/images/accueil/        illustrations de l'accueil en WebP (480, 800, 1448) ; originaux dans sources-images/
 src/images/decollage/      graphismes de Décollage ! fournis par Philippe (jauge…), originaux dans sources-images/decollage/
 src/images/avatars/        49 avatars WebP 128 × 128 découpés dans sources-images/avatars/grille-avatars.png
@@ -285,10 +287,15 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Claviers AZERTY** : lire les chiffres avec `e.code` (`Digit1`, `Numpad1`), pas `e.key`.
 - **Pixelify Sans dans les pages web aussi** : ses chiffres se confondent (« 9 + 9 » lu « g + g ») ; sur l'accueil,
   elle ne sert qu'aux surtitres sans chiffres, les nombres utilisent `.pixel-nombre`.
-- **Niveau de l'accueil** : quatre boutons radio `input[name="niveau"]` (plus de `<select id="niveau">`) ; Playwright
-  doit cliquer la case elle-même (`page.click('input[value="stratege"]')`), l'étiquette est couverte par la case.
-  Un nouveau venu n'a **aucun** niveau coché : son premier clic sur « Jouer » ouvre la fenêtre `#choix-niveau` au lieu
-  de lancer le jeu. Un script qui part d'un navigateur neuf doit d'abord cocher un niveau (ou choisir dans la fenêtre).
+- **Accueil et difficulté** : plus de sélecteur global. Tout lien `a[data-jeu]` ouvre `#choix-niveau` à chaque fois
+  (sauf `data-sans-choix`, « Reprendre ») : un script choisit dans la fenêtre. Seul le « Jouer » du jeu de face est
+  visible : d'abord `.manege-noms button`, puis `.vitrine-texte.devant a.jouer`. Sur téléphone (≤ 520 px), pas de
+  flèches. Le `touchmove` consommé du manège est nécessaire : sans lui, Chrome lance une inertie invisible et perd le
+  toucher suivant (3 fois sur 5 après un geste vif). N'animer que `transform` et `opacity` : ni flou, ni filtre, ni
+  recoloration de la page. `?leger` montre le mode à plat, pris tout seul sur un appareil modeste ou lent.
+- **Scripts dans le conteneur Playwright** : `-e NODE_PATH=/ct/nm` ; ne pas passer par `xvfb-run` sans nécessité, il peut
+  rester bloqué sans rien dire. Sur le poste, `$TMPDIR` diffère entre le bac à sable et le reste. Jamais `sed -n … -i` :
+  le fichier est vidé (arrivé à `accueil-e2e.mjs` le 02/11, rétabli depuis git).
 - **« Mon espace »** : le titre h1 existe aussi sans être connecté ; un script attend `.mon-espace` (connecté). Les enfants sont dans `<details id="ajout-enfant">`, fermé tant qu'il n'y en a pas. Un compte à un seul profil n'a pas de « Qui joue ? ».
 - **Espace joueur** : `.joueur` est un bouton qui ouvre `#panneau-joueur` (plus un lien). Le panneau contient lui
   aussi « Se déconnecter » : dans l'espace parents, viser `#contenu button`.

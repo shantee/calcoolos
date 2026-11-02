@@ -1,6 +1,6 @@
 /*
- * Accueil (chantier 01) : une ouverture, puis une grande vitrine illustrée par jeu.
- * Le fond change doucement d'ambiance selon le jeu en cours de lecture (data-univers sur <html>).
+ * Accueil : une ouverture, puis le manège des jeux (src/platform/manege.ts).
+ * Le fond change doucement d'ambiance selon le jeu de face (data-univers sur <html>).
  */
 :root {
   --encre: #1d1a2b;
@@ -56,7 +56,14 @@ body {
   min-height: 100vh;
   background-color: var(--ambiance);
   overflow-x: hidden;
-  transition: background-color 0.9s ease;
+}
+
+/* Ancienne couleur du fond, qui s'efface quand le jeu de face change (changerAmbiance, accueil.ts). */
+.ambiance-fondu {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
 }
 
 /* Lumière douce en haut et vignette sur les bords : donne de la profondeur sans décor ajouté. */
@@ -129,17 +136,20 @@ main {
 
 .ouverture {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 36px;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px clamp(24px, 4vw, 56px);
   align-items: center;
-  padding: clamp(28px, 6vh, 64px) 0 clamp(36px, 7vh, 72px);
+  padding: clamp(10px, 2vh, 22px) 0 clamp(6px, 1.5vh, 14px);
 }
 
 .ouverture-texte {
   display: grid;
-  gap: 18px;
-  justify-items: start;
+  gap: 4px;
   min-width: 0;
+}
+
+.lancement-joueur {
+  grid-column: 1 / -1;
 }
 
 h1 {
@@ -154,41 +164,27 @@ h1 {
 
 /* Le grand logo : de la place au-dessus et au-dessous pour ses cubes. */
 .titre-logo {
-  margin: 0.62em 0 0.12em;
-  font-size: clamp(3.4rem, 9.6vw, 6.6rem);
+  margin: 0.5em 0 0.1em;
+  font-size: clamp(2.7rem, 6vw, 4.4rem);
   text-shadow: none;
   min-height: 1em;
 }
 
 .accroche {
-  margin: 4px 0 0;
-  font-size: clamp(1.25rem, 3vw, 1.6rem);
+  margin: 0;
+  font-size: clamp(1.1rem, 2.2vw, 1.4rem);
   font-weight: 700;
 }
 
 .intro {
   margin: 0;
-  max-width: 34em;
-  font-size: 1.08rem;
-  line-height: 1.55;
+  max-width: 44em;
+  font-size: 1rem;
+  line-height: 1.5;
   color: var(--texte);
 }
 
-/* ---------- La table de lancement : qui joue, quel niveau ---------- */
-
-.lancement {
-  display: grid;
-  gap: 16px;
-  width: 100%;
-  margin-top: 8px;
-  padding: 18px clamp(14px, 2vw, 22px) 16px;
-  border: 3px solid var(--encre);
-  border-radius: 26px;
-  background:
-    linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 40%),
-    rgb(9 17 30 / 0.72);
-  box-shadow: 0 6px 0 var(--encre);
-}
+/* ---------- Qui joue ---------- */
 
 .lancement-joueur:has(#qui-joue-zone:not([hidden])) .statut-invite {
   display: none;
@@ -199,11 +195,11 @@ h1 {
   font-size: 1.1rem;
 }
 
-.lancement .qui-joue {
+.lancement-joueur .qui-joue {
   margin: 0;
 }
 
-.lancement .qui-joue button {
+.lancement-joueur .qui-joue button {
   grid-auto-flow: column;
   align-items: center;
   min-width: 0;
@@ -212,7 +208,7 @@ h1 {
   box-shadow: 0 4px 0 var(--encre);
 }
 
-.lancement .qui-joue .avatar {
+.lancement-joueur .qui-joue .avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -241,313 +237,6 @@ h1 {
   box-shadow: 0 0 0 4px rgb(95 211 188 / 0.2);
 }
 
-/* Niveau : quatre cartes avec un personnage, l'âge et la difficulté en crans. */
-.niveau {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  min-width: 0;
-  max-width: 100%;
-  scroll-margin: 120px;
-}
-
-.niveau legend {
-  padding: 0;
-  margin-bottom: 10px;
-  font-weight: 800;
-  font-size: 1.1rem;
-}
-
-.niveaux {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.niveaux label {
-  --cran: var(--sarcelle);
-  position: relative;
-  display: grid;
-  justify-items: center;
-  align-content: start;
-  gap: 1px;
-  padding: 8px 6px 10px;
-  border: 3px solid rgb(246 236 216 / 0.14);
-  border-radius: 18px;
-  background: rgb(246 236 216 / 0.04);
-  text-align: center;
-  cursor: pointer;
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.niveaux label[data-niveau='explorateur'] {
-  --cran: var(--ciel);
-}
-
-.niveaux label[data-niveau='stratege'] {
-  --cran: var(--violet);
-}
-
-.niveaux label[data-niveau='maitre'] {
-  --cran: var(--corail);
-}
-
-.niveaux input {
-  position: absolute;
-  opacity: 0;
-  inset: 0;
-  margin: 0;
-  cursor: pointer;
-}
-
-.niveau-perso {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  margin-bottom: 2px;
-  border-radius: 50%;
-  background: rgb(246 236 216 / 0.07);
-  transition: transform 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
-}
-
-.niveau-perso .avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-}
-
-.niveau-nom {
-  font-weight: 800;
-  line-height: 1.1;
-}
-
-.niveaux small {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--brume);
-}
-
-/* Difficulté en quatre crans : 1 pour Éveil, 4 pour Maître. */
-.niveau-crans {
-  display: flex;
-  gap: 3px;
-  margin-top: 6px;
-}
-
-.niveau-crans i {
-  width: 9px;
-  height: 5px;
-  border-radius: 3px;
-  background: rgb(246 236 216 / 0.16);
-}
-
-.niveaux label[data-niveau='eveil'] .niveau-crans i:nth-child(-n + 1),
-.niveaux label[data-niveau='explorateur'] .niveau-crans i:nth-child(-n + 2),
-.niveaux label[data-niveau='stratege'] .niveau-crans i:nth-child(-n + 3),
-.niveaux label[data-niveau='maitre'] .niveau-crans i {
-  background: var(--cran);
-}
-
-.niveaux label:hover {
-  background: rgb(246 236 216 / 0.09);
-  border-color: rgb(246 236 216 / 0.3);
-}
-
-.niveaux label:hover .niveau-perso {
-  transform: translateY(-3px) rotate(-4deg);
-}
-
-.niveaux label:has(input:checked) {
-  background: var(--safran);
-  border-color: var(--encre);
-  color: var(--encre);
-  box-shadow: 0 5px 0 var(--encre);
-  transform: translateY(-3px);
-}
-
-.niveaux label:has(input:checked) small {
-  color: #4a3a1a;
-}
-
-.niveaux label:has(input:checked) .niveau-perso {
-  background: rgb(255 255 255 / 0.45);
-}
-
-.niveaux label:has(input:checked) .niveau-crans i {
-  background: rgb(29 26 43 / 0.2);
-}
-
-.niveaux label[data-niveau='eveil']:has(input:checked) .niveau-crans i:nth-child(-n + 1),
-.niveaux label[data-niveau='explorateur']:has(input:checked) .niveau-crans i:nth-child(-n + 2),
-.niveaux label[data-niveau='stratege']:has(input:checked) .niveau-crans i:nth-child(-n + 3),
-.niveaux label[data-niveau='maitre']:has(input:checked) .niveau-crans i {
-  background: var(--encre);
-}
-
-.anime .niveaux label:has(input:checked) .niveau-perso {
-  animation: perso-content 0.5s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-
-@keyframes perso-content {
-  40% {
-    transform: translateY(-8px) scale(1.08);
-  }
-}
-
-.niveaux label:has(input:focus-visible) {
-  outline: 3px solid var(--creme);
-  outline-offset: 3px;
-}
-
-.niveau-detail {
-  min-height: 1.5em;
-  margin: 12px 0 0;
-  font-size: 0.98rem;
-  line-height: 1.45;
-  color: var(--texte);
-}
-
-.niveau-detail b {
-  color: var(--safran);
-}
-
-/* Aucun niveau choisi (nouveau venu) : une étiquette le signale à côté du titre. */
-.niveau-alerte {
-  display: none;
-  margin-left: 8px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  background: var(--safran);
-  color: var(--encre);
-  font-size: 0.8rem;
-  font-weight: 800;
-  vertical-align: 2px;
-}
-
-.niveau.a-choisir .niveau-alerte {
-  display: inline-block;
-}
-
-.anime .niveau.a-choisir .niveau-alerte {
-  animation: alerte 2.4s ease-in-out infinite;
-}
-
-@keyframes alerte {
-  0%,
-  70%,
-  100% {
-    transform: none;
-  }
-  80% {
-    transform: translateX(-3px) rotate(-3deg);
-  }
-  90% {
-    transform: translateX(2px) rotate(2deg);
-  }
-}
-
-/* Arrivée depuis un rappel « changer » : les cartes s'illuminent brièvement. */
-.niveau.signale .niveaux {
-  animation: signale 1.1s ease-out;
-}
-
-@keyframes signale {
-  0%,
-  60% {
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  25% {
-    filter: drop-shadow(0 0 14px rgb(255 201 74 / 0.7));
-  }
-}
-
-.explorer {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: 10px;
-  padding: 6px 4px;
-  color: var(--creme);
-  font-weight: 800;
-  font-size: 1.1rem;
-  text-decoration: none;
-  border-bottom: 3px solid rgb(255 201 74 / 0.5);
-}
-
-.explorer:hover {
-  border-bottom-color: var(--safran);
-}
-
-.fleche {
-  display: inline-block;
-  color: var(--safran);
-}
-
-.anime .fleche {
-  animation: invite 1.8s ease-in-out infinite;
-}
-
-@keyframes invite {
-  50% {
-    transform: translateY(5px);
-  }
-}
-
-/* Les quatre jeux en vignettes : on voit d'emblée qu'il y en a quatre. */
-.mosaique {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(12px, 2vw, 22px);
-  min-width: 0;
-}
-
-.vignette {
-  position: relative;
-  display: block;
-  border: 3px solid var(--encre);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 6px 0 var(--encre);
-  color: var(--creme);
-  text-decoration: none;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-
-.vignette img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-}
-
-.vignette span {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 22px 12px 9px;
-  font-weight: 800;
-  font-size: clamp(0.85rem, 2.4vw, 1rem);
-  line-height: 1.15;
-  background: linear-gradient(transparent, rgb(10 12 24 / 0.88) 55%);
-}
-
-.vignette:hover,
-.vignette:focus-visible {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 0 var(--encre);
-}
-
-/* ---------- Repère de progression ---------- */
-
-.reperes {
-  display: none;
-}
-
 /* ---------- Vitrines ---------- */
 
 .vitrine {
@@ -562,42 +251,34 @@ h1 {
   scroll-margin-top: 8px;
 }
 
-.vitrine[data-univers='meteores'] {
+.vitrine[data-univers='meteores'],
+:root[data-univers='meteores'] .jeux {
   --accent: #c8a6ff;
   --halo: rgb(160 110 255 / 0.25);
 }
 
-.vitrine[data-univers='dragon'] {
+.vitrine[data-univers='dragon'],
+:root[data-univers='dragon'] .jeux {
   --accent: #ffa36b;
   --halo: rgb(255 120 80 / 0.24);
 }
 
-.vitrine[data-univers='fusee'] {
+.vitrine[data-univers='fusee'],
+:root[data-univers='fusee'] .jeux {
   --accent: #7fd6ff;
   --halo: rgb(90 190 255 / 0.25);
 }
 
-.vitrine[data-univers='neon'] {
+.vitrine[data-univers='neon'],
+:root[data-univers='neon'] .jeux {
   --accent: #ff7ae0;
   --halo: rgb(255 90 220 / 0.26);
 }
 
-.vitrine[data-univers='multirail'] {
+.vitrine[data-univers='multirail'],
+:root[data-univers='multirail'] .jeux {
   --accent: #5fe3d2;
   --halo: rgb(70 220 200 / 0.26);
-}
-
-/* Fine séparation entre deux univers. */
-.vitrine + .vitrine::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  width: min(220px, 40%);
-  height: 3px;
-  border-radius: 3px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, rgb(246 236 216 / 0.18), transparent);
 }
 
 .vitrine-image {
@@ -685,7 +366,7 @@ h1 {
   transform: scale(1);
 }
 
-.anime .vitrine-image:hover .lecture::before {
+:root:not(.calme) .vitrine-image.devant:hover .lecture::before {
   animation: onde 1.8s ease-out 0.3s infinite;
 }
 
@@ -817,35 +498,6 @@ h1 {
 
 .rail-pose {
   color: #5fe3d2;
-}
-
-/* Cinquième vignette : Neon Flight en bandeau sur toute la largeur de la mosaïque. */
-.vignette-large {
-  grid-column: 1 / -1;
-}
-
-.vignette-large img {
-  aspect-ratio: 16 / 5;
-  object-position: 50% 62%;
-}
-
-.vignette small {
-  font-weight: 600;
-  opacity: 0.8;
-}
-
-.actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px 22px;
-  margin-top: 6px;
-}
-
-.commandes {
-  margin: 0;
-  font-size: 0.92rem;
-  color: var(--brume);
 }
 
 /* Exemples de calcul (purement décoratifs, aria-hidden). */
@@ -990,90 +642,6 @@ h1 {
 .jouer:active {
   transform: translateY(3px);
   box-shadow: 0 3px 0 var(--encre);
-}
-
-/* Apparition des vitrines (seulement si le script l'active : sans lui, tout est visible). */
-.anime .vitrine:not(.visible) .vitrine-image {
-  opacity: 0;
-  transform: translateY(28px) scale(0.97);
-}
-
-.anime .vitrine:not(.visible) .vitrine-texte > * {
-  opacity: 0;
-  transform: translateY(18px);
-}
-
-.anime .vitrine .vitrine-image,
-.anime .vitrine .vitrine-texte > * {
-  transition:
-    opacity 0.7s ease,
-    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-.anime .vitrine-texte > :nth-child(2) {
-  transition-delay: 0.06s;
-}
-
-.anime .vitrine-texte > :nth-child(3) {
-  transition-delay: 0.12s;
-}
-
-.anime .vitrine-texte > :nth-child(4) {
-  transition-delay: 0.18s;
-}
-
-.anime .vitrine-texte > :nth-child(5) {
-  transition-delay: 0.24s;
-}
-
-.anime .vitrine-texte > :nth-child(6) {
-  transition-delay: 0.3s;
-}
-
-/* Rappel du niveau à côté de chaque « Jouer » : on sait toujours à quel niveau on va jouer. */
-.rappel-niveau {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 14px 4px 4px;
-  border: 2px solid rgb(246 236 216 / 0.2);
-  border-radius: 999px;
-  background: rgb(9 17 30 / 0.5);
-  color: var(--creme);
-  text-decoration: none;
-  line-height: 1.15;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-
-.rappel-niveau:hover,
-.rappel-niveau:focus-visible {
-  border-color: var(--safran);
-  background: rgb(255 201 74 / 0.1);
-}
-
-.rappel-niveau .avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgb(246 236 216 / 0.1);
-}
-
-.rappel-niveau > span {
-  display: grid;
-}
-
-.rappel-niveau b {
-  color: var(--safran);
-}
-
-.rappel-niveau small {
-  font-size: 0.78rem;
-  color: var(--brume);
-  text-decoration: underline;
-}
-
-.vitrine .actions .commandes {
-  flex-basis: 100%;
 }
 
 /* ---------- Le carnet : avantages du compte, ou progrès réels du joueur ---------- */
@@ -1254,21 +822,10 @@ h1 {
   font-variant-numeric: tabular-nums;
 }
 
-.anime .carnet:not(.visible) {
-  opacity: 0;
-  transform: translateY(24px);
-}
-
-.anime .carnet {
-  transition:
-    opacity 0.7s ease,
-    transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
-}
-
-/* ---------- Choix du niveau avant la première partie ---------- */
+/* ---------- Choix de la difficulté au lancement d’un jeu ---------- */
 
 .choix-niveau {
-  width: min(640px, calc(100vw - 24px));
+  width: min(760px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
   padding: 0;
   color: var(--creme);
@@ -1339,10 +896,14 @@ h1 {
 }
 
 .choix-niveau-option:hover,
+.choix-niveau-option:focus-visible,
+.choix-niveau-option.choisi {
+  background: color-mix(in srgb, var(--piment) 20%, #101a30);
+  border-color: var(--piment);
+}
+
+.choix-niveau-option:hover,
 .choix-niveau-option:focus-visible {
-  background: var(--safran);
-  border-color: var(--encre);
-  color: var(--encre);
   transform: translateY(-3px);
   outline: none;
 }
@@ -1351,28 +912,18 @@ h1 {
   box-shadow: 0 0 0 3px var(--creme);
 }
 
-.choix-niveau-option .avatar {
-  width: 60px;
-  height: 60px;
-}
-
 .choix-niveau-option small {
   font-size: 0.8rem;
-  opacity: 0.8;
+  line-height: 1.25;
+  color: var(--texte);
 }
 
 .choix-niveau-exemple {
-  margin-top: 6px;
-  padding: 2px 10px;
-  border-radius: 8px;
-  background: rgb(0 0 0 / 0.25);
+  margin-block: 4px;
+  font-size: 1.15rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-}
-
-.choix-niveau-option:hover .choix-niveau-exemple,
-.choix-niveau-option:focus-visible .choix-niveau-exemple {
-  background: rgb(255 255 255 / 0.4);
+  color: var(--piment);
 }
 
 .choix-niveau-fermer {
@@ -1442,48 +993,11 @@ h1 {
 
 /* ---------- Téléphone et tablette ---------- */
 
-/* Une colonne : les vignettes des jeux remontent juste sous le titre, visibles dès le premier écran. */
-@media (max-width: 899px) {
-  .ouverture {
-    gap: 18px;
-    justify-items: start;
-    padding-bottom: 24px;
-  }
-
-  .ouverture-texte {
-    display: contents;
-  }
-
-  /* Logo et accroche, puis la table de lancement (niveau), puis les quatre jeux en vignettes. */
-  .ouverture-texte > :nth-child(-n + 3) {
-    order: -3;
-  }
-
-  .lancement {
-    order: -2;
-  }
-
-  .mosaique {
-    order: -1;
-    width: 100%;
-    margin: 6px 0 8px;
-  }
-
-  .titre-logo {
-    margin-top: 0.42em;
-  }
-
-  .vitrine {
-    padding: 36px 0;
-  }
-}
-
 @media (max-width: 520px) {
   .exemple {
     font-size: 1.15rem;
   }
 
-  .niveaux,
   .choix-niveau-liste {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1538,18 +1052,9 @@ h1 {
   }
 }
 
-/* ---------- Grand écran : texte et image côte à côte, en alternance ---------- */
+/* ---------- Grand écran ---------- */
 
 @media (min-width: 900px) {
-  .ouverture {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    gap: clamp(40px, 5vw, 80px);
-  }
-
-  .mosaique {
-    padding-bottom: 36px;
-  }
-
   .carnet {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
     gap: clamp(28px, 4vw, 56px);
@@ -1557,89 +1062,6 @@ h1 {
 
   .avantages-chiffres {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  /* Colonne de droite décalée vers le bas : un rythme de planche, pas une grille de formulaire. */
-  .vignette:nth-child(even) {
-    transform: translateY(36px);
-  }
-
-  .vignette:nth-child(even):hover,
-  .vignette:nth-child(even):focus-visible {
-    transform: translateY(32px);
-  }
-
-  /* Les vignettes paires descendent de 36 px : le bandeau du bas laisse la place. */
-  .vignette-large {
-    margin-top: 36px;
-  }
-
-  .anime .vignette img {
-    animation: flotte 7s ease-in-out infinite alternate;
-    animation-delay: calc(var(--i) * -1.7s);
-  }
-
-  .vitrine {
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
-    gap: clamp(36px, 5vw, 72px);
-  }
-
-  .vitrine:nth-child(even) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  }
-
-  .vitrine:nth-child(even) .vitrine-image {
-    order: 2;
-  }
-}
-
-@keyframes flotte {
-  from {
-    transform: scale(1.06) translateY(-1.5%);
-  }
-  to {
-    transform: scale(1.06) translateY(1.5%);
-  }
-}
-
-/* Repère de progression : quatre traits sur le bord droit, visibles une fois les jeux atteints. */
-@media (min-width: 1100px) {
-  .reperes {
-    position: fixed;
-    right: 22px;
-    top: 50%;
-    z-index: 3;
-    display: grid;
-    gap: 10px;
-    transform: translateY(-50%);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.4s ease;
-  }
-
-  .reperes.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .reperes a {
-    display: block;
-    width: 6px;
-    height: 26px;
-    border-radius: 6px;
-    background: rgb(246 236 216 / 0.25);
-    transition:
-      background-color 0.3s ease,
-      height 0.3s ease;
-  }
-
-  .reperes a:hover {
-    background: rgb(246 236 216 / 0.6);
-  }
-
-  .reperes a[aria-current='true'] {
-    height: 44px;
-    background: var(--safran);
   }
 }
 
@@ -1649,11 +1071,7 @@ h1 {
     scroll-behavior: auto;
   }
 
-  body,
-  .vignette,
   .jouer,
-  .niveaux label,
-  .niveau-perso,
   .vitrine-image img,
   .bouton-creer,
   .choix-niveau-option {
@@ -1669,10 +1087,7 @@ h1 {
   scroll-behavior: auto;
 }
 
-.calme body,
-.calme .vignette,
-.calme .jouer,
-.calme .reperes a {
+.calme .jouer {
   transition: none;
 }
 
@@ -1682,19 +1097,6 @@ h1 {
 [data-niveau='stratege'] { --piment: #ff9838; }
 [data-niveau='maitre'] { --piment: #ff5a4f; }
 
-.niveaux {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-}
-
-.niveaux label {
-  align-content: start;
-  gap: 3px;
-  padding: 10px 6px 9px;
-  border-top: 5px solid var(--piment);
-  text-align: center;
-}
-
 .niveau-piments {
   display: flex;
   justify-content: center;
@@ -1702,62 +1104,10 @@ h1 {
   color: var(--piment);
 }
 
-.niveau-piments svg,
-.rappel-piments svg {
+.niveau-piments svg {
   width: 20px;
   height: 20px;
   margin-inline: -2px;
-}
-
-.niveau-exemple {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--piment);
-}
-
-.niveaux small {
-  font-size: 0.72rem;
-  line-height: 1.2;
-}
-
-.niveaux label:has(input:checked) {
-  border-color: var(--piment);
-  color: var(--creme);
-  background: color-mix(in srgb, var(--piment) 20%, #101a30);
-  box-shadow: 0 0 0 2px var(--piment), 0 8px 20px rgb(0 0 0 / 0.3);
-}
-
-.niveaux label:has(input:checked) small {
-  color: var(--creme);
-}
-
-.rappel-niveau > .rappel-piments {
-  display: inline-flex;
-  flex: none;
-  flex-flow: row nowrap;
-  color: var(--piment, var(--creme));
-}
-
-.vignette-tags {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.vignette-tags li {
-  padding: 1px 7px;
-  border-radius: 99px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--creme);
-  background: rgb(13 10 28 / 0.78);
 }
 
 .choix-niveau-option .niveau-piments {
@@ -1969,9 +1319,7 @@ h1 {
 
 .accueil-perso .accroche,
 .accueil-perso .intro,
-.accueil-perso .titre-logo,
-.accueil-perso .mosaique,
-.accueil-perso .explorer {
+.accueil-perso .titre-logo {
   display: none;
 }
 
@@ -1985,12 +1333,6 @@ h1 {
   max-width: none;
 }
 
-@media (min-width: 761px) {
-  .accueil-perso .niveaux {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 760px) {
   .univers {
     margin-inline: 8px;
@@ -1999,10 +1341,6 @@ h1 {
 
   .univers-haut {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .niveaux {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .univers-jeux {
@@ -2028,4 +1366,339 @@ h1 {
   .tuile-jeu {
     transition: none;
   }
+}
+
+/* --- Le manège des jeux. --- */
+.jeux {
+  /* La hauteur de la scène suit celle de la carte, pour que tout tienne dans le premier écran. */
+  --carte: min(calc(clamp(210px, 40vh, 400px) * 4 / 3), 76vw);
+  --scene: calc(var(--carte) * 0.77);
+  display: grid;
+  gap: 32px;
+}
+
+.jeux[hidden] {
+  display: none;
+}
+
+.manege-pret {
+  grid-template: 'scene' var(--scene) 'nav' auto 'texte' auto / minmax(0, 1fr);
+  gap: 0;
+  justify-items: center;
+  margin-inline: calc(var(--marge) * -1);
+  padding-bottom: clamp(28px, 5vh, 56px);
+  overflow-x: clip;
+}
+
+.manege-pret .vitrine {
+  display: contents;
+}
+
+.manege-pret .vitrine-image {
+  grid-area: scene;
+  align-self: center;
+  width: var(--carte);
+  cursor: pointer;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  will-change: transform, opacity;
+}
+
+.manege-pret .vitrine-image img {
+  -webkit-user-drag: none;
+}
+
+/* Le plateau du manège : un anneau peint une fois, sous les cartes. */
+.manege-pret::before {
+  content: '';
+  grid-area: scene;
+  align-self: end;
+  z-index: 0;
+  width: min(calc(var(--carte) * 2.7), 124vw);
+  height: calc(var(--carte) * 0.26);
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--accent) 26%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* Sur la carte qui tourne, un disque plein : le flou d'arrière-plan se recalculerait à chaque image. */
+.manege-pret .lecture {
+  background: rgb(16 26 48 / 0.62);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.manege-pret .vitrine-image:not(.devant) .lecture {
+  display: none;
+}
+
+/* Appareil modeste : cartes à plat, sans ombre portée floue ni plateau. */
+.manege-leger .vitrine-image {
+  box-shadow: 0 8px 0 var(--encre);
+}
+
+.manege-leger::before {
+  display: none;
+}
+
+.manege-tenu .vitrine-image {
+  cursor: grabbing;
+}
+
+.manege-nav {
+  grid-area: nav;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 20px var(--marge) 16px;
+}
+
+.manege-noms {
+  display: flex;
+  gap: 2px;
+}
+
+.manege-noms button {
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--texte);
+  background: none;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.manege-noms button:hover {
+  color: var(--creme);
+  background: rgb(246 236 216 / 0.1);
+}
+
+.manege-noms button[aria-current='true'] {
+  color: var(--encre);
+  background: var(--accent);
+}
+
+.manege-fleche {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  font: inherit;
+  background: rgb(246 236 216 / 0.08);
+  border: 3px solid var(--encre);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.manege-fleche::before {
+  content: '';
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: auto;
+  border: solid var(--creme);
+  border-width: 4px 4px 0 0;
+  transform: translateX(-2px) rotate(45deg);
+}
+
+.manege-precedent::before {
+  transform: translateX(2px) rotate(-135deg);
+}
+
+.manege-fleche:hover {
+  background: rgb(246 236 216 / 0.2);
+}
+
+.manege-noms button:focus-visible,
+.manege-fleche:focus-visible {
+  outline: 3px solid var(--creme);
+  outline-offset: 2px;
+}
+
+.manege-pret .vitrine-texte {
+  grid-area: texte;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 8px clamp(24px, 4vw, 56px);
+  align-content: start;
+  width: min(100%, calc(var(--largeur) + 2 * var(--marge)));
+  padding-inline: var(--marge);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease;
+}
+
+.manege-pret .vitrine-texte.devant {
+  opacity: 1;
+  visibility: visible;
+}
+
+.manege-pret .vitrine-texte > * {
+  grid-column: 1;
+}
+
+.manege-pret .vitrine h2 {
+  font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+}
+
+.manege-pret .accroche-jeu {
+  max-width: 38em;
+  font-size: 1.12rem;
+}
+
+.manege-pret .pitch {
+  max-width: 40em;
+  font-size: 1.02rem;
+  line-height: 1.5;
+}
+
+.manege-pret .exemple {
+  grid-column: 2;
+  grid-row: 4 / span 2;
+  align-self: start;
+  margin: 0;
+}
+
+.manege-pret .actions {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+  width: 100%;
+  margin: 0;
+}
+
+.manege-pret .jouer {
+  width: 100%;
+}
+
+@media (max-width: 899px) {
+  .ouverture {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manege-pret .vitrine-texte {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .manege-pret .exemple,
+  .manege-pret .actions {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  /* Le nom du jeu d'abord, puis « Jouer », et le détail ensuite. */
+  .manege-pret .actions {
+    order: 1;
+  }
+
+  .manege-pret .surtitre,
+  .manege-pret .accroche-jeu,
+  .manege-pret .competences,
+  .manege-pret .pitch,
+  .manege-pret .exemple {
+    order: 2;
+  }
+}
+
+/* Sur petit écran, les six jeux se reconnaissent à leur miniature ; le nom complet est juste dessous. */
+.manege-noms img {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .manege-nav {
+    gap: 6px;
+    padding-block: 14px 12px;
+  }
+
+  .manege-noms {
+    flex: 1;
+    gap: 6px;
+    max-width: 480px;
+    min-width: 0;
+  }
+
+  .manege-noms button {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
+    padding: 0;
+    overflow: hidden;
+    background: none;
+    border: 3px solid var(--encre);
+    border-radius: 10px;
+  }
+
+  .manege-noms button:hover {
+    background: none;
+  }
+
+  .manege-noms img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.62;
+  }
+
+  .manege-noms button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .manege-noms button[aria-current='true'] {
+    border-color: var(--accent);
+  }
+
+  .manege-noms button[aria-current='true'] img {
+    opacity: 1;
+  }
+}
+
+/* Téléphone : le geste et les miniatures suffisent, les flèches rendraient ces dernières trop petites. */
+@media (max-width: 520px) {
+  .manege-fleche {
+    display: none;
+  }
+
+  .manege-nav {
+    padding-inline: 16px;
+  }
+
+  .manege-noms {
+    max-width: none;
+  }
+
+  .ouverture {
+    padding-block: 4px;
+  }
+
+  .titre-logo {
+    font-size: 2.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manege-pret .vitrine-texte,
+  .manege-noms button,
+  .manege-fleche {
+    transition: none;
+  }
+}
+
+.calme .manege-pret .vitrine-texte,
+.calme .manege-noms button,
+.calme .manege-fleche {
+  transition: none;
 }

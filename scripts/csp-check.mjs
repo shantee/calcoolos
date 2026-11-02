@@ -78,10 +78,11 @@ for (const p of pages) {
   await page.mouse.click(400, 300);
   await page.waitForTimeout(1500);
   if (p === 'index.html') {
-    // Accueil : les illustrations (chargement différé) doivent toutes s'afficher une fois la page parcourue.
+    // Accueil : les illustrations visibles doivent toutes s'afficher une fois la page parcourue
+    // (les miniatures du manège, masquées sur grand écran, ne se chargent pas : c'est voulu).
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(1500);
-    const broken = await page.$$eval('img', (imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.currentSrc || i.src));
+    const broken = await page.$$eval('img', (imgs) => imgs.filter((i) => i.offsetParent !== null && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src));
     for (const b of broken) problems.push(`${p} : image non chargée ${b}`);
   }
   console.log('ok :', p);

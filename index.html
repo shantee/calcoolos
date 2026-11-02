@@ -23,70 +23,248 @@
       <!-- L'univers du joueur : rempli par accueil.ts pour un joueur connecté ou un invité qui revient. -->
       <section class="univers" id="univers" aria-labelledby="univers-titre" hidden></section>
 
-      <!-- Ouverture : logo, préparation de la partie (qui joue, niveau), et les jeux en vignettes. -->
+      <!-- Ouverture : le logo, l'accroche et qui joue. Les jeux viennent juste dessous, dans le manège. -->
       <section class="ouverture" aria-labelledby="titre">
+        <h1 id="titre" class="titre-logo" translate="no">%BRAND_NAME%</h1>
         <div class="ouverture-texte">
-          <h1 id="titre" class="titre-logo" translate="no">%BRAND_NAME%</h1>
           <p class="accroche">%BRAND_TAGLINE%</p>
           <p class="intro">
-            Des mondes à explorer, des personnages attachants, des aventures à finir : ce sont de vrais jeux vidéo. Sauf qu’ici, ton meilleur coup, c’est ton calcul mental. On vient pour jouer, à tout âge, et on repart plus vif.
+            Des mondes à explorer, des personnages attachants, des aventures à finir : ce sont de vrais jeux vidéo. Sauf qu’ici, ton meilleur coup, c’est ton calcul mental.
           </p>
-
-          <!-- La table de lancement : qui joue, à quel niveau. -->
-          <div class="lancement">
-            <div class="lancement-joueur" id="lancement-joueur">
-              <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
-                <h2 id="qui-joue-titre">Qui joue ?</h2>
-                <div class="qui-joue" id="qui-joue"></div>
-              </section>
-              <p class="statut-invite" id="statut-invite">
-                <span class="pastille-invite" aria-hidden="true"></span>
-                <span><b>Tu joues en invité</b>, sans inscription. <a href="#carnet">Pourquoi créer un compte ?</a></span>
-              </p>
-            </div>
-
-            <fieldset class="niveau" id="niveau">
-              <legend>Choisis ta difficulté <span class="niveau-alerte">avant de jouer</span></legend>
-              <div class="niveaux">
-                <label data-niveau="eveil"><input type="radio" name="niveau" value="eveil" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Doux</span><span class="niveau-exemple">8 + 5</span><small>+ − jusqu’à 20</small></label>
-                <label data-niveau="explorateur"><input type="radio" name="niveau" value="explorateur" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Relevé</span><span class="niveau-exemple">27 + 15</span><small>+ − jusqu’à 50, × faciles</small></label>
-                <label data-niveau="stratege"><input type="radio" name="niveau" value="stratege" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Piquant</span><span class="niveau-exemple">7 × 8</span><small>+ − jusqu’à 100, × ÷ des tables</small></label>
-                <label data-niveau="maitre"><input type="radio" name="niveau" value="maitre" /><span class="niveau-piments" aria-hidden="true"></span><span class="niveau-nom">Explosif</span><span class="niveau-exemple">84 ÷ 7</span><small>+ − jusqu’à 200, × ÷ jusqu’à 12</small></label>
-              </div>
-              <p class="niveau-detail" id="niveau-detail" aria-live="polite">Plus il y a de piments, plus les calculs sont corsés. Tu peux changer à tout moment.</p>
-            </fieldset>
-
-            <a class="explorer" href="#jeu-fusee">Choisis ton jeu <span class="fleche" aria-hidden="true">↓</span></a>
-          </div>
         </div>
-
-        <nav class="mosaique" aria-label="Les jeux">
-          <a class="vignette" href="#jeu-fusee" style="--i: 0">
-            <img src="/src/images/accueil/decollage-480.webp" width="480" height="360" alt="" />
-            <span>Décollage !</span>
-          </a>
-          <a class="vignette" href="#jeu-meteores" style="--i: 1">
-            <img src="/src/images/accueil/pluie-de-meteores-480.webp" width="480" height="360" alt="" />
-            <span>Pluie de météores</span>
-          </a>
-          <a class="vignette" href="#jeu-cubes" style="--i: 2">
-            <img src="/src/images/accueil/cubes-de-siege-480.webp" width="480" height="360" alt="" />
-            <span>Panique au phare !</span>
-          </a>
-          <a class="vignette" href="#jeu-dragon" style="--i: 3">
-            <img src="/src/images/accueil/dragon-gourmand-480.webp" width="480" height="360" alt="" />
-            <span>Le Dragon gourmand</span>
-          </a>
-          <a class="vignette" href="#jeu-neon" style="--i: 4">
-            <img src="/src/images/accueil/neon-flight-480.webp" width="480" height="360" alt="" />
-            <span>Neon Flight</span>
-          </a>
-          <a class="vignette" href="#jeu-multirail" style="--i: 5">
-            <img src="/src/images/accueil/multirail-480.webp" width="480" height="360" alt="" />
-            <span>MULTIRAIL</span>
-          </a>
-        </nav>
+        <div class="lancement-joueur" id="lancement-joueur">
+          <section id="qui-joue-zone" hidden aria-labelledby="qui-joue-titre">
+            <h2 id="qui-joue-titre">Qui joue ?</h2>
+            <div class="qui-joue" id="qui-joue"></div>
+          </section>
+          <p class="statut-invite" id="statut-invite">
+            <span class="pastille-invite" aria-hidden="true"></span>
+            <span><b>Tu joues en invité</b>, sans inscription. <a href="#carnet">Pourquoi créer un compte ?</a></span>
+          </p>
+        </div>
       </section>
+
+      <!-- Le manège : une carte par jeu, et la description du jeu de face (src/platform/manege.ts). -->
+      <div class="jeux" id="jeux">
+        <section class="vitrine" id="jeu-fusee" data-univers="fusee" aria-labelledby="fusee-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/decollage-800.webp"
+              srcset="/src/images/accueil/decollage-480.webp 480w, /src/images/accueil/decollage-800.webp 800w, /src/images/accueil/decollage-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              fetchpriority="high"
+              alt="Une petite fusée décolle d’une île flottante sous un panneau « 2 × 4 = ? », au-dessus d’un village avec un moulin et une vache."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/decollage.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">Du village jusqu’aux étoiles</p>
+            <h2 id="fusee-titre">Décollage !</h2>
+            <p class="accroche-jeu">Chaque bonne réponse propulse ta fusée : pose-toi sur les plateformes et monte jusqu’aux étoiles&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Calcul rapide</li><li>Additions et soustractions</li><li>Tables (dès Relevé)</li></ul>
+            <p class="pitch">
+              Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
+              Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’au royaume de la confiserie !
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="pixel pixel-nombre">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/decollage.html">Jouer<span class="visuel-masque"> à Décollage !</span></a>
+              <p class="commandes">Chiffres, puis flèches (ou Q et D)</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="vitrine" id="jeu-meteores" data-univers="meteores" aria-labelledby="meteores-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/pluie-de-meteores-800.webp"
+              srcset="/src/images/accueil/pluie-de-meteores-480.webp 480w, /src/images/accueil/pluie-de-meteores-800.webp 800w, /src/images/accueil/pluie-de-meteores-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Une fusée pilotée par un chat attend sur son pas de tir ; deux météores rouges portant « 7 × 8 » et « 2 × 5 » foncent vers elle, à côté d’un pavé numérique."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/pluie-de-meteores.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">Au-dessus de l’archipel</p>
+            <h2 id="meteores-titre">Pluie de météores</h2>
+            <p class="accroche-jeu">Résous les calculs à toute vitesse pour pulvériser les météores avant l’impact&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Les quatre opérations</li><li>Rapidité</li><li>Repérer le bon calcul</li></ul>
+            <p class="pitch">
+              Météores et robots foncent sur la station, et chacun porte un calcul.
+              <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt !
+              Le météore doré, lui, fait tout exploser.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="meteore">7 × 8</span> → <span class="cube">56</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/pluie-de-meteores.html">Jouer<span class="visuel-masque"> à Pluie de météores</span></a>
+              <p class="commandes">Pavé à l’écran, ou chiffres + Retour arrière</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="vitrine" id="jeu-cubes" data-univers="cubes" aria-labelledby="cubes-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/cubes-de-siege-800.webp"
+              srcset="/src/images/accueil/cubes-de-siege-480.webp 480w, /src/images/accueil/cubes-de-siege-800.webp 800w, /src/images/accueil/cubes-de-siege-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un chat réfléchit devant un plateau de cubes numérotés, près d’un phare ; sur un rocher, un monstre rouge brandit une pancarte « 29 »."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/cubes-de-siege.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">L’Atelier des Cubes</p>
+            <h2 id="cubes-titre">Panique au phare !</h2>
+            <p class="accroche-jeu">Additionne les bons cubes pour repousser les monstres et protéger ton phare&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Décomposer un nombre</li><li>Stratégie</li></ul>
+            <p class="pitch">
+              Un monstre approche du phare avec un nombre sur sa pancarte.
+              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
+              Moins tu utilises de cubes, plus ton tir est fort.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Panique au phare !</span></a>
+              <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="vitrine" id="jeu-dragon" data-univers="dragon" aria-labelledby="dragon-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/dragon-gourmand-800.webp"
+              srcset="/src/images/accueil/dragon-gourmand-480.webp 480w, /src/images/accueil/dragon-gourmand-800.webp 800w, /src/images/accueil/dragon-gourmand-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un dragon rouge et vert vole, gueule ouverte, vers des lanternes numérotées 8, 12 et 5, au-dessus d’un lac au crépuscule."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/dragon-gourmand.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">Dans le ciel du soir</p>
+            <h2 id="dragon-titre">Le Dragon gourmand</h2>
+            <p class="accroche-jeu">Guide ton dragon vers les bons nombres : il doit avaler exactement le total demandé&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Compléments</li><li>Multiplications (Piquant, Explosif)</li></ul>
+            <p class="pitch">
+              Guide le dragon et fais-lui avaler des lanternes.
+              <strong>Ensemble, elles doivent faire exactement le nombre demandé.</strong>
+              S’il en mange trop, il a le hoquet !
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="lanterne-ex">9</span> + <span class="lanterne-ex">8</span> = <span class="parchemin">17</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer<span class="visuel-masque"> au Dragon gourmand</span></a>
+              <p class="commandes">Souris, doigt ou flèches</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="vitrine" id="jeu-neon" data-univers="neon" aria-labelledby="neon-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/neon-flight-800.webp"
+              srcset="/src/images/accueil/neon-flight-480.webp 480w, /src/images/accueil/neon-flight-800.webp 800w, /src/images/accueil/neon-flight-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un vaisseau vu de dos file entre des gratte-ciel au néon vers un soleil rétro ; des panneaux lumineux affichent « 7 × 8 = ? » et « 6 × 4 = ? »."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/neon-flight.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">Multiply · en 3D</p>
+            <h2 id="neon-titre">Neon Flight</h2>
+            <p class="accroche-jeu">Révise tes tables de multiplication aux commandes d’une navette, et survole une ville spectaculaire sans te crasher&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de 2 à 12</li><li>Rapidité</li><li>Mémoriser les produits</li></ul>
+            <p class="pitch">
+              De la forêt jusqu’à la mégapole, <strong>chaque bonne réponse fait remonter ta navette</strong> ;
+              trop lent ou faux, elle descend vers les toits. Choisis tes tables, enchaîne les combos et bats ton record.
+              Pour apprendre, réviser ou enfin maîtriser ses tables, à 8 ans comme à 40.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="neon-ex">7 × 8</span> → <span class="cube">56</span> → <span class="neon-monte">▲ altitude</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/neon-flight.html">Jouer<span class="visuel-masque"> à Neon Flight</span></a>
+              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
+            </div>
+          </div>
+        </section>
+        <section class="vitrine" id="jeu-multirail" data-univers="multirail" aria-labelledby="multirail-titre">
+          <figure class="vitrine-image">
+            <img
+              src="/src/images/accueil/multirail-800.webp"
+              srcset="/src/images/accueil/multirail-480.webp 480w, /src/images/accueil/multirail-800.webp 800w, /src/images/accueil/multirail-1448.webp 1448w"
+              sizes="(min-width: 900px) 560px, 76vw"
+              width="1448"
+              height="1086"
+              loading="lazy"
+              decoding="async"
+              alt="Un petit train à vapeur et ses wagons-tasses roule sur une île verte flottant au-dessus des nuages, entre un lac suspendu et des îles en montgolfière."
+            />
+            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
+            <a class="lancer" data-jeu href="jeu/multirail.html" tabindex="-1" aria-hidden="true">
+              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
+            </a>
+          </figure>
+          <div class="vitrine-texte">
+            <p class="surtitre">L’Express des Nuages · en 3D</p>
+            <h2 id="multirail-titre">MULTIRAIL</h2>
+            <p class="accroche-jeu">Conduis Bouillotte, la petite locomotive, d’île en île au-dessus des nuages : chaque bonne réponse pose un rail&nbsp;!</p>
+            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de multiplication</li><li>Calcul mental varié</li><li>Calculs en plusieurs étapes</li></ul>
+            <p class="pitch">
+              Choisis <strong>Tables à bord</strong> pour réviser tes tables, ou le <strong>Voyage Zen</strong> :
+              additions, soustractions, divisions exactes et parenthèses, à ton rythme. Traverse forêts de champignons,
+              mer des lanternes et palais de cristal, ramasse des voyageurs… et surveille la pression de la chaudière.
+            </p>
+            <p class="exemple" aria-hidden="true">
+              <span class="rail-ex">27 + 33 + (2 × 6)</span> → <span class="cube">72</span> → <span class="rail-pose">🛤️ un rail de plus</span>
+            </p>
+            <div class="actions">
+              <a class="jouer" data-jeu href="jeu/multirail.html">Jouer<span class="visuel-masque"> à MULTIRAIL</span></a>
+              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <!-- Le carnet : ce qu'apporte un compte (visiteur), ou les vrais progrès du joueur (connecté). -->
       <section class="carnet" id="carnet" aria-labelledby="carnet-titre">
@@ -130,237 +308,6 @@
         </ul>
       </section>
 
-      <!-- Repère de progression (grands écrans) : le jeu en cours de lecture est mis en avant. -->
-      <nav class="reperes" aria-label="Aller à un jeu">
-        <a href="#jeu-fusee" data-repere="jeu-fusee"><span class="visuel-masque">Décollage !</span></a>
-        <a href="#jeu-meteores" data-repere="jeu-meteores"><span class="visuel-masque">Pluie de météores</span></a>
-        <a href="#jeu-cubes" data-repere="jeu-cubes"><span class="visuel-masque">Panique au phare !</span></a>
-        <a href="#jeu-dragon" data-repere="jeu-dragon"><span class="visuel-masque">Le Dragon gourmand</span></a>
-        <a href="#jeu-neon" data-repere="jeu-neon"><span class="visuel-masque">Neon Flight</span></a>
-        <a href="#jeu-multirail" data-repere="jeu-multirail"><span class="visuel-masque">MULTIRAIL</span></a>
-      </nav>
-
-      <div class="jeux" id="jeux">
-        <section class="vitrine" id="jeu-fusee" data-univers="fusee" aria-labelledby="fusee-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/decollage-800.webp"
-              srcset="/src/images/accueil/decollage-480.webp 480w, /src/images/accueil/decollage-800.webp 800w, /src/images/accueil/decollage-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              fetchpriority="high"
-              alt="Une petite fusée décolle d’une île flottante sous un panneau « 2 × 4 = ? », au-dessus d’un village avec un moulin et une vache."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/decollage.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">Du village jusqu’aux étoiles</p>
-            <h2 id="fusee-titre">Décollage !</h2>
-            <p class="accroche-jeu">Chaque bonne réponse propulse ta fusée : pose-toi sur les plateformes et monte jusqu’aux étoiles&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Calcul rapide</li><li>Additions et soustractions</li><li>Tables (dès Relevé)</li></ul>
-            <p class="pitch">
-              Un calcul s’affiche : <strong>chaque bonne réponse donne une poussée à la fusée</strong>.
-              Pilote-la ensuite pour te poser sur une plateforme, et monte jusqu’au royaume de la confiserie !
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="pixel pixel-nombre">9 + 9</span> → <span class="cube">18</span> → <span class="pixel">décollage !</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/decollage.html">Jouer<span class="visuel-masque"> à Décollage !</span></a>
-              <p class="commandes">Chiffres, puis flèches (ou Q et D)</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="vitrine" id="jeu-meteores" data-univers="meteores" aria-labelledby="meteores-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/pluie-de-meteores-800.webp"
-              srcset="/src/images/accueil/pluie-de-meteores-480.webp 480w, /src/images/accueil/pluie-de-meteores-800.webp 800w, /src/images/accueil/pluie-de-meteores-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Une fusée pilotée par un chat attend sur son pas de tir ; deux météores rouges portant « 7 × 8 » et « 2 × 5 » foncent vers elle, à côté d’un pavé numérique."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/pluie-de-meteores.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">Au-dessus de l’archipel</p>
-            <h2 id="meteores-titre">Pluie de météores</h2>
-            <p class="accroche-jeu">Résous les calculs à toute vitesse pour pulvériser les météores avant l’impact&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Les quatre opérations</li><li>Rapidité</li><li>Repérer le bon calcul</li></ul>
-            <p class="pitch">
-              Météores et robots foncent sur la station, et chacun porte un calcul.
-              <strong>Tape le résultat</strong> : ton vaisseau tire aussitôt !
-              Le météore doré, lui, fait tout exploser.
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="meteore">7 × 8</span> → <span class="cube">56</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/pluie-de-meteores.html">Jouer<span class="visuel-masque"> à Pluie de météores</span></a>
-              <p class="commandes">Pavé à l’écran, ou chiffres + Retour arrière</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="vitrine" id="jeu-cubes" data-univers="cubes" aria-labelledby="cubes-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/cubes-de-siege-800.webp"
-              srcset="/src/images/accueil/cubes-de-siege-480.webp 480w, /src/images/accueil/cubes-de-siege-800.webp 800w, /src/images/accueil/cubes-de-siege-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Un chat réfléchit devant un plateau de cubes numérotés, près d’un phare ; sur un rocher, un monstre rouge brandit une pancarte « 29 »."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/cubes-de-siege.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">L’Atelier des Cubes</p>
-            <h2 id="cubes-titre">Panique au phare !</h2>
-            <p class="accroche-jeu">Additionne les bons cubes pour repousser les monstres et protéger ton phare&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Décomposer un nombre</li><li>Stratégie</li></ul>
-            <p class="pitch">
-              Un monstre approche du phare avec un nombre sur sa pancarte.
-              <strong>Additionne des cubes pour obtenir exactement ce nombre</strong>, puis lance !
-              Moins tu utilises de cubes, plus ton tir est fort.
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="cube">9</span> + <span class="cube">9</span> = <span class="pancarte">18</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/cubes-de-siege.html">Jouer<span class="visuel-masque"> à Panique au phare !</span></a>
-              <p class="commandes">Souris, doigt, ou flèches + Espace + Entrée</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="vitrine" id="jeu-dragon" data-univers="dragon" aria-labelledby="dragon-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/dragon-gourmand-800.webp"
-              srcset="/src/images/accueil/dragon-gourmand-480.webp 480w, /src/images/accueil/dragon-gourmand-800.webp 800w, /src/images/accueil/dragon-gourmand-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Un dragon rouge et vert vole, gueule ouverte, vers des lanternes numérotées 8, 12 et 5, au-dessus d’un lac au crépuscule."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/dragon-gourmand.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">Dans le ciel du soir</p>
-            <h2 id="dragon-titre">Le Dragon gourmand</h2>
-            <p class="accroche-jeu">Guide ton dragon vers les bons nombres : il doit avaler exactement le total demandé&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Additions</li><li>Compléments</li><li>Multiplications (Piquant, Explosif)</li></ul>
-            <p class="pitch">
-              Guide le dragon et fais-lui avaler des lanternes.
-              <strong>Ensemble, elles doivent faire exactement le nombre demandé.</strong>
-              S’il en mange trop, il a le hoquet !
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="lanterne-ex">9</span> + <span class="lanterne-ex">8</span> = <span class="parchemin">17</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/dragon-gourmand.html">Jouer<span class="visuel-masque"> au Dragon gourmand</span></a>
-              <p class="commandes">Souris, doigt ou flèches</p>
-            </div>
-          </div>
-        </section>
-
-        <section class="vitrine" id="jeu-neon" data-univers="neon" aria-labelledby="neon-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/neon-flight-800.webp"
-              srcset="/src/images/accueil/neon-flight-480.webp 480w, /src/images/accueil/neon-flight-800.webp 800w, /src/images/accueil/neon-flight-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Un vaisseau vu de dos file entre des gratte-ciel au néon vers un soleil rétro ; des panneaux lumineux affichent « 7 × 8 = ? » et « 6 × 4 = ? »."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/neon-flight.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">Multiply · en 3D</p>
-            <h2 id="neon-titre">Neon Flight</h2>
-            <p class="accroche-jeu">Révise tes tables de multiplication aux commandes d’une navette, et survole une ville spectaculaire sans te crasher&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de 2 à 12</li><li>Rapidité</li><li>Mémoriser les produits</li></ul>
-            <p class="pitch">
-              De la forêt jusqu’à la mégapole, <strong>chaque bonne réponse fait remonter ta navette</strong> ;
-              trop lent ou faux, elle descend vers les toits. Choisis tes tables, enchaîne les combos et bats ton record.
-              Pour apprendre, réviser ou enfin maîtriser ses tables, à 8 ans comme à 40.
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="neon-ex">7 × 8</span> → <span class="cube">56</span> → <span class="neon-monte">▲ altitude</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/neon-flight.html">Jouer<span class="visuel-masque"> à Neon Flight</span></a>
-              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
-            </div>
-          </div>
-        </section>
-        <section class="vitrine" id="jeu-multirail" data-univers="multirail" aria-labelledby="multirail-titre">
-          <figure class="vitrine-image">
-            <img
-              src="/src/images/accueil/multirail-800.webp"
-              srcset="/src/images/accueil/multirail-480.webp 480w, /src/images/accueil/multirail-800.webp 800w, /src/images/accueil/multirail-1448.webp 1448w"
-              sizes="(min-width: 1240px) 620px, (min-width: 900px) 52vw, 100vw"
-              width="1448"
-              height="1086"
-              loading="lazy"
-              decoding="async"
-              alt="Un petit train à vapeur et ses wagons-tasses roule sur une île verte flottant au-dessus des nuages, entre un lac suspendu et des îles en montgolfière."
-            />
-            <!-- Calque qui lance le jeu au clic (doublon du bouton « Jouer », ignoré au clavier). -->
-            <a class="lancer" data-jeu href="jeu/multirail.html" tabindex="-1" aria-hidden="true">
-              <span class="lecture"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.6-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></svg></span>
-            </a>
-          </figure>
-          <div class="vitrine-texte">
-            <p class="surtitre">L’Express des Nuages · en 3D</p>
-            <h2 id="multirail-titre">MULTIRAIL</h2>
-            <p class="accroche-jeu">Conduis Bouillotte, la petite locomotive, d’île en île au-dessus des nuages : chaque bonne réponse pose un rail&nbsp;!</p>
-            <ul class="competences" aria-label="Ce qu’on travaille"><li>Tables de multiplication</li><li>Calcul mental varié</li><li>Calculs en plusieurs étapes</li></ul>
-            <p class="pitch">
-              Choisis <strong>Tables à bord</strong> pour réviser tes tables, ou le <strong>Voyage Zen</strong> :
-              additions, soustractions, divisions exactes et parenthèses, à ton rythme. Traverse forêts de champignons,
-              mer des lanternes et palais de cristal, ramasse des voyageurs… et surveille la pression de la chaudière.
-            </p>
-            <p class="exemple" aria-hidden="true">
-              <span class="rail-ex">27 + 33 + (2 × 6)</span> → <span class="cube">72</span> → <span class="rail-pose">🛤️ un rail de plus</span>
-            </p>
-            <div class="actions">
-              <a class="jouer" data-jeu href="jeu/multirail.html">Jouer<span class="visuel-masque"> à MULTIRAIL</span></a>
-              <p class="commandes">Chiffres + Entrée, ou pavé à l’écran · ordinateur ou tablette récents</p>
-            </div>
-          </div>
-        </section>
-      </div>
-
       <footer class="parents" aria-labelledby="parents-titre">
         <h2 id="parents-titre">Pour tout le monde, et pour les familles</h2>
         <p>
@@ -374,14 +321,14 @@
       </footer>
     </main>
 
-    <!-- Première partie sans niveau choisi : on le demande une fois, puis le jeu se lance. -->
+    <!-- Au lancement d'un jeu : on choisit sa difficulté (la dernière choisie est proposée). -->
     <dialog class="choix-niveau" id="choix-niveau" aria-labelledby="choix-niveau-titre">
       <form method="dialog">
-        <p class="surtitre">Avant de jouer</p>
-        <h2 id="choix-niveau-titre">Quel est ton niveau ?</h2>
-        <p>Pour que les calculs ne soient ni trop faciles, ni trop durs. Tu pourras en changer à tout moment.</p>
+        <p class="surtitre" id="choix-niveau-jeu"></p>
+        <h2 id="choix-niveau-titre">Choisis ta difficulté</h2>
+        <p>Plus il y a de piments, plus les calculs sont corsés.</p>
         <div class="choix-niveau-liste" id="choix-niveau-liste"></div>
-        <button class="choix-niveau-fermer" value="annuler" type="submit">Plus tard</button>
+        <button class="choix-niveau-fermer" value="annuler" type="submit">Annuler</button>
       </form>
     </dialog>
 

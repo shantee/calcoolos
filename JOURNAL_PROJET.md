@@ -30,6 +30,29 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-02 : Claude, accueil en manège et difficulté au lancement
+
+**Demande** (PDF `calcoolos_accueil_rework_references.pdf`, puis précisions de Philippe) : accueil plus clair, carrousel
+3D beau mais fiable à la souris, au clavier et au doigt, descriptions gardées, sélecteur global supprimé, difficulté au
+lancement, bug « Explosif mais 2 × 2 » sur MULTIRAIL. Captures à valider **avant** publication.
+
+**Fait** : manège en CSS (`src/platform/manege.ts`) ; une seule description à la fois, « Jouer » dans le premier écran ;
+miniatures des jeux sur petit écran ; fenêtre de difficulté à chaque lancement, dernier choix mis en évidence,
+« Reprendre » direct ; niveau enregistré sur le profil avant de partir. Fond changé par un calque qui s'efface.
+
+**Bug MULTIRAIL** : le niveau ne réglait que la vitesse, les tables mémorisées étaient communes à tous les niveaux et
+× 1 restait dans le paquet. Corrigé (paquet par niveau, `tablesParNiveau`) ; même défaut de mémoire corrigé dans Neon
+Flight. Le relevé a montré que Décollage !, les autres jeux 2D et Neon posaient encore `6 × 2` en Explosif : facteur
+minimal de 3 en Explosif. La fenêtre décrit des tables pour Neon Flight et MULTIRAIL.
+
+**Vérifié** : accueil 110/110, plateforme 21/21, 187 tests, CSP, relevé par niveau 90/90 + MULTIRAIL 13/13 (avant
+le plancher d'Explosif, couvert ensuite par les tests), Firefox et WebKit réels aux trois formats. Fluidité : environ
+60 images/s sans tâche longue, processeur simulé jusqu'à 6 fois plus lent.
+
+**Limites** : pas d'essai sur vraie tablette ni sur un vrai processeur graphique de téléphone ; MULTIRAIL relevé sur
+peu de calculs par niveau (GPU logiciel) ; Brave jamais piloté, Edge non testé ; ressenti d'équilibrage d'Explosif à
+juger par des joueurs.
+
 ## 2026-11-02 : Claude, Neon Flight ne démarrait pas là où WebGPU fonctionne
 
 - **Constat** : « La 3D ne démarre pas » dans Brave sur la tablette du fils de Philippe, et chez un testeur sous Chrome,

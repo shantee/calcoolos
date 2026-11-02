@@ -108,7 +108,9 @@ check(true, 'compte familial et profil créés');
 // pour être jugée vraisemblable).
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
-await page.locator('a.jouer[data-jeu][href*="dragon"]').click();
+await page.locator('.manege-noms button', { hasText: 'Dragon' }).click();
+await page.locator('.vitrine-texte.devant a.jouer').click();
+await page.locator('.choix-niveau-option[data-niveau="explorateur"]').click();
 await page.waitForLoadState('networkidle');
 await page.waitForFunction(() => window.__dragon !== undefined, null, { timeout: 20000 });
 await page.waitForTimeout(600);

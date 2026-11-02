@@ -226,7 +226,7 @@ await p.click('#connexion button[type="submit"]');
 await p.waitForSelector('.mon-espace');
 check(true, 'Google injoignable : connexion par mot de passe');
 await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-check(await p.locator('.mosaique, #niveau').first().isVisible(), 'accueil normal');
+check(await p.locator('#jeux').isVisible(), 'accueil normal');
 await c.close();
 
 // --- Nettoyage -----------------------------------------------------------------------------------------

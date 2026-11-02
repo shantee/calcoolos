@@ -122,8 +122,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
   panneau.append(tete);
 
   if (niveau) {
-    panneau.append(h('p', { class: 'panneau-niveau' }, 'Niveau ', h('b', {}, niveau), ' · ',
-      h('a', { href: 'index.html#niveau' }, 'changer')));
+    panneau.append(h('p', { class: 'panneau-niveau' }, 'Dernier niveau ', h('b', {}, niveau)));
   }
 
   if (connecte) {
