@@ -26,7 +26,7 @@ export const NIVEAU_TABLES: Record<TierId, { exemple: string; detail: string }> 
 };
 
 /** MULTIRAIL à Explosif : plus de tables isolées, un vrai calcul mental qui monte au fil du voyage. */
-export const EXPLOSIF_MULTIRAIL = { exemple: '(7 × 8) + 23', detail: 'Vrai calcul mental : plusieurs opérations, de plus en plus élaborées au fil du voyage.' };
+export const EXPLOSIF_MULTIRAIL = { exemple: '(7 × 8) + 23', detail: 'Vrai calcul mental, de plus en plus élaboré au fil du voyage.' };
 
 export const NIVEAU_INFOS: Record<TierId, { nom: string; public: string; exemple: string; detail: string; piments: number }> = {
   eveil: { nom: TIERS.eveil.label, public: TIERS.eveil.public, exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', piments: 1 },

@@ -344,7 +344,7 @@ export class UI {
     const mental = calculMental(p.niveau, p.mode, p.game);
     t.querySelector('.pitch')!.innerHTML = zen
       ? 'Un voyage tranquille… ou presque&nbsp;! Résous des calculs variés pour bâtir la voie et découvrir les mondes au-delà des nuages.'
-      : mental ? 'Ici, les tables ne voyagent plus seules&nbsp;! Additions, soustractions, multiplications et divisions s\'enchaînent pour bâtir la voie devant Bouillotte.'
+      : mental ? 'Ici, les tables ne voyagent plus seules&nbsp;! Additions, soustractions, multiplications et divisions bâtissent la voie.'
       : 'Les rails ne sont pas encore construits&nbsp;! Résous les multiplications pour bâtir la voie devant Bouillotte, la locomotive-bouilloire.';
     t.querySelector<HTMLElement>('.for-tables')!.style.display = zen ? 'none' : '';
     t.querySelector<HTMLElement>('.for-zen')!.style.display = zen ? '' : 'none';

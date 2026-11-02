@@ -172,7 +172,11 @@ const JEUX = [
   },
 ];
 
-const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+// GPU=1 : la vraie carte du poste, nettement plus rapide pour les deux jeux en 3D
+const browser = await chromium.launch({
+  args: process.env.GPU ? ['--ignore-gpu-blocklist', '--use-angle=vulkan', '--enable-features=Vulkan'] : ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+  ...(process.env.CHROME ? { executablePath: process.env.CHROME } : {}),
+});
 const synthese = [];
 for (const jeu of JEUX) {
   if ((seul && !jeu.nom.includes(seul)) || (sauf && jeu.nom.includes(sauf))) continue;

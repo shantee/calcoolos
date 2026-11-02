@@ -51,6 +51,28 @@ de l'accueil, seulement en rendu logiciel : 0,5 s sur la GTX 1060, avec ou sans 
 **Limites** : à 320 × 568, « Jouer » reste 42 px sous le pli. Sous-titre non traduit en anglais et en allemand, comme
 convenu pour les nouveaux textes.
 
+## 2026-11-02 : Claude, MULTIRAIL à Explosif devient du vrai calcul mental
+
+- **Demande de Philippe** : Explosif posait encore `4 × 4` ; il veut de vrais calculs combinés (`(7 × 8) + 23`, `88 + 77`,
+  `(144 ÷ 12) + 87`, `250 − (9 × 8) + 17`), une progression au fil du voyage qui ne monte pas sans fin, des respirations,
+  le temps adapté à chaque calcul, sans toucher aux tables des débutants.
+- **Fait** : `src/game/multirail/explosif.ts` (32 familles, effort estimé, cinq paliers, progression par région, vagues,
+  respirations, adaptation au joueur). Il remplace les tables en Aventure à Explosif et les calculs du Voyage Zen à ce
+  niveau. Train, jauge et perte de wagon suivent le temps accordé ; série et points adaptés (`Run.onCorrect`). Écran titre
+  et fenêtre de lancement disent ce qui attend le joueur (`EXPLOSIF_MULTIRAIL`). Détail : `doc/NIVEAUX.md`.
+- **Inchangé** : Entraînement (tables seules, même à Explosif), Doux, Relevé, Piquant, Neon Flight, `trois-termes.ts`.
+- **Relevés** : 20 000 calculs relus par un analyseur indépendant du générateur à chaque `npm test` ; sur 200 parties,
+  niveau moyen de 1,9 en première région à 3,6, puis ondulation entre 3,0 et 3,6 ; environ 3 % de calculs à une opération,
+  25 formes ; temps moyen de 6,9 s (palier 1) à 14,6 s (palier 5).
+- **Tests** : Vitest 226 ; navigateur sur la GTX 1060, `multirail-explosif-e2e.mjs` 29/29 (45 calculs réels, train à
+  16,5 m/s sur les calculs simples et 9,9 m/s sur les élaborés, aucun wagon perdu en répondant à temps) ;
+  `niveaux-e2e.mjs` MULTIRAIL 18/18 par la vraie fenêtre, retour à Doux compris. Captures `CAPTURES/multirail/explosif-*`.
+- **Corrigé en route** : une réponse au sommet aurait pu valoir 4 000 points pour une borne serveur de 3 000 ; le sommet
+  vaut donc 36 % de plus et non le double. Le seuil fixe de 3 s rendait la série inatteignable.
+- **Limites** : réglage jamais joué par un humain ; temps et paliers viennent d'une estimation, à confirmer en vraie
+  partie. Les anciens records d'Explosif (tables seules) restent dans les classements, à côté des nouveaux. Coopération :
+  travail mené dans un worktree séparé pendant que l'autre session publiait l'accroche de l'accueil.
+
 ## 2026-11-02 : Claude, calculs à trois nombres dans Neon Flight et MULTIRAIL
 
 **Demande** : des calculs du style `3 × 8 + 2` ou `15 + 27 + 22`, avec additions, soustractions et multiplications.

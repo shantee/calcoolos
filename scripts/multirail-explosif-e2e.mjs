@@ -3,7 +3,7 @@
  * Entraînement et Voyage Zen, puis plaque lisible sur téléphone. Chaque calcul est relu par un analyseur indépendant.
  *
  * Prérequis : `npm run build` puis `npm run preview` (l'API n'est pas nécessaire).
- * Usage : node scripts/multirail-explosif-e2e.mjs [urlDeBase] (CALCULS=40 pour le nombre de calculs du long voyage)
+ * Usage : node scripts/multirail-explosif-e2e.mjs [urlDeBase] (CALCULS=40 : calculs du long voyage ; GPU=1 : vraie carte)
  */
 import { createRequire } from 'node:module';
 
@@ -18,7 +18,10 @@ const { chromium } = await loadPlaywright();
 const base = process.argv[2] ?? 'http://127.0.0.1:4173';
 const objectif = Number(process.env.CALCULS ?? 40);
 const dossier = process.env.CAPTURES ?? 'CAPTURES/multirail';
-const options = { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] };
+// GPU=1 : la vraie carte graphique du poste, bien plus fluide que le rendu logiciel pour ce jeu en 3D
+const options = process.env.GPU
+  ? { args: ['--ignore-gpu-blocklist', '--use-angle=vulkan', '--enable-features=Vulkan'] }
+  : { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] };
 if (process.env.CHROME) options.executablePath = process.env.CHROME;
 const problemes = [];
 let total = 0;
@@ -99,16 +102,15 @@ console.log('• Explosif en Aventure : long voyage');
   check(/Calculs mêlés/.test(titre) && /le vrai calcul mental/i.test(titre), "l'écran titre annonce le calcul mental");
   await page.screenshot({ path: `${dossier}/explosif-titre.png` });
   await page.evaluate(() => window.__multirail.start());
+  await page.waitForFunction(() => window.__multirail.state === 'playing');
   const vus = [];
   let dernier = null;
   let capture = 0;
   const finBoucle = Date.now() + 8 * 60000;
   while (vus.length < objectif && Date.now() < finBoucle) {
     const etat = await page.evaluate(() => ({ state: window.__multirail.state, run: window.__multirail.run }));
-    if (etat.state !== 'playing') {
-      if (etat.state === 'paused') await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-      if (etat.state !== 'paused') break;
-    }
+    if (etat.state === 'paused') await page.locator('.pause .go').click();
+    else if (etat.state !== 'playing') break;
     const q = await attendreQuestion(page, dernier, 20000);
     if (!q) break;
     dernier = q.text;
@@ -250,6 +252,7 @@ for (const [nom, largeur, hauteur] of [['telephone', 360, 740], ['telephone-pays
   });
   check(m.g >= 0 && m.d <= m.l && !m.debord, `${nom} : la plaque tient dans l'écran (${Math.round(m.d - m.g)} px sur ${m.l}, police ${m.police} px)`);
   check(m.police >= 18, `${nom} : le calcul reste lisible`);
+  await pause(1200); // la plaque finit d'arriver
   await page.screenshot({ path: `${dossier}/explosif-plaque-${nom}.png` });
   await ctx.close();
 }

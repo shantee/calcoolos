@@ -141,7 +141,7 @@ class Outils {
 
   /** division exacte, écrite (d × q) ÷ d */
   quotient(p: number): Expr {
-    const d = p <= 2 ? this.n(3, 9) : this.n(4, 12);
+    const d = p <= 2 ? this.n(3, 9) : this.choix([4, 5, 6, 7, 8, 9, 11, 12]);
     return N('÷', d * this.n(3, p <= 2 ? 9 : 12), d);
   }
 }
