@@ -131,6 +131,7 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/comptes-e2e.mjs` | comptes pour tous, vraie API et vraies parties : adulte seul, enfant ajouté, changement de joueur, reconnexion, six enfants, classements (`[adresse]`, comptes d'essai supprimés) |
 | `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
+| `scripts/multirail-explosif-e2e.mjs` | MULTIRAIL à Explosif : long voyage relu par un analyseur indépendant, erreurs, temps écoulé, Entraînement, Doux, Voyage Zen, plaque sur 4 formats (`CALCULS=40`) |
 | `scripts/neon-compat-e2e.mjs` | Neon Flight : parties avec WebGPU actif, Brave 1.93 simulé, tablette, chaque repli, contexte perdu, rapport `?diag` (`NAV=firefox`, `NAV=webkit`) |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 
@@ -167,6 +168,7 @@ src/game/siege/            Cubes de siège : round.ts, session.ts (logique), gam
 src/game/meteors/          Pluie de météores : session.ts, meteor-scene.ts
 src/game/dragon/           Le Dragon gourmand : session.ts, dragon-scene.ts
 src/game/rocket/           Décollage ! : session.ts, rocket-scene.ts
+src/game/multirail/        MULTIRAIL (Three.js) : model.ts (règles), zen.ts (calculs variés), explosif.ts (calcul mental d'Explosif), main.ts
 src/game/sfx.ts            tous les sons + 3 musiques jouées en direct (pistes 'espace', 'dragon', 'fusee')
 src/game/fx.ts             feu d'artifice et confettis (style B)
 src/game/render-config.ts  maxTextures (voir pièges)
