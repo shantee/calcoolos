@@ -148,6 +148,15 @@ describe('Explosif : de vrais calculs variés', () => {
     for (let g = 1; g <= 100; g++) for (const c of voyage(g, 200)) expect(SIMPLE.test(c.text), c.text).toBe(false);
   });
 
+  it('jamais de simple opération sur deux nombres ronds (240 − 50)', () => {
+    for (let g = 1; g <= 100; g++) {
+      for (const c of voyage(g, 200)) {
+        const m = c.text.match(/^(\d+) [+−] (\d+)$/);
+        if (m) expect(Number(m[1]) % 10 === 0 && Number(m[2]) % 10 === 0, c.text).toBe(false);
+      }
+    }
+  });
+
   it('le dernier filet de sécurité reste un calcul combiné', () => {
     // tables réduites à [1] : le générateur a peu de choix, il doit quand même combiner
     for (const c of voyage(4, 200, () => true, [1])) expect(SIMPLE.test(c.text), c.text).toBe(false);

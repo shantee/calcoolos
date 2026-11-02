@@ -226,10 +226,11 @@ export function niveauDuVoyage(region: number): number {
   return montee < PLATEAU ? montee : PLATEAU + [0, 0.3, -0.5][region % 3];
 }
 
-/** calculs creux : (36 ÷ 4) × 4, 123 + 38 − 123 ne demandent rien, un seul nombre s'annule */
+/** calculs creux : (36 ÷ 4) × 4, 123 + 38 − 123 ou 240 − 50 ne demandent presque rien */
 function creux(e: Expr): boolean {
   if (typeof e === 'number') return false;
   const { l, r } = e;
+  if ((e.op === '+' || e.op === '−') && typeof l === 'number' && typeof r === 'number' && l % 10 === 0 && r % 10 === 0) return true;
   if (typeof l !== 'number' && typeof r === 'number') {
     if (l.op === '÷' && e.op === '×' && l.r === r) return true;
     if (e.op === '−' && l.op === '+' && (l.l === r || l.r === r)) return true;
