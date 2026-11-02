@@ -35,8 +35,9 @@
 **Demande** : un slogan plus court et des mots qui changent, sans toucher au fonctionnement de l'accueil ni au manège.
 
 **Fait**
-- Slogan « Un calcul, mille aventures. » (`brand.json`), phrase « Des jeux pour faire travailler ses méninges. »
-  (remplace le paragraphe « Des mondes à explorer… »).
+- Deux lignes, à la demande de Philippe : « Ici, tu joues. » et « Des jeux pour faire travailler ses méninges. »
+  (remplace le paragraphe « Des mondes à explorer… »). Le slogan « Un calcul, mille aventures. » (`brand.json`) n'a
+  été affiché qu'un moment : il ne reste que dans le titre de l'onglet.
 - `src/platform/mots-vifs.ts` : « Ici, tu joues. », puis explores, voyages, réfléchis, progresses, apprends, découvres.
   Chaque lettre arrive sur un rouleau de compteur, précédée d'un chiffre. Deux tours puis arrêt sur « joues », pause
   sous le pointeur, onglet caché ou hors écran ; rien ne bouge avec les animations réduites ou `?calme`.

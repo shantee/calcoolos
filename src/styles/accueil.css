@@ -170,15 +170,6 @@ h1 {
   min-height: 1em;
 }
 
-.accroche {
-  margin: 0;
-  font-size: clamp(1.45rem, 3vw, 2.1rem);
-  font-weight: 800;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
 /*
  * « Ici, tu joues. » : les lettres arrivent sur des rouleaux de compteur, chacune précédée d'un chiffre qui
  * défile. Tout se joue en transformations dans une fenêtre de taille fixe, réservée par le mot le plus long :
@@ -186,9 +177,10 @@ h1 {
  */
 .mots-vifs {
   margin: 0;
-  font-size: clamp(1.1rem, 2.1vw, 1.35rem);
-  font-weight: 700;
-  line-height: 1.35;
+  font-size: clamp(1.45rem, 3vw, 2.1rem);
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
   color: var(--texte);
 }
 
@@ -1396,7 +1388,6 @@ h1 {
   font-size: 0.9rem;
 }
 
-.accueil-perso .accroche,
 .accueil-perso .mots-vifs,
 .accueil-perso .intro,
 .accueil-perso .titre-logo {
@@ -1769,19 +1760,20 @@ h1 {
   }
 }
 
-/* Téléphone : le slogan tient sur une ligne et laisse « Jouer » dans le premier écran. */
+/* Téléphone : les deux lignes tiennent et laissent « Jouer » dans le premier écran. */
 @media (max-width: 520px) {
-  .accroche {
-    font-size: min(1.4rem, 6.2vw);
-  }
-
   .ouverture-texte {
     gap: 0;
   }
 
   .mots-vifs {
-    font-size: 1rem;
-    line-height: 1.25;
+    font-size: min(1.4rem, 6.2vw);
+  }
+
+  .intro {
+    display: block;
+    font-size: min(0.95rem, 4.1vw);
+    line-height: 1.3;
   }
 }
 

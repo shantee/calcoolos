@@ -84,7 +84,7 @@ check(await page.evaluate(() => document.activeElement?.classList.contains('joue
 
 // --- L'accroche ------------------------------------------------------------------------------------
 console.log('• Accroche');
-check((await page.textContent('.accroche')) === 'Un calcul, mille aventures.', 'accroche : le slogan');
+check((await page.textContent('.intro')) === 'Des jeux pour faire travailler ses méninges.', 'accroche : la phrase de présentation');
 const motAffiche = () => page.evaluate(() => [...document.querySelectorAll('.mot-couche:not(.sort)')].map((c) => [...c.children].map((l) => l.lastChild.lastChild.textContent).join('')).join('|'));
 const reperes = () => page.evaluate(() => [document.querySelector('#jeux').getBoundingClientRect().top, document.documentElement.scrollHeight].join('/'));
 const reperesAvant = await reperes();
