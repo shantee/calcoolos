@@ -75,3 +75,12 @@ describe('difficulté des calculs selon le niveau', () => {
     expect(tablesDuNiveau(undefined, 'eveil')).toEqual([...SERIES.petites.tables]);
   });
 });
+
+it('un fait raté passe avant les calculs à trois nombres', () => {
+  const deck = new QuestionDeck([7], () => 0.5, {}, 3, 'maitre');
+  expect(deck.reposePrevue).toBe(false);
+  deck.scheduleRetry({ a: 7, b: 8 });
+  expect(deck.reposePrevue).toBe(true);
+  for (let i = 0; i < 4; i++) deck.next(0);
+  expect(deck.reposePrevue).toBe(false);
+});

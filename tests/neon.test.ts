@@ -259,3 +259,49 @@ test("Explosif ne pose plus de × 2, sauf si le joueur n'a gardé que cette tabl
   seule.next();
   assert.equal(seule.a, 2);
 });
+
+const rngFixe = (valeurs: number[]) => {
+  let i = 0;
+  return () => valeurs[i++ % valeurs.length];
+};
+
+test("Défi : un calcul à trois nombres se répond comme une table, avec plus de temps", () => {
+  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "maitre", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
+  f.start();
+  while (!f.trio && f.questions < 50) {
+    f.answer(f.attendu);
+    f.tick(1);
+  }
+  assert.ok(f.trio, "un calcul à trois nombres finit par sortir");
+  assert.equal(f.enonce, f.trio!.text);
+  assert.equal(f.limit > 7, true, "plus de temps qu'une table");
+  const avant = JSON.stringify(f.stats.tables);
+  assert.equal(f.answer(f.attendu), true);
+  assert.equal(JSON.stringify(f.stats.tables), avant, "la grille des tables n'est pas faussée");
+});
+
+test("une erreur sur trois nombres montre la correction et ne repose pas le calcul", () => {
+  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "maitre", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
+  f.start();
+  while (!f.trio && f.questions < 50) {
+    f.answer(f.attendu);
+    f.tick(1);
+  }
+  const { text, answer } = f.trio!;
+  f.answer(answer + 1);
+  assert.equal(f.correction, `${text} = ${answer}`);
+});
+
+test("Doux et l'entraînement ne posent que des tables", () => {
+  for (const reglage of [
+    { difficulty: "eveil", mode: "arcade" },
+    { difficulty: "maitre", mode: "training" },
+  ] as const) {
+    const f = new Flight({ ...defaults, tables: [7, 8], ...reglage });
+    f.start();
+    for (let i = 0; i < 200; i++) {
+      f.next();
+      assert.equal(f.trio, null);
+    }
+  }
+});

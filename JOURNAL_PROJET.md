@@ -30,6 +30,20 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-02 : Claude, calculs à trois nombres dans Neon Flight et MULTIRAIL
+
+**Demande** : des calculs du style `3 × 8 + 2` ou `15 + 27 + 22`, avec additions, soustractions et multiplications.
+
+**Fait**
+- `src/core/trois-termes.ts` : huit formes, part de 15 % à Relevé, 25 % à Piquant, 35 % à Explosif, jamais à Doux ni à
+  l'entraînement. Temps multiplié par 1,5. Détail et règles dans `doc/NIVEAUX.md`.
+- Neon Flight : `Flight.trio`, `enonce`, `attendu`, `marge` ; le calcul long reste sur une ligne (`.equation.longue`).
+- MULTIRAIL : `Question.trio`, plaque en texte, train ralenti, `QuestionDeck.reposePrevue`.
+- `scripts/niveaux-e2e.mjs` : lit les calculs à trois nombres. Le contrôle du retour à Doux, faux sur deux calculs
+  relevés (une moyenne de 29 contre 20 à Piquant, par hasard), vérifie désormais les tables pour ces deux jeux.
+
+**Limites** : équilibrage non joué par un humain ; le facteur 1,5 reste à juger sur tablette.
+
 ## 2026-11-02 : Claude, accueil en manège et difficulté au lancement
 
 **Demande** (PDF `calcoolos_accueil_rework_references.pdf`, puis précisions de Philippe) : accueil plus clair, carrousel

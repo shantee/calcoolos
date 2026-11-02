@@ -26,6 +26,7 @@ import { REGIONS, Regions, ambienceAt } from './regions';
 import { Sky, cloneAmbience, AMBIENCES } from './sky';
 import { Layout, TrackPath, type Segment } from './track';
 import { Car, Passenger, Train } from './train';
+import { poserTroisTermes, TEMPS_TROIS_TERMES, tirerTroisTermes, type TroisTermes } from '../../core/trois-termes';
 import { UI, type Prefs, type Shown } from './ui';
 import { outcomeText, reportResult } from '../../platform/results';
 import { partieCommence, partiePause } from '../../platform/suivi';
@@ -434,6 +435,8 @@ interface Question {
   fact: Fact | null;
   /** calcul du Voyage Zen (null pour les tables) */
   zen: ZenProblem | null;
+  /** calcul à trois nombres posé entre les tables (null sinon) */
+  trio: TroisTermes | null;
   answer: number;
   seg: Segment;
   start: number;
@@ -446,7 +449,7 @@ interface Question {
   strainAt: number;
 }
 
-const shownOf = (c: Question): Shown => c.zen ?? c.fact!;
+const shownOf = (c: Question): Shown => c.zen ?? c.trio ?? c.fact!;
 
 /** Calcoolos : un calcul jugé (juste, faux ou temps écoulé) entre dans le relevé commun */
 function noteAnswer(c: Question, ok: boolean, seconds?: number): void {
@@ -455,18 +458,28 @@ function noteAnswer(c: Question, ok: boolean, seconds?: number): void {
   const table = z && (z.op === '×' ? z.a <= 12 && z.b <= 12 : z.b <= 12 && z.a / z.b <= 12);
   const fait = c.fact ? { op: '×', a: c.fact.a, b: c.fact.b } : table ? z : undefined;
   releve.reponse(ok, seconds === undefined ? undefined : seconds * 1000, fait);
-  const ops = c.fact ? ['×'] : [...new Set(c.zen!.text.match(/[+−×÷]/g) ?? [])];
+  const ops = c.fact ? ['×'] : [...new Set((c.zen ?? c.trio)!.text.match(/[+−×÷]/g) ?? [])];
   for (const op of ops) (opsTally[op] ??= [0, 0])[ok ? 0 : 1]++;
 }
-const missedOf = (c: Question): Missed => (c.zen ? { text: c.zen.text, answer: c.zen.answer } : factMissed(c.fact!));
+const missedOf = (c: Question): Missed => {
+  const texte = c.zen ?? c.trio;
+  return texte ? { text: texte.text, answer: texte.answer } : factMissed(c.fact!);
+};
 const isZenRun = (): boolean => run.game === 'zen';
 
 /** tire le calcul suivant (tables ou Voyage Zen) dans la question */
-function draw(cur: Pick<Question, 'fact' | 'zen' | 'answer'>): void {
+function draw(cur: Pick<Question, 'fact' | 'zen' | 'trio' | 'answer'>): void {
+  cur.trio = null;
   if (isZenRun()) {
     cur.zen = zenDeck.next();
     cur.fact = null;
     cur.answer = cur.zen.answer;
+  } else if (run.mode === 'aventure' && !deck.reposePrevue && poserTroisTermes(prefs.niveau, deck.asked + 1, Math.random)) {
+    deck.asked++;
+    cur.trio = tirerTroisTermes(prefs.niveau, prefs.tables, Math.random);
+    cur.fact = null;
+    cur.zen = null;
+    cur.answer = cur.trio.answer;
   } else {
     cur.fact = deck.next(progressAt(s));
     cur.zen = null;
@@ -674,7 +687,7 @@ window.addEventListener('blur', () => setPaused(true));
 
 function ask(seg: Segment): void {
   const win = Math.max(20, seg.s0 - s);
-  q = { fact: null, zen: null, answer: 0, seg, start: gt, entry: '', cracks: 0, window: win, braked: false, stuck: 0, strainAt: 3 };
+  q = { fact: null, zen: null, trio: null, answer: 0, seg, start: gt, entry: '', cracks: 0, window: win, braked: false, stuck: 0, strainAt: 3 };
   draw(q);
   ui.showQuestion(shownOf(q), '', 0, seg.passenger && run.mode === 'aventure', grandLabel(seg));
   if (seg.style === 'grand' && seg.span === 0) ui.showBanner('✦ Le Grand Pont<small>3 calculs pour le traverser</small>', '', 2200);
@@ -731,9 +744,11 @@ function onCorrect(cur: Question): void {
     ui.setPressure(run.pressure);
     lastSolved = gt;
   } else {
-    res = run.onCorrect(seconds, referenceTime(run.difficulty, s), gt);
-    recordAnswer(mastery, cur.fact!, true, seconds, DIFFICULTIES[run.difficulty].combo);
-    store.set(MASTERY_KEY, mastery);
+    res = run.onCorrect(seconds, referenceTime(run.difficulty, s) * (cur.trio ? TEMPS_TROIS_TERMES : 1), gt);
+    if (cur.fact) {
+      recordAnswer(mastery, cur.fact, true, seconds, DIFFICULTIES[run.difficulty].combo);
+      store.set(MASTERY_KEY, mastery);
+    }
   }
   const rainbow = run.boiling(gt);
   const seg = cur.seg;
@@ -863,15 +878,16 @@ function onWrong(cur: Question): void {
     onWrongZen(cur);
     return;
   }
-  const fact = cur.fact!;
   noteAnswer(cur, false);
-  run.onWrong(factMissed(fact));
-  recordAnswer(mastery, fact, false, gt - cur.start, DIFFICULTIES[run.difficulty].combo);
-  store.set(MASTERY_KEY, mastery);
-  deck.scheduleRetry(fact);
+  run.onWrong(missedOf(cur));
+  if (cur.fact) {
+    recordAnswer(mastery, cur.fact, false, gt - cur.start, DIFFICULTIES[run.difficulty].combo);
+    store.set(MASTERY_KEY, mastery);
+    deck.scheduleRetry(cur.fact);
+  }
   audio.wrong();
   ui.plateFlash('bad');
-  ui.showCorrection(factMissed(fact));
+  ui.showCorrection(missedOf(cur));
   ui.setScore(run.score, 1, 0, run.boiling(gt));
   train.loco.setMood('scared', gt, 0.9);
   fx.soot(train.loco.chimneyTop.getWorldPosition(new THREE.Vector3()));
@@ -1094,6 +1110,8 @@ function drive(dt: number): void {
     cruise = left > 0.5 ? THREE.MathUtils.clamp(dist / left, 1.2, base * 1.15) : base * 0.8;
     if (gt < joltUntil) cruise *= 0.7;
   } else if (zen) cruise = base * (1 + rush * 0.5) * (boiling ? 1.15 : 1);
+  // un calcul à trois nombres demande plus de réflexion : le train ralentit d'autant
+  if (q?.trio) cruise /= TEMPS_TROIS_TERMES;
   const stop = stopPoint();
   const brake = run.mode === 'entrainement' && !title ? 4 : 6.5;
   const vMax = Math.sqrt(2 * brake * Math.max(0, stop - s));
@@ -1723,7 +1741,7 @@ if (TEST) {
     get question() {
       if (!q) return null;
       const left = q.zen ? +(q.zen.think - (gt - q.start)).toFixed(1) : null;
-      return { text: q.zen?.text ?? `${q.fact!.a} × ${q.fact!.b}`, answer: q.answer, tier: q.zen?.tier, think: q.zen?.think, left, entry: q.entry, cracks: q.cracks, key: q.fact ? factKey(q.fact.a, q.fact.b) : null, dist: Math.round(q.seg.s0 - s) };
+      return { text: q.zen?.text ?? q.trio?.text ?? `${q.fact!.a} × ${q.fact!.b}`, answer: q.answer, tier: q.zen?.tier, think: q.zen?.think, left, entry: q.entry, cracks: q.cracks, key: q.fact ? factKey(q.fact.a, q.fact.b) : null, dist: Math.round(q.seg.s0 - s) };
     },
     get run() { return { game: run.game, score: run.score, combo: run.combo, wagons: run.wagons, correct: run.correct, wrong: run.wrong, timeouts: run.timeouts, saved: run.saved, pressure: run.pressure, travel: run.travel }; },
     /** répond au calcul en cours (juste ou faux) */

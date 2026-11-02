@@ -1,4 +1,5 @@
 import type { TierId } from "../../core/difficulty";
+import { poserTroisTermes, TEMPS_TROIS_TERMES, tirerTroisTermes, type TroisTermes } from "../../core/trois-termes";
 import { Releve } from "../../platform/releve";
 /** Arcade = mode Défi de Calcoolos (classé), Entraînement = mode Tranquille. */
 export type Mode = "arcade" | "training";
@@ -106,6 +107,8 @@ export class Flight {
   fevers = 0;
   /** Relevé commun des réponses (temps, faits), envoyé avec le résultat. */
   releve = new Releve();
+  /** Calcul à trois nombres en cours (null pour une table). */
+  trio: TroisTermes | null = null;
   private recent: string[] = [];
   private retry: { a: number; b: number; due: number }[] = [];
   stats: RecordData = emptyRecord();
@@ -115,6 +118,16 @@ export class Flight {
   ) {}
   get multiplier() {
     return 1 + Math.min(5, Math.floor(this.combo / 3));
+  }
+  get enonce() {
+    return this.trio?.text ?? `${this.a} × ${this.b}`;
+  }
+  get attendu() {
+    return this.trio?.answer ?? this.a * this.b;
+  }
+  /** Un calcul à trois nombres laisse plus de temps : les seuils du combo suivent. */
+  get marge() {
+    return this.trio ? TEMPS_TROIS_TERMES : 1;
   }
   get floor() {
     return FLOOR[this.settings.mode];
@@ -152,11 +165,17 @@ export class Flight {
   }
   next() {
     this.questions++;
+    this.trio = null;
     const due = this.retry.findIndex((q) => q.due <= this.questions);
     if (due >= 0) {
       const q = this.retry.splice(due, 1)[0];
       this.a = q.a;
       this.b = q.b;
+    } else if (
+      this.settings.mode === "arcade" &&
+      poserTroisTermes(this.settings.difficulty, this.questions, this.random)
+    ) {
+      this.trio = tirerTroisTermes(this.settings.difficulty, this.settings.tables, this.random);
     } else {
       const pool = this.settings.tables
         .flatMap((a) => Array.from({ length: 9 }, (_, i) => ({ a, b: i + 2 })))
@@ -168,13 +187,15 @@ export class Flight {
       this.a = q.a;
       this.b = q.b;
     }
-    this.recent.push(`${this.a}:${this.b}`);
-    if (this.recent.length > 5) this.recent.shift();
+    if (!this.trio) {
+      this.recent.push(`${this.a}:${this.b}`);
+      if (this.recent.length > 5) this.recent.shift();
+    }
     const base = TIME_LIMIT[this.settings.difficulty] ?? TIME_LIMIT.explorateur;
     this.limit =
       this.settings.mode === "training"
         ? 30
-        : Math.max(base * 0.65, base - this.correct * 0.07);
+        : Math.max(base * 0.65, base - this.correct * 0.07) * this.marge;
     this.sink = SINK_PER_QUESTION / this.limit;
     this.remaining = this.limit;
     this.cooldown = 0;
@@ -182,20 +203,21 @@ export class Flight {
   }
   answer(value: number | null) {
     if (this.state !== "playing" || this.cooldown > 0) return false;
-    const good = value === this.a * this.b && this.remaining > 0;
+    const good = value === this.attendu && this.remaining > 0;
     const used = this.limit - this.remaining;
     this.total++;
-    const st = (this.stats.tables[this.a] ??= { correct: 0, total: 0 });
-    st.total++;
+    // La grille des tables ne retient que les tables.
+    const st = this.trio ? null : (this.stats.tables[this.a] ??= { correct: 0, total: 0 });
+    if (st) st.total++;
     // Temps de réponse seulement pour une réponse tapée (pas pour un temps écoulé).
-    this.releve.reponse(good, value === null ? undefined : used * 1000, { op: "×", a: this.a, b: this.b });
+    this.releve.reponse(good, value === null ? undefined : used * 1000, this.trio ? undefined : { op: "×", a: this.a, b: this.b });
     if (good) {
       this.correct++;
-      st.correct++;
-      const fast = used <= COMBO_TIME;
+      if (st) st.correct++;
+      const fast = used <= COMBO_TIME * this.marge;
       this.combo = fast ? this.combo + 1 : 0;
       this.longest = Math.max(this.longest, this.combo);
-      this.rating = used <= FLASH_TIME ? "flash" : fast ? "great" : "good";
+      this.rating = used <= FLASH_TIME * this.marge ? "flash" : fast ? "great" : "good";
       if (this.rating === "flash") this.flashes++;
       const wasFever = this.boost > 0;
       this.gain =
@@ -236,9 +258,9 @@ export class Flight {
         this.floor,
         this.targetAltitude - PENALTY,
       );
-      this.feedback = this.correction = `${this.a} × ${this.b} = ${this.a * this.b}`;
+      this.feedback = this.correction = `${this.enonce} = ${this.attendu}`;
       this.correctionTime = 2.5;
-      this.retry.push({ a: this.a, b: this.b, due: this.questions + 3 });
+      if (!this.trio) this.retry.push({ a: this.a, b: this.b, due: this.questions + 3 });
       // Nouveau calcul immédiatement : on ne réessaie pas le même tout de suite.
       this.next();
       this.result = "bad";

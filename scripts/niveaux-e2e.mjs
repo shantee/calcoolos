@@ -33,7 +33,18 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 /** Un calcul relevé : { a, b, op, texte }. Les nombres viennent du jeu, jamais du niveau demandé. */
 const lireCalcul = (texte) => {
   const m = String(texte).replace(/\s+/g, ' ').trim().match(/^(\d+) ([+\-−×÷]) (\d+)$/);
-  return m ? { a: +m[1], op: m[2], b: +m[3], texte: `${m[1]} ${m[2]} ${m[3]}` } : { texte: String(texte) };
+  if (m) return { a: +m[1], op: m[2], b: +m[3], texte: `${m[1]} ${m[2]} ${m[3]}` };
+  // calcul à trois nombres de Neon Flight et MULTIRAIL : les produits d'abord, puis de gauche à droite
+  const t = String(texte).replace(/\s+/g, ' ').trim().match(/^(\d+) ([+−×]) (\d+) ([+−×]) (\d+)$/);
+  if (!t) return { texte: String(texte) };
+  const nombres = [+t[1], +t[3], +t[5]];
+  const ops = [t[2], t[4]];
+  for (let i = ops.indexOf('×'); i >= 0; i = ops.indexOf('×')) {
+    nombres.splice(i, 2, nombres[i] * nombres[i + 1]);
+    ops.splice(i, 1);
+  }
+  const valeur = nombres.slice(1).reduce((v, n, i) => (ops[i] === '+' ? v + n : v - n), nombres[0]);
+  return { texte: t[0], valeur, troisNombres: true };
 };
 
 // Chaque jeu : comment le démarrer, et comment relever ses calculs en y répondant.
@@ -108,9 +119,9 @@ const JEUX = [
       const reglage = await p.inputValue('#difficulty');
       await p.evaluate(() => window.__neon.start());
       const vus = [];
-      for (let i = 0; i < 80 && vus.length < 10; i++) {
+      for (let i = 0; i < 80 && vus.length < 14; i++) {
         const t = await p.textContent('#equation').catch(() => '');
-        if (t && t.includes('×') && vus.at(-1) !== t) vus.push(t);
+        if (t && /\d/.test(t) && vus.at(-1) !== t) vus.push(t);
         await p.evaluate(() => window.__neon.answer());
         await pause(300);
       }
@@ -162,11 +173,23 @@ for (const jeu of JEUX) {
     const moyenne = valeurs.length ? Math.round(valeurs.reduce((x, y) => x + y, 0) / valeurs.length) : 0;
     if (rang < 4) moyennes[niveau] = moyenne;
     synthese.push(`${jeu.nom.padEnd(20)} ${(rang === 4 ? 'eveil (retour)' : niveau).padEnd(15)} moyenne ${String(moyenne).padStart(4)} : ${calculs.slice(0, 7).map((c) => c.texte).join(' ; ')}`);
+    if (jeu.nom === 'Neon Flight') {
+      const trois = calculs.filter((c) => c.troisNombres);
+      if (niveau === 'eveil') check(trois.length === 0, `Doux : que des tables (${trois.map((c) => c.texte).join(', ') || 'aucun autre calcul'})`);
+      if (niveau === 'maitre') check(trois.length > 0, `Explosif : des calculs à trois nombres (${trois.map((c) => c.texte).join(', ')})`);
+    }
     if (niveau === 'maitre') {
       const trop = calculs.filter((c) => c.op === '×' && (Math.min(c.a, c.b) <= 1 || Math.max(c.a, c.b) <= 3));
       check(trop.length === 0, `Explosif : aucun calcul trivial (${trop.map((c) => c.texte).join(', ') || 'aucun'})`);
     }
-    if (niveau === 'eveil' && rang === 4) check(moyenne <= moyennes.stratege, `retour à Doux : les calculs redeviennent simples (moyenne ${moyenne})`);
+    if (niveau === 'eveil' && rang === 4) {
+      // sur deux calculs relevés (MULTIRAIL), une moyenne ne prouve rien : pour les tables, on vérifie la table elle-même
+      const produits = calculs.filter((c) => c.op === '×');
+      if (produits.length === calculs.length) {
+        const horsSerie = produits.filter((c) => Math.min(c.a, c.b) > 5);
+        check(horsSerie.length === 0, `retour à Doux : tables de 2 à 5 (${horsSerie.map((c) => c.texte).join(', ') || 'aucune autre'})`);
+      } else check(moyenne <= moyennes.stratege, `retour à Doux : les calculs redeviennent simples (moyenne ${moyenne})`);
+    }
   }
   check(moyennes.eveil < moyennes.maitre, `Explosif plus dur que Doux (moyennes ${moyennes.eveil} < ${moyennes.maitre})`);
   await ctx.close();

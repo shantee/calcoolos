@@ -244,6 +244,11 @@ export class QuestionDeck {
     this.pool = factsDuNiveau(factPool(tables.length ? tables : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), niveau);
   }
 
+  /** un fait raté attend son retour : il passe avant tout autre genre de calcul */
+  get reposePrevue(): boolean {
+    return this.retry.length > 0;
+  }
+
   /** le fait raté reviendra après deux autres calculs */
   scheduleRetry(f: Fact): void {
     const key = factKey(f.a, f.b);

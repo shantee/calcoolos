@@ -376,11 +376,12 @@ function renderHud() {
   const vario = $("#vario");
   vario.textContent = `${flight.vario < 0 ? "▼" : "▲"} ${Math.abs(flight.vario).toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m/s`;
   vario.classList.toggle("up", flight.vario >= 0);
-  $("#equation").textContent = `${flight.a} × ${flight.b}`;
+  $("#equation").textContent = flight.enonce;
+  $(".equation").classList.toggle("longue", !!flight.trio);
   $("#answer").textContent = input || "?";
   $("#time-fill").style.width = (flight.remaining / flight.limit) * 100 + "%";
   $("#time-fill").classList.toggle("urgent", flight.remaining < 3);
-  $("#time-fill").classList.toggle("combo", flight.cooldown <= 0 && flight.limit - flight.remaining <= COMBO_TIME);
+  $("#time-fill").classList.toggle("combo", flight.cooldown <= 0 && flight.limit - flight.remaining <= COMBO_TIME * flight.marge);
   $("#seconds").textContent = Math.ceil(flight.remaining) + " s";
   const wrong = flight.correctionTime > 0;
   $("#feedback").textContent = wrong
@@ -490,13 +491,13 @@ Object.assign(window, {
     },
     answer: () => {
       if (flight.state !== "playing" || flight.cooldown > 0) return false;
-      for (const k of String(flight.a * flight.b)) key(k);
+      for (const k of String(flight.attendu)) key(k);
       key("Enter");
       return true;
     },
     wrong: () => {
       if (flight.state !== "playing" || flight.cooldown > 0) return false;
-      for (const k of String(flight.a * flight.b + 1)) key(k);
+      for (const k of String(flight.attendu + 1)) key(k);
       key("Enter");
       return true;
     },

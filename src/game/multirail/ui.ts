@@ -1,12 +1,13 @@
 // Interface : écran d'accueil, plaque du calcul, pavé tactile, effets de score, pause et fin de voyage.
+import type { TroisTermes } from '../../core/trois-termes';
 import { DIFFICULTIES, MAX_WAGONS, CRACKS_PER_GAP, SERIES, TIER_SPEED, seriesOf, type Fact, type Game, type Missed, type Mode, type SeriesId } from './model';
 import { PRESSURE_MAX, ZEN_LEVELS, type ZenProblem } from './zen';
 import { NIVEAUX, NIVEAU_INFOS } from '../../platform/niveau';
 import type { TierId } from '../../core/difficulty';
 
 /** ce qu'affiche la plaque : une multiplication des tables ou un calcul du Voyage Zen */
-export type Shown = Fact | ZenProblem;
-const isZen = (f: Shown): f is ZenProblem => 'text' in f;
+export type Shown = Fact | ZenProblem | TroisTermes;
+const enTexte = (f: Shown): f is ZenProblem | TroisTermes => 'text' in f;
 
 export interface Prefs {
   tables: number[];
@@ -229,9 +230,10 @@ export class UI {
   showQuestion(f: Shown | null, entry: string, cracks: number, passenger: boolean, grand: string): void {
     this.plate.classList.toggle('show', !!f);
     if (!f) return;
-    const zen = isZen(f);
-    this.plate.classList.toggle('zen', zen);
-    if (zen) {
+    const texte = enTexte(f);
+    const zen = 'think' in f;
+    this.plate.classList.toggle('zen', texte);
+    if (texte) {
       this.qExpr.textContent = f.text;
       // les longs calculs prennent une écriture plus petite
       this.plate.dataset.len = f.text.length > 16 ? 'long' : f.text.length > 10 ? 'mid' : '';

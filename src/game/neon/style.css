@@ -452,6 +452,16 @@ footer {
   margin: 14px 0;
   font-variant-numeric: tabular-nums;
 }
+/* Calcul à trois nombres : toujours sur une ligne, même dans le panneau étroit du paysage. */
+#equation {
+  white-space: nowrap;
+}
+.equation.longue {
+  gap: 10px;
+}
+.equation.longue #equation {
+  font-size: 0.74em;
+}
 .equals {
   color: #8199b4;
   font-size: 25px;
