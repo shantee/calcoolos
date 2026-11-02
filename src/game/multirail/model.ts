@@ -24,7 +24,7 @@ export const DIFFICULTIES: Record<Difficulty, DiffPreset> = {
   douce: { label: 'Douce', hint: 'Tout le temps de compter', v0: 9, v1: 13, t0: 14, t1: 10, combo: 6 },
   promenade: { label: 'Promenade', hint: 'Le temps de réfléchir', v0: 10, v1: 15, t0: 12, t1: 8, combo: 5 },
   express: { label: 'Express', hint: 'Ça file !', v0: 13, v1: 20, t0: 9, t1: 6, combo: 4 },
-  bolide: { label: 'Bolide', hint: 'Pour les as des tables', v0: 16, v1: 25, t0: 7, t1: 4.6, combo: 3 },
+  bolide: { label: 'Bolide', hint: 'Le vrai calcul mental', v0: 16, v1: 25, t0: 7, t1: 4.6, combo: 3 },
   // Voyage Zen : allure constante, le train ralentit selon le temps de réflexion de chaque calcul
   zen: { label: 'Zen', hint: '', v0: 11, v1: 11, t0: 10, t1: 10, combo: 99 },
 };
@@ -71,6 +71,12 @@ export const TIER_FACTS: Record<TierId, { depart: number; plancher: number }> = 
   stratege: { depart: 0.7, plancher: 0.1 },
   maitre: { depart: 1, plancher: 0.25 },
 };
+/**
+ * Explosif, en Aventure : plus de tables isolées, de vrais calculs mentaux (explosif.ts). L'Entraînement et les autres
+ * niveaux gardent les tables : c'est là qu'on les apprend. Le Voyage Zen a son propre paquet.
+ */
+export const calculMental = (niveau: TierId, mode: Mode, game: Game): boolean => niveau === 'maitre' && mode === 'aventure' && game === 'tables';
+
 /** en dessous, le plancher est relâché : il respecte les tables choisies à la main */
 const MIN_FACTS = 6;
 
@@ -379,8 +385,9 @@ export class Run {
     return now < this.boilUntil;
   }
 
-  onCorrect(seconds: number, refTime: number, now: number): CorrectResult {
-    const fast = seconds <= DIFFICULTIES[this.difficulty].combo;
+  /** `rapide` : délai d'une réponse qui fait progresser la série ; `poids` : valeur du calcul en points */
+  onCorrect(seconds: number, refTime: number, now: number, rapide = DIFFICULTIES[this.difficulty].combo, poids = 1): CorrectResult {
+    const fast = seconds <= rapide;
     this.combo = fast ? this.combo + 1 : 0;
     this.bestCombo = Math.max(this.bestCombo, this.combo);
     this.correct++;
@@ -391,7 +398,7 @@ export class Run {
       startBoil = true;
     }
     const multiplier = comboMultiplier(this.combo) * (this.boiling(now) ? 2 : 1);
-    const points = answerPoints(seconds, refTime, multiplier);
+    const points = Math.round((answerPoints(seconds, refTime, multiplier) * poids) / 10) * 10;
     this.score += points;
     return { points, multiplier, fast, startBoil };
   }

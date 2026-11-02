@@ -65,16 +65,16 @@ export function format(e: Expr, top = true): string {
   return top ? s : `(${s})`;
 }
 
-function countOps(e: Expr): number {
+export function countOps(e: Expr): number {
   return typeof e === 'number' ? 0 : 1 + countOps(e.l) + countOps(e.r);
 }
 
-function numbers(e: Expr): number[] {
+export function numbers(e: Expr): number[] {
   return typeof e === 'number' ? [e] : [...numbers(e.l), ...numbers(e.r)];
 }
 
 /** opérations sans intérêt : × 1, ÷ 1, + 0, résultat nul… */
-function boring(e: Expr): boolean {
+export function boring(e: Expr): boolean {
   if (typeof e === 'number') return false;
   const r = typeof e.r === 'number' ? e.r : null;
   const l = typeof e.l === 'number' ? e.l : null;

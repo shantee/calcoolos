@@ -1,6 +1,6 @@
 // Interface : écran d'accueil, plaque du calcul, pavé tactile, effets de score, pause et fin de voyage.
 import type { TroisTermes } from '../../core/trois-termes';
-import { DIFFICULTIES, MAX_WAGONS, CRACKS_PER_GAP, SERIES, TIER_SPEED, seriesOf, type Fact, type Game, type Missed, type Mode, type SeriesId } from './model';
+import { DIFFICULTIES, MAX_WAGONS, CRACKS_PER_GAP, SERIES, TIER_SPEED, calculMental, seriesOf, type Fact, type Game, type Missed, type Mode, type SeriesId } from './model';
 import { PRESSURE_MAX, ZEN_LEVELS, type ZenProblem } from './zen';
 import { NIVEAUX, NIVEAU_INFOS } from '../../platform/niveau';
 import type { TierId } from '../../core/difficulty';
@@ -236,7 +236,7 @@ export class UI {
     if (texte) {
       this.qExpr.textContent = f.text;
       // les longs calculs prennent une écriture plus petite
-      this.plate.dataset.len = f.text.length > 16 ? 'long' : f.text.length > 10 ? 'mid' : '';
+      this.plate.dataset.len = f.text.length > 21 ? 'xl' : f.text.length > 16 ? 'long' : f.text.length > 10 ? 'mid' : '';
     } else {
       this.qA.textContent = String(f.a);
       this.qB.textContent = String(f.b);
@@ -341,14 +341,16 @@ export class UI {
     const t = this.title;
     const p = this.prefs;
     const zen = p.game === 'zen';
+    const mental = calculMental(p.niveau, p.mode, p.game);
     t.querySelector('.pitch')!.innerHTML = zen
       ? 'Un voyage tranquille… ou presque&nbsp;! Résous des calculs variés pour bâtir la voie et découvrir les mondes au-delà des nuages.'
+      : mental ? 'Ici, les tables ne voyagent plus seules&nbsp;! Additions, soustractions, multiplications et divisions s\'enchaînent pour bâtir la voie devant Bouillotte.'
       : 'Les rails ne sont pas encore construits&nbsp;! Résous les multiplications pour bâtir la voie devant Bouillotte, la locomotive-bouilloire.';
     t.querySelector<HTMLElement>('.for-tables')!.style.display = zen ? 'none' : '';
     t.querySelector<HTMLElement>('.for-zen')!.style.display = zen ? '' : 'none';
     const games = t.querySelector('.games')!;
     games.innerHTML = '';
-    for (const [g, label, sub] of [['tables', '🚂 Les Tables à bord&nbsp;!', 'Multiplications de 1 à 10'], ['zen', '🍃 Le Voyage Zen', 'Calcul mental varié']] as const) {
+    for (const [g, label, sub] of [['tables', '🚂 Les Tables à bord&nbsp;!', mental ? 'Calculs mêlés, tables comprises' : 'Multiplications de 1 à 10'], ['zen', '🍃 Le Voyage Zen', 'Calcul mental varié']] as const) {
       const b = h('button', `game ${p.game === g ? 'sel' : ''}`, `<b>${label}</b><small>${sub}</small>`);
       b.onclick = () => {
         p.game = g;
@@ -358,7 +360,7 @@ export class UI {
     }
     const modes = t.querySelector('.modes')!;
     modes.innerHTML = '';
-    for (const [m, label, sub] of [['aventure', 'Aventure', 'Va le plus loin · classé'], ['entrainement', 'Entraînement', 'Sans pression, le train attend']] as const) {
+    for (const [m, label, sub] of [['aventure', 'Aventure', 'Va le plus loin · classé'], ['entrainement', 'Entraînement', p.game === 'tables' && p.niveau === 'maitre' ? 'Les tables seules, sans pression' : 'Sans pression, le train attend']] as const) {
       const b = h('button', `mode ${p.mode === m ? 'sel' : ''}`, `<b>${label}</b><small>${sub}</small>`);
       b.onclick = () => {
         p.mode = m;
@@ -380,7 +382,7 @@ export class UI {
       series.append(b);
     }
     t.querySelector('.series-note')!.textContent =
-      current === 'perso' ? '· au choix, hors classement' : p.mode === 'aventure' ? '· série classée' : '';
+      current === 'perso' ? '· au choix, hors classement' : mental ? '· série classée, mêlée aux calculs' : p.mode === 'aventure' ? '· série classée' : '';
     const tables = t.querySelector('.tables')!;
     tables.innerHTML = '';
     for (let n = 1; n <= 10; n++) {
