@@ -17,8 +17,11 @@
 }
 .sans3d h1 {
   margin: 0 0 0.75rem;
-  font-size: clamp(1.5rem, 5vw, 2.1rem);
-  line-height: 1.2;
+  /* Neon Flight stylise tous ses h1 (lettres serrées, italique) : cet écran doit rester lisible partout. */
+  font: 700 clamp(1.5rem, 5vw, 2.1rem) / 1.2 system-ui, sans-serif;
+  letter-spacing: normal;
+  text-shadow: none;
+  text-transform: none;
 }
 .sans3d p {
   margin: 0 0 0.75rem;
@@ -32,4 +35,64 @@
   color: #2a1a4a;
   font-weight: 700;
   text-decoration: none;
+}
+.sans3d button,
+.sans3d button:hover {
+  display: block;
+  margin: 1rem auto 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.diag3d {
+  position: fixed;
+  inset: auto 8px 8px;
+  z-index: 1100;
+  display: grid;
+  gap: 8px;
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 10px;
+  border-radius: 12px;
+  background: #101426;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+}
+.diag3d textarea {
+  box-sizing: border-box;
+  width: 100%;
+  height: min(60vh, 26rem);
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #1d2352;
+  color: #e8ecff;
+  font: 12px/1.45 ui-monospace, monospace;
+  white-space: pre-wrap;
+}
+.diag3d div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.diag3d button,
+.diag3d button:hover {
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 999px;
+  background: #ffd166;
+  color: #2a1a4a;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.diag3d button + button,
+.diag3d button + button:hover {
+  background: #3a4277;
+  color: #fff;
 }

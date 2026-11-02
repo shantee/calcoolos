@@ -1,9 +1,11 @@
 // MULTIRAIL : jeu en 3D (Three.js). Ce point d'entrée n'est chargé que par jeu/multirail.html,
 // Three.js ne pèse donc ni sur l'accueil ni sur les autres jeux.
 import '../i18n/page';
+import { ecouterErreurs3d, ouvrirDiag3d } from '../platform/diag3d';
 import { afficherSans3d, webgl2Disponible } from '../platform/sans3d';
 import { demarrerSuivi } from '../platform/suivi';
 
+ecouterErreurs3d();
 demarrerSuivi('multirail');
 
 if (webgl2Disponible()) {
@@ -14,3 +16,4 @@ if (webgl2Disponible()) {
 } else {
   afficherSans3d();
 }
+if (new URLSearchParams(location.search).has('diag')) void ouvrirDiag3d();

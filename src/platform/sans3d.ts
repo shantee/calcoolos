@@ -3,6 +3,7 @@
  * matérielle coupée, pilote graphique refusé. Sans lui, la page resterait vide.
  */
 import './sans3d.css';
+import { ouvrirDiag3d } from './diag3d';
 
 /** Interroge le navigateur sans charger le moteur 3D, qui pèse lourd pour un jeu qui ne démarrera pas. */
 export function webgl2Disponible(): boolean {
@@ -20,13 +21,19 @@ export function afficherSans3d(): void {
   titre.textContent = 'La 3D ne démarre pas sur ce navigateur';
   const raison = document.createElement('p');
   raison.textContent = 'Ce jeu a besoin de la 3D (WebGL), qui est bloquée ou indisponible ici.';
+  const rienAInstaller = document.createElement('p');
+  rienAInstaller.textContent = 'Il n’y a rien à installer.';
   const conseil = document.createElement('p');
   conseil.textContent =
     'Vérifie que l’accélération matérielle est activée dans les réglages du navigateur, puis redémarre-le. Sinon, essaie un autre navigateur : les jeux en 2D fonctionnent partout.';
   const retour = document.createElement('a');
   retour.href = '../';
   retour.textContent = 'Retour à l’accueil';
-  bloc.append(titre, raison, conseil, retour);
+  const details = document.createElement('button');
+  details.type = 'button';
+  details.textContent = 'Détails techniques';
+  details.onclick = () => void ouvrirDiag3d();
+  bloc.append(titre, raison, rienAInstaller, conseil, retour, details);
   ecran.append(bloc);
   document.body.append(ecran);
 }

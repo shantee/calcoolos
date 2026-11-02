@@ -1,6 +1,4 @@
-import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine";
 import { Engine } from "@babylonjs/core/Engines/engine";
-import { WebGPUEngine } from "@babylonjs/core/Engines/webgpuEngine";
 import { Scene } from "@babylonjs/core/scene";
 import { Color3, Color4 } from "@babylonjs/core/Maths/math.color";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector";
@@ -21,6 +19,7 @@ import type { PBRMaterial } from "@babylonjs/core/Materials/PBR/pbrMaterial";
 import "@babylonjs/loaders/glTF/2.0";
 import shuttleUrl from "./assets/shuttle.glb?url";
 import type { Flight, Quality } from "./model";
+import type { Profil3d } from "./moteur3d";
 import { hitsRoof } from "./collision";
 import { CHUNK, Land, type Chunk } from "./land";
 import { STAGES, dangerAltitude, placeAt, type Place } from "./stages";
@@ -32,7 +31,7 @@ const SLOTS = 8;
 const SHIP_LENGTH = 22;
 const SHIP_FLIP = true;
 export class World {
-  engine!: AbstractEngine;
+  engine!: Engine;
   scene!: Scene;
   camera!: FreeCamera;
   light!: HemisphericLight;
@@ -44,8 +43,9 @@ export class World {
   hullMats: PBRMaterial[] = [];
   shipSize = { w: 12, h: 6, rear: -10 };
   particles: { mesh: Mesh; v: Vector3 }[] = [];
-  pipeline!: DefaultRenderingPipeline;
-  glow!: GlowLayer;
+  /** Absents du profil léger. */
+  pipeline?: DefaultRenderingPipeline;
+  glow?: GlowLayer;
   shock!: Mesh;
   shockMat!: StandardMaterial;
   trails: Mesh[] = [];
@@ -68,23 +68,13 @@ export class World {
   quality: Quality = "high";
   ready = false;
   disposed = false;
-  async init(canvas: HTMLCanvasElement, quality: Quality) {
-    let gpu: WebGPUEngine | undefined;
-    try {
-      if (
-        !new URLSearchParams(location.search).has("webgl") &&
-        (await WebGPUEngine.IsSupportedAsync)
-      ) {
-        gpu = new WebGPUEngine(canvas, { antialias: true });
-        await gpu.initAsync();
-        this.engine = gpu;
-      }
-    } catch {
-      gpu?.dispose();
-    }
-    this.engine ??= new Engine(canvas, true, {
-      preserveDrawingBuffer: true,
-      stencil: true,
+  async init(canvas: HTMLCanvasElement, quality: Quality, profil: Profil3d) {
+    const { leger, webgl2 } = profil;
+    this.engine = new Engine(canvas, !leger, {
+      preserveDrawingBuffer: !leger,
+      stencil: !leger,
+      disableWebGL2Support: !webgl2,
+      ...(leger ? { powerPreference: "default" as const } : {}),
     });
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.018, 0.025, 0.075, 1);
@@ -103,20 +93,22 @@ export class World {
     this.light.intensity = 0.9;
     this.light.diffuse = C("#859bff");
     this.light.groundColor = C("#1c1637");
-    this.pipeline = new DefaultRenderingPipeline("neon", true, this.scene, [
-      this.camera,
-    ]);
-    this.pipeline.bloomEnabled = true;
-    this.pipeline.bloomThreshold = 0.65;
-    this.pipeline.bloomWeight = 0.35;
-    this.pipeline.bloomKernel = 48;
-    this.pipeline.fxaaEnabled = true;
-    this.pipeline.chromaticAberrationEnabled = true;
-    this.pipeline.chromaticAberration.aberrationAmount = 0;
-    this.glow = new GlowLayer("reactor aura", this.scene, {
-      blurKernelSize: 32,
-    });
-    this.glow.intensity = 0.5;
+    if (!leger) {
+      this.pipeline = new DefaultRenderingPipeline("neon", true, this.scene, [
+        this.camera,
+      ]);
+      this.pipeline.bloomEnabled = true;
+      this.pipeline.bloomThreshold = 0.65;
+      this.pipeline.bloomWeight = 0.35;
+      this.pipeline.bloomKernel = 48;
+      this.pipeline.fxaaEnabled = true;
+      this.pipeline.chromaticAberrationEnabled = true;
+      this.pipeline.chromaticAberration.aberrationAmount = 0;
+      this.glow = new GlowLayer("reactor aura", this.scene, {
+        blurKernelSize: 32,
+      });
+      this.glow.intensity = 0.5;
+    }
     this.land = new Land(this.scene, this.glow, (n, c, e) => this.neon(n, c, e));
     this.buildSky();
     for (let j = 0; j < SLOTS; j++) {
@@ -125,8 +117,10 @@ export class World {
     }
     await this.buildShip();
     this.buildParticles();
-    this.setQuality(quality);
+    this.setQuality(leger ? "low" : quality);
     this.reset(true);
+    // Une scène que le moteur ne sait pas dessiner doit échouer ici, tant qu'un autre profil peut prendre le relais.
+    this.scene.render();
     this.ready = true;
     window.addEventListener("resize", this.resize);
     document.addEventListener("fullscreenchange", this.resize);
@@ -423,9 +417,11 @@ export class World {
           ? 1.25
           : 1 / Math.min(devicePixelRatio, 1.5),
     );
-    this.pipeline.bloomEnabled = q !== "low";
-    this.glow.isEnabled = q !== "low";
-    this.pipeline.bloomWeight = q === "high" ? 0.35 : 0.2;
+    if (this.pipeline) {
+      this.pipeline.bloomEnabled = q !== "low";
+      this.pipeline.bloomWeight = q === "high" ? 0.35 : 0.2;
+    }
+    if (this.glow) this.glow.isEnabled = q !== "low";
     this.land.far = q !== "low";
     for (const c of this.chunks)
       for (const m of c.root.getChildMeshes())
@@ -500,7 +496,7 @@ export class World {
     for (const m of this.nightOnly) m.visibility = Math.max(0, night * 1.4 - 0.4);
     for (const m of this.avenue) m.setEnabled(night > 0.7);
     // De jour, l'éclat est réservé aux effets : l'avion ne doit pas être éblouissant.
-    this.pipeline.bloomThreshold = 0.92 - 0.27 * night;
+    if (this.pipeline) this.pipeline.bloomThreshold = 0.92 - 0.27 * night;
     return { place, night };
   }
   update(dt: number, f: Flight) {
@@ -593,11 +589,11 @@ export class World {
     this.camera.setTarget(new Vector3(swayX * 0.2, alt - (window.innerWidth < 760 ? 42 : 20) + swayY * 0.3, 100));
     const fov = fever ? 1.18 : 0.95 + Math.min(0.12, (f.speed - 55) / 400);
     this.camera.fov += (fov - this.camera.fov) * (1 - Math.exp(-dt * 2));
-    if (this.quality !== "low") {
+    if (this.quality !== "low" && this.pipeline && this.glow) {
       this.pipeline.bloomWeight = (this.quality === "high" ? 0.35 : 0.2) * (0.5 + night * 0.5) + this.flash * 0.12 + (fever ? 0.08 : 0);
       this.glow.intensity = 0.15 + 0.35 * night + this.flash * 0.25 + (fever ? 0.15 : 0);
     }
-    this.pipeline.chromaticAberration.aberrationAmount = fever ? 6 + Math.sin(t * 6) * 4 : this.flash * 5;
+    if (this.pipeline) this.pipeline.chromaticAberration.aberrationAmount = fever ? 6 + Math.sin(t * 6) * 4 : this.flash * 5;
     this.burstOrigin.copyFrom(this.ship.position);
     this.stream.emitter = this.streamOrigin.set(this.ship.position.x, this.ship.position.y, this.ship.position.z - 12);
     this.stream.emitRate = fever ? 160 : 0;
@@ -644,7 +640,15 @@ export class World {
     this.disposed = true;
     window.removeEventListener("resize", this.resize);
     document.removeEventListener("fullscreenchange", this.resize);
-    this.scene.dispose();
-    this.engine.dispose();
+    this.scene?.dispose();
+    this.engine?.dispose();
+  }
+  /** Libère un essai raté, pour que le profil suivant parte d'une page propre. */
+  abandon() {
+    try {
+      this.dispose();
+    } catch {
+      /* moteur à moitié construit : le canvas est remplacé de toute façon */
+    }
   }
 }

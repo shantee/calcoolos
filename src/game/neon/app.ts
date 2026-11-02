@@ -15,6 +15,8 @@ import { activePlayer } from "../../platform/player";
 import { estNiveau, niveauRetenu, NIVEAUX, NIVEAU_INFOS } from "../../platform/niveau";
 import { AVATAR_INVITE, avatarImg } from "../../platform/avatars";
 import { afficherSans3d } from "../../platform/sans3d";
+import { noter3d, ouvrirDiag3d } from "../../platform/diag3d";
+import { PROFILS_3D, essayerProfils } from "./moteur3d";
 import type { TierId } from "../../core/difficulty";
 const app = document.querySelector<HTMLDivElement>("#app")!;
 const params = new URLSearchParams(location.search);
@@ -25,8 +27,9 @@ const settingsKey = parJoueur(SETTINGS_KEY, player?.id),
   recordsKey = parJoueur(RECORD_KEY, player?.id);
 const settings = loadSettings(tier, settingsKey),
   flight = new Flight(settings),
-  world = new World(),
   audio = new Synth();
+/** Remplacé par le monde qui a réellement démarré. */
+let world = new World();
 let record = readRecord(recordsKey),
   input = "",
   last = performance.now(),
@@ -118,7 +121,7 @@ $("#difficulty").addEventListener("change", (e) => {
 $("#quality").addEventListener("change", (e) => {
   settings.quality = (e.target as HTMLSelectElement)
     .value as Settings["quality"];
-  world.setQuality(settings.quality);
+  if (world.ready) world.setQuality(settings.quality);
   syncSettings();
 });
 $<HTMLSelectElement>("#difficulty").value = settings.difficulty;
@@ -395,8 +398,43 @@ function renderHud() {
 }
 syncSettings();
 screen();
+/** Essaie les profils du plus riche au plus simple, chacun sur un canvas neuf : un canvas garde son premier contexte. */
+async function demarrer3d() {
+  let canvas = $<HTMLCanvasElement>("#world");
+  const { resultat } = await essayerProfils(
+    PROFILS_3D,
+    async (p) => {
+      const essai = new World();
+      try {
+        await essai.init(canvas, settings.quality, p);
+        return essai;
+      } catch (e) {
+        essai.abandon();
+        const neuf = canvas.cloneNode(false) as HTMLCanvasElement;
+        canvas.replaceWith(neuf);
+        canvas = neuf;
+        throw e;
+      }
+    },
+    noter3d,
+  );
+  world = resultat;
+  // Sans contexte, Babylon cesse de dessiner : le vol se met en pause, et le rendu revient seul à la restauration.
+  let abandon = 0;
+  world.engine.onContextLostObservable.add(() => {
+    noter3d("Contexte WebGL perdu");
+    if (flight.state === "playing") pause();
+    abandon = window.setTimeout(afficherSans3d, CONTEXTE_PERDU_MS);
+  });
+  world.engine.onContextRestoredObservable.add(() => {
+    noter3d("Contexte WebGL restauré");
+    clearTimeout(abandon);
+  });
+}
+/** Au-delà, le navigateur ne rendra plus la 3D : on le dit plutôt que de laisser un écran figé. */
+const CONTEXTE_PERDU_MS = 15000;
 try {
-  await world.init($("#world"), settings.quality);
+  await demarrer3d();
   $("#play").removeAttribute("disabled");
   $("#play").textContent = "JOUER  ↗";
   world.engine.runRenderLoop(() => {
@@ -437,10 +475,12 @@ try {
   console.error(e);
   afficherSans3d();
 }
+if (params.has("diag")) void ouvrirDiag3d();
 /** Crochets de test (scripts Playwright), comme les autres jeux : window.__neon. */
 Object.assign(window, {
   __neon: {
     ready: () => world.ready,
+    moteur: () => ({ gl: world.engine?.getGlInfo().version, webgl: world.engine?.webGLVersion, effets: !!world.pipeline, qualite: world.quality }),
     start: (mode: Settings["mode"] = settings.mode) => {
       settings.mode = mode;
       syncSettings();

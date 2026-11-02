@@ -129,6 +129,7 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/comptes-e2e.mjs` | comptes pour tous, vraie API et vraies parties : adulte seul, enfant ajouté, changement de joueur, reconnexion, six enfants, classements (`[adresse]`, comptes d'essai supprimés) |
 | `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
+| `scripts/neon-compat-e2e.mjs` | Neon Flight : parties avec WebGPU actif, Brave 1.93 simulé, tablette, chaque repli, contexte perdu, rapport `?diag` (`NAV=firefox`, `NAV=webkit`) |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 
 PHP absent du poste Fedora : lancer l'API dans un conteneur, `podman run --rm --name calcoolos-api-dev --network host
@@ -294,6 +295,13 @@ Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jam
 - **Logo** : `logo.css` est chargé après `plateforme.css` ; une règle de la barre qui change le logo doit être plus
   précise (`.barre .logo-barre`). Les images clés WAAPI ne lisent pas les variables CSS : l'inclinaison des lettres
   est portée par leurs pseudo-éléments, les animations ne touchent qu'au déplacement de la lettre.
+- **Babylon et WebGPU** : importé module par module, `WebGPUEngine` n'embarque pas toutes ses extensions (textures
+  dynamiques notamment) et Chromium ne l'active pas par défaut sur Linux : un test local passe en WebGL sans le dire.
+  Neon Flight est en WebGL seulement ; pour retenter WebGPU, tester avec `--enable-unsafe-webgpu
+  --use-webgpu-adapter=swiftshader`. Ne pas déduire d'un échec du moteur que le navigateur bloque la 3D : `?diag` d'abord.
+- **WebKit et Firefox réels sur le poste** : WebKit ne démarre pas sur Fedora (bibliothèques Ubuntu) ; utiliser l'image
+  `mcr.microsoft.com/playwright:v1.62.1-noble` avec podman, `--network host`. Firefox y exige un écran et Mesa :
+  `xvfb-run`, `headless: false`, `LIBGL_ALWAYS_SOFTWARE=1`, sinon WebGL est refusé pour tous les jeux.
 - **Clavier Phaser** : quand une image est lente, la file d'événements peut être relue deux fois ; dédoublonner
   (voir le gestionnaire des chiffres de Cubes de siège) toute touche qui compte.
 - **Plein écran** : seulement juste après un geste ; au doigt, Chrome ne reconnaît le geste qu'au lever du doigt.

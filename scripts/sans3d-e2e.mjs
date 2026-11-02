@@ -32,7 +32,7 @@ await verifier('MULTIRAIL sans WebGL', '/jeu/multirail.html');
 await verifier('MULTIRAIL téléphone', '/jeu/multirail.html', { largeur: 360 });
 await verifier('MULTIRAIL anglais', '/jeu/multirail.html', { langue: 'en-US', titre: '3D won’t start' });
 await verifier('MULTIRAIL allemand', '/jeu/multirail.html', { langue: 'de-DE', titre: '3D startet' });
-await verifier('Neon Flight sans WebGL', '/jeu/neon-flight.html?webgl');
+await verifier('Neon Flight sans WebGL', '/jeu/neon-flight.html');
 // Le navigateur annonce WebGL 2, puis refuse le contexte du moteur (cas de Three.js chez Philippe).
 await verifier('MULTIRAIL, refus au moteur', '/jeu/multirail.html', {
   avant: () => {

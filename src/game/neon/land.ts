@@ -61,7 +61,7 @@ export class Land {
   private vc: StandardMaterial;
   constructor(
     private scene: Scene,
-    private glow: GlowLayer,
+    private glow: GlowLayer | undefined,
     private neonFactory: (name: string, color: string, emission: number) => StandardMaterial,
   ) {
     this.vc = new StandardMaterial("vertex colors", scene);
@@ -746,7 +746,7 @@ export class Land {
       m.fogEnabled = false;
       const p = MeshBuilder.CreatePlane(key, { size: 1 }, this.scene);
       p.material = m;
-      this.glow.addExcludedMesh(p);
+      this.glow?.addExcludedMesh(p);
       return p;
     }, c.root, x, y, z, 15, 15, 1);
   }
@@ -804,7 +804,7 @@ export class Land {
       template.isVisible = false;
       this.ads.set(ad, template);
       this.adMats.push({ tex, flicker: ad.flicker ?? 0, phase: Math.random() * 10, ticker: ad.shape === "ticker" });
-      this.glow.addExcludedMesh(template);
+      this.glow?.addExcludedMesh(template);
     }
     const p = template.createInstance("ad");
     p.parent = parent;

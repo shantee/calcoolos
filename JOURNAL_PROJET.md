@@ -30,6 +30,29 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-02 : Claude, Neon Flight ne démarrait pas là où WebGPU fonctionne
+
+- **Constat** : « La 3D ne démarre pas » dans Brave sur la tablette du fils de Philippe, et chez un testeur sous Chrome,
+  Windows 11 ; Firefox sur la même tablette et MULTIRAIL partout fonctionnaient.
+- **Cause (reproduite sur le site en ligne)** : Neon essayait WebGPU d'abord. Babylon est importé module par module et
+  `webgpuEngine.js` n'embarque pas `WebGPU/Extensions/engine.dynamicTexture` : `TypeError: createDynamicTexture is not
+  a function` dans `buildSky()`, donc après le choix du moteur, hors de portée du repli WebGL. Le jeu tombait partout où
+  WebGPU **marche** (Chrome et Edge sur Windows et macOS, Chrome et Brave sur Android quand le matériel suit). Firefox
+  Android n'a pas WebGPU, MULTIRAIL ne l'utilise pas, et aucun navigateur de test ne l'avait : le bug n'a jamais été
+  vu. L'écran du 30/10 l'a masqué derrière un message accusant le navigateur. Les protections de Brave 1.93 (nom du
+  GPU, fausse extension WebGL, infos WebGPU vidées) ne sont pas en cause : simulées, le jeu marche.
+- **Correctif** : WebGL seulement (`src/game/neon/moteur3d.ts`), comme MULTIRAIL : pas de perte, tous les navigateurs
+  où Neon marchait étaient déjà en WebGL, et 54 Ko compressés en moins. Trois profils (complet, allégé sans
+  post-traitement ni halo, WebGL 1 forcé), chacun sur un `World` et un canvas neufs, avec une image rendue pendant le
+  démarrage. Contexte perdu : pause, retour à la restauration, écran d'échec après 15 s. Titre de l'écran d'échec rendu
+  lisible (les `h1` de Neon serraient ses lettres), « Il n'y a rien à installer » (le testeur cherchait un module).
+- **Diagnostic** : `src/platform/diag3d.ts`, `?diag` sur Neon et MULTIRAIL, ou « Détails techniques » sur l'écran
+  d'échec : navigateur, WebGL, WebGPU, profils essayés, erreurs. Bouton Copier ; rien n'est envoyé au serveur.
+- **Tests** : Vitest 179, CSP ok, `scripts/neon-compat-e2e.mjs` 12/12 sous Chromium avec WebGPU actif ; partie
+  complète et MULTIRAIL dans de vrais Firefox et WebKit (image `mcr.microsoft.com/playwright`, voir AGENTS.md).
+- **Limites** : Brave, Chrome Android, Edge et Safari réels non essayés ; rendu logiciel seulement. À confirmer sur la
+  tablette avec `?diag`.
+
 ## 2026-10-30 : Claude, jeux 3D sans WebGL
 
 - **Constat** : dans Brave de Philippe, MULTIRAIL plantait sur une erreur non gérée (`Error creating WebGL context`), page

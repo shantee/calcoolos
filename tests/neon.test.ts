@@ -1,5 +1,8 @@
 /** Neon Flight : logique du vol (tests repris du projet autonome, adaptés aux niveaux de Calcoolos). */
 import { assert, test } from "vitest";
+import sourceWorld from "../src/game/neon/world.ts?raw";
+import sourceApp from "../src/game/neon/app.ts?raw";
+import { PROFILS_3D, essayerProfils } from "../src/game/neon/moteur3d";
 import { Flight, defaults, seriesOf, starsFor } from "../src/game/neon/model";
 import { hitsRoof } from "../src/game/neon/collision";
 function game() {
@@ -204,4 +207,34 @@ test("relevé : chaque réponse compte, avec son temps et son fait", () => {
   assert.equal(m.faits![cle][0], 1);
   assert.equal(m.faits![cle][2], 2000);
   assert.equal(f.total, 3);
+});
+test("démarrage 3D : le premier profil qui marche gagne, dans l'ordre, du plus riche au plus simple", async () => {
+  const essais: string[] = [];
+  const { profil, resultat } = await essayerProfils(PROFILS_3D, async (p) => {
+    essais.push(p.nom);
+    if (p.nom === "complet") throw new Error("refus");
+    return 42;
+  });
+  assert.deepEqual(essais, ["complet", "allégé"]);
+  assert.equal(profil.nom, "allégé");
+  assert.equal(resultat, 42);
+  assert.equal(PROFILS_3D[0].leger, false, "le premier profil garde tous les effets");
+});
+test("démarrage 3D : sans aucun profil possible, l'erreur remonte et tout est noté", async () => {
+  const notes: string[] = [];
+  const echec = essayerProfils(
+    PROFILS_3D,
+    async (p) => {
+      throw new Error(`refus ${p.nom}`);
+    },
+    (n) => notes.push(n),
+  );
+  await echec.then(
+    () => assert.fail("aurait dû échouer"),
+    (e: Error) => assert.equal(e.message, "refus WebGL 1"),
+  );
+  assert.equal(notes.length, PROFILS_3D.length);
+});
+test("Neon Flight n'utilise pas WebGPU : importé sans ses extensions, il plantait partout où il fonctionne", () => {
+  for (const source of [sourceWorld, sourceApp]) assert.notMatch(source, /from "[^"]*webgpu/i);
 });
