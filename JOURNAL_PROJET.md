@@ -1247,3 +1247,4 @@ Validation finale des sorts : 271/271 tests (timeout 30 s), build réussi, parco
 
 ### Publication des sorts — 03/11/2026, Codex
 Sur demande « publie ! » : release 20261103-225435-a63a540 mise en service sur WebDell. Tests 271, API 252, sauvegarde base et bascule réussis. Trois sorts vérifiés au doigt sur https://calculos.zfx.fr (Chromium émulé, animations réduites), nouvelle cible soluble, gel puis reprise, aucune erreur JS. Voir doc/SORTS_PHARE.md. Index général mis à jour, commit parent toujours impossible (.git en lecture seule). Aucun push.
+Vérification publique finale : 24/24 réussies (trois formats, comptes, progression, nettoyage), aucune erreur de console.

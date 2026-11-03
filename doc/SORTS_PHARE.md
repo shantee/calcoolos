@@ -24,3 +24,4 @@ Commits locaux : be26678, 2b76c4b. L'index général est modifié mais son commi
 ## Publication — 03/11/2026, Codex
 Demandée explicitement par Philippe. Publication via deploy/publier.sh : 271 tests, types/build, 252 vérifications API, sauvegarde de base puis bascule réussis. Release 20261103-225435-a63a540. Configuration SSH locale contournée avec -F /dev/null (fichier système refusé par OpenSSH), sans modification système.
 Parcours tactile sur le site public réussi : les trois sorts fonctionnent, cible 77 soluble, gel vérifié immobile puis reprise après huit secondes, aucune erreur JavaScript. Capture : CAPTURES/sorts-phare/en-ligne.png. Pas de push GitHub.
+Vérification générale après publication : 24/24 réussies sur ordinateur, tablette et téléphone, reconnexion/progression et suppression du compte de test incluses ; aucune erreur de console.
