@@ -52,7 +52,7 @@ describe('grille commune : 20 000 calculs par niveau et par palier', () => {
       // L'exemple montré dans la fenêtre de choix est un vrai calcul du niveau.
       expect(textes.has(EXEMPLES[niveau]), EXEMPLES[niveau]).toBe(true);
       expect(textes.has(EXEMPLES_PAR_JEU.calcul[niveau].exemple), EXEMPLES_PAR_JEU.calcul[niveau].exemple).toBe(true);
-    });
+    }, 30_000); // 60 000 calculs relus : plusieurs secondes, davantage quand la machine est chargée.
   }
 
   it('CP : additions et soustractions seulement ; CE1 : pas encore de division', () => {
