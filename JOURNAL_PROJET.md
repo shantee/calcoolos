@@ -48,7 +48,10 @@ des calculs automatiques ; préparer une rubrique « Astuces de calcul mental »
   4 familles, fiches en étapes, « À toi ! », personnage).
 
 **Limites** : pas d'astuce dans Pluie de météores ni dans les multiplications élaborées de Neon Flight/MULTIRAIL ;
-non publié (à la demande de Philippe) ; pas essayé sur une vraie tablette.
+pas essayé sur une vraie tablette.
+
+**Publié** le 03/11/2026 à 23 h 09 (`calcoolos-20261103-230907-008c032`, avec les sprites des sorts de Codex) :
+API 252/252 sur le serveur ; parties CM1 et CE1 jouées sur https://calculos.zfx.fr, astuces affichées, aucune erreur.
 
 ## 2026-11-03 : Claude, correction : jouer redevient libre, sans compte
 
