@@ -100,13 +100,13 @@ function syncSettings() {
     /* stockage indisponible */
   }
 }
-/** Qui joue : le profil actif de Calcoolos, ou l'invité (résultats gardés sur l'appareil). */
+/** Qui joue : le profil actif de Calcoolos (la page exige un compte depuis le 03/11/2026, voir platform/acces.ts). */
 $("#pilot").replaceChildren(
   avatarImg(player?.avatar ?? AVATAR_INVITE, 40, ""),
   Object.assign(document.createElement("span"), {
     innerHTML: player
       ? `<b></b><small>Tes vols sont enregistrés dans tes progrès</small>`
-      : `<b>Invité</b><small>Scores gardés sur cet appareil · <a href="../compte.html#inscription">créer un compte</a></small>`,
+      : `<b>Sans profil</b><small>Partie non enregistrée · <a href="../compte.html#connexion">se connecter</a></small>`,
   }),
 );
 if (player) $("#pilot b").textContent = player.pseudo;

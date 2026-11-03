@@ -3,7 +3,8 @@
  * inscription / connexion pour un visiteur, choix de la langue.
  *
  * L'espace joueur est un bouton (avatar, nom, statut) qui ouvre un panneau : qui joue, son niveau, ses progrès,
- * changer de joueur, compte. Choisir un joueur prévient la page par l'événement `calcoolos:joueur` ; une page
+ * changer de joueur, compte. Plus de mode invité (03/11/2026) : un visiteur sans compte n'a pas d'espace joueur,
+ * seulement « Se connecter » et « Créer mon compte ». Choisir un joueur prévient la page par l'événement `calcoolos:joueur` ; une page
  * qui ne l'écoute pas est simplement rechargée.
  */
 import '../styles/logo.css';
@@ -12,7 +13,6 @@ import { AVATAR_INVITE, avatarImg } from './avatars';
 import { h } from './dom';
 import { logo } from './logo';
 import { activePlayer, setActivePlayer, syncActivePlayer, type ActivePlayer } from './player';
-import { localHistory } from './results';
 import { NIVEAU_INFOS, estNiveau, niveauRetenu } from './niveau';
 import { selecteurLangue } from '../i18n/drapeaux';
 
@@ -51,7 +51,7 @@ export async function topbar(current: PageId): Promise<AccountState | null> {
   }
   const state = await accountState();
   etat = state;
-  // Déconnecté : on redevient invité ; hors ligne : on garde le joueur (envoi différé).
+  // Déconnecté : plus de joueur ; hors ligne : on garde le joueur (envoi différé).
   if (state?.connecte) {
     syncActivePlayer(state.profils);
     // Un seul profil : pas de choix à faire, c'est lui qui joue.
@@ -85,19 +85,22 @@ function choisir(p: Profile | null): void {
 function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer | null, state: AccountState | null | undefined): void {
   fermerPanneau?.();
   const connecte = !!state?.connecte;
+  // Visiteur sans compte (ou réponse pas encore arrivée, sans joueur retenu) : pas d'espace joueur.
+  if (!connecte && !joueur) {
+    espace.replaceChildren();
+    dessinerCompte(compte, state);
+    return;
+  }
   const choisi = estNiveau(joueur?.niveau) ? joueur?.niveau : niveauRetenu();
   const niveau = choisi ? NIVEAU_INFOS[choisi].nom : null;
 
   // --- Le bouton : avatar, nom, statut.
-  const nom = h('span', { class: 'joueur-nom' }, joueur ? joueur.pseudo : 'Invité');
+  const nom = h('span', { class: 'joueur-nom' }, joueur ? joueur.pseudo : 'Qui joue ?');
   const statut = h('small', { class: 'joueur-statut' },
-    joueur ? (niveau ? `Niveau ${niveau}` : 'joue en ce moment')
-      : state === undefined ? '…'
-      : connecte ? 'choisis un profil'
-      : state ? 'sans compte' : 'hors ligne');
+    joueur ? (niveau ? `Niveau ${niveau}` : 'joue en ce moment') : 'choisis un profil');
   const bouton = h('button', {
     type: 'button',
-    class: `joueur${joueur ? ' joueur-profil' : ' joueur-invite'}`,
+    class: `joueur${joueur ? ' joueur-profil' : ' joueur-a-choisir'}`,
     'aria-expanded': 'false',
     'aria-controls': 'panneau-joueur',
     'aria-haspopup': 'true',
@@ -112,12 +115,11 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
   const tete = h('div', { class: 'panneau-tete' },
     avatarImg(joueur?.avatar ?? AVATAR_INVITE, 64, ''),
     h('div', {},
-      h('p', { class: 'panneau-nom' }, joueur ? joueur.pseudo : connecte ? 'Personne n’est choisi' : 'Tu joues en invité'),
+      h('p', { class: 'panneau-nom' }, joueur ? joueur.pseudo : 'Personne n’est choisi'),
       h('p', { class: 'panneau-sous' },
-        joueur ? 'Les parties de ce profil sont gardées dans ton compte.'
-          : connecte ? 'Choisis qui joue pour garder ses parties.'
-          : state === null ? 'Serveur injoignable : tes parties restent sur cet appareil.'
-          : 'Tes parties restent dans ce navigateur.')),
+        state === null ? 'Serveur injoignable : tes parties partiront dès qu’il répondra.'
+          : joueur ? 'Les parties de ce profil sont gardées dans ton compte.'
+          : 'Choisis qui joue pour garder ses parties.')),
   );
   panneau.append(tete);
 
@@ -134,10 +136,7 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
       b.addEventListener('click', () => choisir(p));
       liste.append(b);
     }
-    const inv = h('button', { type: 'button', 'aria-pressed': String(!joueur) }, avatarImg(AVATAR_INVITE, 36, ''), 'Invité');
-    inv.addEventListener('click', () => choisir(null));
-    liste.append(inv);
-    if (profils.length !== 1) panneau.append(h('p', { class: 'panneau-titre' }, 'Qui joue ?'), liste);
+    if (profils.length > 1 || (!joueur && profils.length > 0)) panneau.append(h('p', { class: 'panneau-titre' }, 'Qui joue ?'), liste);
     const sortir = h('button', { type: 'button', class: 'panneau-lien' }, 'Se déconnecter');
     sortir.addEventListener('click', async () => {
       await api.post('/deconnexion').catch(() => null);
@@ -148,22 +147,9 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
       h('a', { class: 'bouton petit', href: joueur ? `tableau.html?profil=${joueur.id}` : 'tableau.html' }, 'Voir les progrès'),
       h('a', { class: 'bouton petit secondaire', href: 'compte.html' }, 'Mon espace')),
     h('p', { class: 'panneau-compte' }, h('span', {}, state?.email ?? ''), sortir));
-  } else {
-    const parties = localHistory();
-    const etoiles = parties.reduce((a, r) => a + r.etoiles, 0);
-    if (parties.length > 0) {
-      panneau.append(h('p', { class: 'panneau-local' },
-        `${parties.length} ${parties.length > 1 ? 'parties' : 'partie'} · ${etoiles} ★ sur cet appareil`));
-    }
-    if (state) {
-      panneau.append(
-        h('p', { class: 'panneau-invite' }, 'Avec un compte gratuit, tes scores, records et succès te suivent sur tous tes appareils.'),
-        h('div', { class: 'panneau-actions' },
-          h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'),
-          h('a', { class: 'bouton petit secondaire', href: 'compte.html#connexion' }, 'Se connecter')),
-      );
-    }
-    panneau.append(h('p', { class: 'panneau-compte' }, h('a', { href: 'tableau.html' }, 'Mes progrès sur cet appareil')));
+  } else if (joueur) {
+    // Serveur injoignable : on garde le joueur retenu, sans rien pouvoir changer pour l'instant.
+    panneau.append(h('p', { class: 'panneau-compte' }, h('a', { href: `tableau.html?profil=${joueur.id}` }, 'Voir les progrès')));
   }
 
   const ouvrir = (oui: boolean) => {
@@ -185,8 +171,12 @@ function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer
     }
   };
 
-  // --- À droite : inscription et connexion pour un visiteur, Mon espace pour un compte.
-  if (connecte) {
+  dessinerCompte(compte, state);
+}
+
+/** À droite : inscription et connexion pour un visiteur, Mon espace pour un compte. */
+function dessinerCompte(compte: HTMLElement, state: AccountState | null | undefined): void {
+  if (state?.connecte) {
     compte.replaceChildren(h('a', { class: 'lien-compte', href: 'compte.html', 'aria-current': page === 'compte' ? 'page' : undefined }, 'Mon espace'));
   } else if (state === null) {
     compte.replaceChildren();

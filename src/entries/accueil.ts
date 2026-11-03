@@ -8,7 +8,8 @@ import { logo } from '../platform/logo';
 import { motsVifs } from '../platform/mots-vifs';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
-import { flushQueue, lastGame, localHistory, type StoredResult } from '../platform/results';
+import { flushQueue, lastGame, type StoredResult } from '../platform/results';
+import { lienCompte } from '../platform/acces';
 import { EXEMPLES_PAR_JEU, NIVEAU_INFOS, estNiveau, familleDuJeu, niveauDepart, niveauRetenu, retenirNiveau } from '../platform/niveau';
 import { monterManege, type Manege } from '../platform/manege';
 import { basculerFavori, lireFavoris, masquerPresentations, ordonnerJeux, presentationsMasquees } from '../platform/favoris';
@@ -28,6 +29,9 @@ const calmeUrl = new URLSearchParams(window.location.search).has('calme');
 const calme = calmeUrl || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let etat: AccountState | null | undefined;
+/** Se résout avec la réponse du serveur : un clic sur « Jouer » avant elle l'attend (compte ou visiteur ?). */
+let etatConnu: (e: AccountState | null) => void = () => {};
+const etatPret = new Promise<AccountState | null>((r) => (etatConnu = r));
 /** Dernier niveau choisi : proposé d'office au lancement d'un jeu. Rien pour un nouveau venu. */
 let niveauActuel: TierId | null = null;
 let leManege: Manege | null = null;
@@ -117,9 +121,62 @@ document.addEventListener('click', (e) => {
   const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-jeu]:not([data-sans-choix])');
   if (!a || !dialogue?.showModal) return;
   e.preventDefault();
+  void (async () => {
+    // Plus de mode invité : sans compte, on propose d'abord de s'inscrire ou de se connecter.
+    if (!peutJouer(etat === undefined ? await etatPret : etat)) proposerCompte(a);
+    else ouvrirChoix(a);
+  })();
+});
+
+/** Peut-on lancer un jeu d'ici ? Compte connecté, ou serveur injoignable avec un joueur déjà choisi sur l'appareil. */
+function peutJouer(e: AccountState | null): boolean {
+  return !!e?.connecte || (e === null && activePlayer() !== null);
+}
+
+/** Nom du jeu d'un lien de lancement (vitrine ou tuile). */
+function nomDuJeu(a: HTMLAnchorElement): string {
+  return a.closest('.vitrine')?.querySelector('h2')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
+}
+
+/** « decollage » pour un lien vers jeu/decollage.html. */
+function slugDuJeu(a: HTMLAnchorElement): string | null {
+  return /\/jeu\/([a-z0-9-]+)\.html$/.exec(new URL(a.href).pathname)?.[1] ?? null;
+}
+
+const compteRequis = document.querySelector<HTMLDialogElement>('#compte-requis');
+compteRequis?.addEventListener('click', (e) => {
+  if (e.target === compteRequis) compteRequis.close();
+});
+
+/** Visiteur : la fenêtre « crée ton compte ou connecte-toi », qui ramènera au choix du niveau de ce jeu. */
+function proposerCompte(a: HTMLAnchorElement): void {
+  if (!compteRequis?.showModal) {
+    window.location.href = lienCompte(retourVers(a), 'inscription');
+    return;
+  }
+  compteRequis.querySelector('#compte-requis-jeu')?.replaceChildren(nomDuJeu(a));
+  const retour = retourVers(a);
+  compteRequis.querySelector<HTMLAnchorElement>('#compte-requis-inscription')?.setAttribute('href', lienCompte(retour, 'inscription'));
+  compteRequis.querySelector<HTMLAnchorElement>('#compte-requis-connexion')?.setAttribute('href', lienCompte(retour, 'connexion'));
+  compteRequis.showModal();
+  compteRequis.querySelector<HTMLElement>('#compte-requis-inscription')?.focus();
+}
+
+/** Après connexion, retour à l'accueil sur ce jeu, fenêtre du niveau ouverte (`index.html?jouer=decollage`). */
+function retourVers(a: HTMLAnchorElement): string {
+  const slug = slugDuJeu(a);
+  const calmeQ = calmeUrl ? '&calme' : '';
+  return slug ? `index.html?jouer=${slug}${calmeQ}` : 'index.html';
+}
+
+/** La fenêtre du choix de la difficulté, pour ce lien de lancement. */
+function ouvrirChoix(a: HTMLAnchorElement): void {
+  if (!dialogue?.showModal) {
+    window.location.href = a.href;
+    return;
+  }
   cible = a;
-  const nom = a.closest('.vitrine')?.querySelector('h2')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
-  dialogue.querySelector('#choix-niveau-jeu')?.replaceChildren(nom);
+  dialogue.querySelector('#choix-niveau-jeu')?.replaceChildren(nomDuJeu(a));
   const exemples = EXEMPLES_PAR_JEU[familleDuJeu(a.href)];
   for (const [id, b] of options) {
     const { exemple, detail } = exemples[id];
@@ -129,7 +186,26 @@ document.addEventListener('click', (e) => {
   }
   dialogue.showModal();
   options.get(niveauActuel ?? 'cp')?.focus();
-});
+}
+
+/**
+ * Retour de la connexion (`?jouer=decollage`) : le manège se place sur ce jeu et la fenêtre du niveau s'ouvre.
+ * Le paramètre est retiré de l'adresse, pour ne pas rouvrir la fenêtre à chaque rechargement.
+ */
+function reprendreLancement(): void {
+  const url = new URL(window.location.href);
+  const slug = url.searchParams.get('jouer');
+  if (slug === null) return;
+  url.searchParams.delete('jouer');
+  history.replaceState(history.state, '', url.toString());
+  if (!peutJouer(etat ?? null)) return;
+  const a = [...document.querySelectorAll<HTMLAnchorElement>('.vitrine a.jouer[data-jeu]')].find((l) => slugDuJeu(l) === slug);
+  if (!a) return;
+  const vitrines = [...document.querySelectorAll('.vitrine')];
+  const i = vitrines.indexOf(a.closest('.vitrine') as Element);
+  if (i >= 0) leManege?.aller(i);
+  ouvrirChoix(a);
+}
 
 // --- Qui joue ? (compte connecté) ---------------------------------------------------------------
 function choisirJoueur(p: Profile | null): void {
@@ -140,13 +216,13 @@ function choisirJoueur(p: Profile | null): void {
   void renderCarnet();
 }
 
-/** « Qui joue ? » : un bouton par profil du compte, plus l'invité. */
+/** « Qui joue ? » : un bouton par profil du compte. */
 function renderPlayers(profiles: Profile[]): void {
   const zone = document.querySelector<HTMLElement>('#qui-joue-zone');
   const list = document.querySelector<HTMLElement>('#qui-joue');
   if (!zone || !list) return;
-  // Un seul profil : aucune question à poser.
-  zone.hidden = profiles.length === 1;
+  // Un seul profil (déjà choisi) : aucune question à poser.
+  zone.hidden = profiles.length === 1 && activePlayer() !== null;
   list.replaceChildren();
   const current = activePlayer();
   const add = (label: string, avatar: string, pressed: boolean, onPick: () => void) => {
@@ -155,7 +231,6 @@ function renderPlayers(profiles: Profile[]): void {
     list.append(b);
   };
   for (const p of profiles) add(p.pseudo, p.avatar, current?.id === p.id, () => choisirJoueur(p));
-  add('Invité', AVATAR_INVITE, !current, () => choisirJoueur(null));
   if (profiles.length === 0) {
     list.append(h('p', { class: 'discret' }, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-le dans Mon espace'), '.'));
   }
@@ -177,30 +252,21 @@ async function renderCarnet(): Promise<void> {
   const actions = document.querySelector<HTMLElement>('#carnet-actions');
   const avantages = document.querySelector<HTMLElement>('#avantages');
   if (!carnet || !titre || !chapeau || !actions || !avantages) return;
-  const invite = document.querySelector<HTMLElement>('#statut-invite');
+  const visiteur = document.querySelector<HTMLElement>('#accueil-visiteur');
   renderUnivers(null);
 
   if (etat === null) {
-    // Serveur injoignable : pas de compte possible pour l'instant, on joue en invité.
+    // Serveur injoignable : ni connexion ni inscription possibles pour l'instant.
     carnet.hidden = true;
-    if (invite) invite.querySelector('a')?.remove();
+    if (visiteur) visiteur.hidden = true;
     return;
   }
-  if (!etat?.connecte) {
-    const parties = localHistory();
-    if (parties.length > 0) {
-      renderUnivers(parties);
-      const etoiles = parties.reduce((a, r) => a + r.etoiles, 0);
-      chapeau.replaceChildren(
-        `Tu as déjà joué ${parties.length} ${parties.length > 1 ? 'parties' : 'partie'} sur cet appareil (${etoiles} ★). `,
-        'Avec un compte gratuit, tes prochaines parties te suivront partout. Ce n’est pas obligatoire : on peut toujours jouer en invité.',
-      );
-    }
-    return;
-  }
+  // Visiteur : page d'accueil épurée (logo, manège, carnet des avantages), sans tableau de bord.
+  // L'ancien historique invité de ce navigateur n'est plus montré (ni effacé).
+  if (!etat?.connecte) return;
 
   // Compte connecté.
-  if (invite) invite.hidden = true;
+  if (visiteur) visiteur.hidden = true;
   carnet.classList.add('carnet-connecte');
   const p = activePlayer();
   if (!p) {
@@ -269,7 +335,7 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
   zone.hidden = resultats === null;
   document.querySelector<HTMLElement>('#jeux')?.toggleAttribute('hidden', resultats !== null && presentationsMasquees(profil));
   if (resultats === null) return;
-  // Le joueur retrouve son univers tout en haut ; l'invité qui revient, juste après le manège.
+  // Le joueur retrouve son univers tout en haut.
   if (perso) ouverture.before(zone);
   else document.querySelector('#jeux')?.after(zone);
 
@@ -421,12 +487,14 @@ pointer();
 
 void (async () => {
   etat = await topbar('accueil');
+  etatConnu(etat);
   if (etat?.connecte) {
     renderPlayers(etat.profils ?? []);
     const p = activePlayer();
     if (p && estNiveau(p.niveau)) void setLevel(p.niveau, 'profil');
     if (window.location.hash === '#qui-joue') document.querySelector('#qui-joue-zone')?.scrollIntoView();
   }
+  reprendreLancement();
   await renderCarnet();
   if (etat?.connecte) await flushQueue();
 })();

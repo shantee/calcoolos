@@ -1,7 +1,10 @@
 /**
- * Fin de partie : le résultat est rangé dans l'historique local (invité) ou
- * envoyé au serveur pour le profil actif. Sans réseau, il attend dans une file
- * et repart au prochain passage.
+ * Fin de partie : le résultat est envoyé au serveur pour le profil actif. Sans réseau (ou session terminée), il
+ * attend dans une file et repart au prochain passage, une fois reconnecté.
+ *
+ * Plus de mode invité depuis le 03/11/2026 : sans profil, rien n'est enregistré (les pages de jeu exigent un compte,
+ * voir acces.ts). L'ancien historique invité (`calcoolos.historique`) reste dans le navigateur, sans être ni lu ni
+ * effacé.
  */
 import { api, accountState } from './api';
 import { activePlayer } from './player';
@@ -48,15 +51,13 @@ export interface StoredResult extends GameResult {
 }
 
 export type ReportOutcome =
-  | { kind: 'local' }
+  | { kind: 'sans-compte' }
   | { kind: 'serveur'; pseudo: string; record: boolean; verifie: boolean }
-  | { kind: 'attente'; pseudo: string }
+  | { kind: 'attente'; pseudo: string; reconnexion?: boolean }
   | { kind: 'refuse'; pseudo: string; message: string };
 
-const HISTORY_KEY = 'calcoolos.historique';
 const QUEUE_KEY = 'calcoolos.envois';
 const LAST_KEY = 'calcoolos.derniere-partie';
-const MAX_LOCAL = 300;
 
 function read<T>(key: string): T[] {
   try {
@@ -75,11 +76,6 @@ function write(key: string, value: unknown[]): void {
   }
 }
 
-/** Historique de l'invité sur cet appareil (le plus récent d'abord). */
-export function localHistory(): StoredResult[] {
-  return read<StoredResult>(HISTORY_KEY);
-}
-
 /** Jeu, niveau et mode de la dernière partie jouée sur cet appareil (invité ou profil). */
 export function lastGame(): { jeu: string; niveau: string; mode: string } | null {
   try {
@@ -88,16 +84,6 @@ export function lastGame(): { jeu: string; niveau: string; mode: string } | null
   } catch {
     return null;
   }
-}
-
-export function clearLocalHistory(): void {
-  write(HISTORY_KEY, []);
-}
-
-function addLocal(r: StoredResult): void {
-  const list = localHistory();
-  list.unshift(r);
-  write(HISTORY_KEY, list.slice(0, MAX_LOCAL));
 }
 
 /** Arrondit et borne les valeurs avant envoi (le serveur vérifie de toute façon). */
@@ -162,23 +148,25 @@ export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
     ...(fin ? { debut: fin.debut, actif: Math.min(r.duree, Math.max(0, fin.actif)) } : {}),
   };
   const player = activePlayer();
-  if (!player) {
-    addLocal(stored);
-    return { kind: 'local' };
-  }
+  if (!player) return { kind: 'sans-compte' };
   try {
     const reply = await send(player.id, stored);
     if (reply.status === 201) return { kind: 'serveur', pseudo: player.pseudo, record: !!reply.data.record, verifie: !!reply.data.verifie };
+    // Session terminée : la partie attend la reconnexion (file d'attente) ; serveur en panne : idem.
+    if (reply.status === 401) return mettreDeCote(player.id, stored, player.pseudo, true);
     if (reply.status >= 500) throw new Error('serveur indisponible');
-    // Refus explicite (session terminée, profil supprimé…) : on garde la partie sur l'appareil.
-    addLocal(stored);
+    // Autre refus explicite (profil supprimé, résultat incohérent…) : la partie n'est pas enregistrée.
     return { kind: 'refuse', pseudo: player.pseudo, message: reply.data.erreur ?? 'Résultat refusé.' };
   } catch {
-    const queue = read<{ profil: number; r: StoredResult; partie?: string | null }>(QUEUE_KEY);
-    queue.push({ profil: player.id, r: stored });
-    write(QUEUE_KEY, queue.slice(-50));
-    return { kind: 'attente', pseudo: player.pseudo };
+    return mettreDeCote(player.id, stored, player.pseudo, false);
   }
+}
+
+function mettreDeCote(profil: number, r: StoredResult, pseudo: string, reconnexion: boolean): ReportOutcome {
+  const queue = read<{ profil: number; r: StoredResult; partie?: string | null }>(QUEUE_KEY);
+  queue.push({ profil, r });
+  write(QUEUE_KEY, queue.slice(-50));
+  return { kind: 'attente', pseudo, reconnexion };
 }
 
 /** Renvoie les résultats en attente (appelé à l'accueil). */
@@ -188,9 +176,15 @@ export async function flushQueue(): Promise<number> {
   if (queue.length === 0) return 0;
   let sent = 0;
   const left: typeof queue = [];
-  for (const item of queue) {
+  for (const [i, item] of queue.entries()) {
     try {
       const reply = await send(item.profil, item.r, item.partie);
+      // Pas connecté : tout attend la prochaine connexion.
+      if (reply.status === 401) {
+        left.push(...queue.slice(i));
+        break;
+      }
+      // 429 (débit) : on réessaiera ; les autres refus sont abandonnés.
       if (reply.status === 201 || (reply.status >= 400 && reply.status < 500 && reply.status !== 429)) sent++;
       else left.push(item);
     } catch {
@@ -206,13 +200,15 @@ export async function flushQueue(): Promise<number> {
 /** Phrase courte à afficher sur l'écran de fin. */
 export function outcomeText(o: ReportOutcome): string {
   switch (o.kind) {
-    case 'local':
-      return 'Mode invité : score gardé ici, hors classement.';
+    case 'sans-compte':
+      return 'Partie non enregistrée : connecte-toi pour garder tes scores.';
     case 'serveur':
       return o.verifie ? `Résultat enregistré pour ${o.pseudo}${o.record ? ' : nouveau record !' : '.'}` : `Résultat enregistré pour ${o.pseudo} (non classé).`;
     case 'attente':
-      return `Pas de réseau : le résultat de ${o.pseudo} partira plus tard.`;
+      return o.reconnexion
+        ? `Session terminée : le résultat de ${o.pseudo} partira dès que tu te reconnectes.`
+        : `Pas de réseau : le résultat de ${o.pseudo} partira plus tard.`;
     case 'refuse':
-      return `${o.message} (gardé sur cet appareil)`;
+      return `${o.message} (partie non enregistrée)`;
   }
 }

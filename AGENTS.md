@@ -234,7 +234,7 @@ Changer une famille de calculs : `GRILLE` de `calculs.ts`, puis `npm test` (360 
 
 ## 8. Plateforme et serveur (résumé ; détails dans `doc/ARCHITECTURE.md` et `doc/DEPLOIEMENT.md`)
 
-- **Invité** : tout dans `localStorage` (`calcoolos.*`), aucun cookie, aucune requête obligatoire.
+- **Plus de mode invité (03/11/2026)** : un compte et un profil sont obligatoires pour jouer (`src/platform/acces.ts`, garde des six jeux, retour au jeu après connexion). Un visiteur n'a aucun cookie tant qu'il ne se connecte pas. Les scripts qui ouvrent un jeu appellent `preparerJoueur()` de `scripts/compte-essai.mjs`.
 - **Compte adulte** (e-mail + mot de passe argon2id, ou « Continuer avec Google » : même compte, `doc/GOOGLE.md`) → un **profil personnel** (`comptes.profil_personnel`, facultatif) et jusqu'à 6 **profils d'enfants** (pseudo, avatar, niveau) ; page « Mon espace » (`compte.html`). Le joueur actif
   est retenu dans le navigateur ; le serveur vérifie à chaque fois que le profil appartient au compte (sinon 404).
 - **Résultats** : forme vérifiée (sinon 422) puis vraisemblance (sinon gardé « non vérifié », hors classements) ;

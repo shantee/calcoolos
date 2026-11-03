@@ -1,12 +1,14 @@
 /**
- * Accueil dans Chromium, avec la vraie API PHP : logo animé, espace joueur, manège des jeux (flèches, clavier,
- * glissé à la souris et au doigt, carte de côté, adresse #jeu-…), difficulté choisie au lancement des six jeux,
+ * Accueil dans Chromium, avec la vraie API PHP : logo animé, accueil du visiteur (plus de mode invité depuis le
+ * 03/11/2026 : « Jouer » demande un compte, inscription puis retour au choix du niveau), espace joueur, manège des
+ * jeux (flèches, clavier, glissé à la souris et au doigt, carte de côté, adresse #jeu-…), difficulté choisie au
+ * lancement des six jeux,
  * carnet, inscription et connexion, profils (niveau du profil, changement de joueur sans rechargement, niveau
  * enregistré sur le profil), déconnexion, animations réduites, formats tablette et téléphone.
  *
  * Prérequis : `npm run api` (PHP, base de développement) et `npm run dev`.
  * Usage : node scripts/accueil-e2e.mjs [urlDeBase] [dossierCaptures]
- * Crée un compte de test jetable (adresse aléatoire) puis le supprime.
+ * Crée deux comptes de test jetables (adresses aléatoires) puis les supprime.
  */
 import { mkdirSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -49,11 +51,11 @@ const deFace = async (nom, p = page) => {
 const fenetre = '#choix-niveau[open]';
 
 // --- 1. Nouveau venu ---------------------------------------------------------------------------------
-console.log('• Nouveau venu (invité, aucun niveau choisi)');
+console.log('• Nouveau venu (visiteur sans compte, aucun niveau choisi)');
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-await page.waitForSelector('.joueur-invite');
-check((await page.textContent('.joueur'))?.includes('Invité'), 'barre : joueur « Invité »');
-check((await page.textContent('.joueur'))?.includes('sans compte'), 'barre : statut « sans compte »');
+await page.waitForSelector('.barre .bouton-compte');
+check(await page.locator('.barre .joueur').count() === 0, 'barre : plus d’espace joueur « Invité » pour un visiteur');
+check(await page.locator('#accueil-visiteur .bouton-creer').isVisible() && await page.locator('#accueil-visiteur .bouton-connexion').isVisible(), 'sous le logo : « Créer mon compte » et « Se connecter »');
 check(await page.locator('#titre .logo-yeux .oeil').count() === 2, 'logo : deux yeux à la place de « oo »');
 check((await page.textContent('#titre .visuel-masque')) === 'Calcoolos', 'logo : nom lisible « Calcoolos » pour les lecteurs d’écran');
 check((await page.title()).startsWith('Calcoolos'), 'titre de la page : Calcoolos');
@@ -70,17 +72,6 @@ await page.screenshot({ path: `${out}/ordinateur-accueil-pensee.png` });
 await page.waitForSelector('.pensee:not(.visible)', { state: 'attached', timeout: 6000 }).catch(() => null);
 await page.screenshot({ path: `${out}/ordinateur-accueil.png` });
 
-// Panneau de l'espace joueur.
-await page.click('.joueur');
-check(await page.locator('#panneau-joueur').isVisible(), 'panneau joueur : s’ouvre au clic');
-check((await page.textContent('#panneau-joueur'))?.includes('Tu joues en invité'), 'panneau joueur : statut invité expliqué');
-check(await page.locator('#panneau-joueur a[href="compte.html#inscription"]').isVisible(), 'panneau joueur : « Créer mon compte »');
-check(await page.locator('#panneau-joueur a[href="compte.html#connexion"]').isVisible(), 'panneau joueur : « Se connecter »');
-await page.waitForTimeout(400); // fin du fondu d'ouverture
-await page.screenshot({ path: `${out}/ordinateur-panneau-invite.png` });
-await page.keyboard.press('Escape');
-check(await page.locator('#panneau-joueur').isHidden(), 'panneau joueur : Échap le ferme');
-check(await page.evaluate(() => document.activeElement?.classList.contains('joueur')), 'panneau joueur : le focus revient au bouton');
 
 // --- L'accroche ------------------------------------------------------------------------------------
 console.log('• Accroche');
@@ -139,8 +130,8 @@ await page.keyboard.press('Tab');
 await page.keyboard.press('Tab');
 check(await page.evaluate(() => document.activeElement === document.querySelector('.vitrine-texte.devant a.jouer')), 'tabulation : des noms au bouton « Jouer »');
 await page.keyboard.press('Enter');
-await page.waitForSelector(fenetre);
-check(true, 'clavier : Entrée sur « Jouer » ouvre le choix de la difficulté');
+await page.waitForSelector('#compte-requis[open]');
+check(true, 'clavier : Entrée sur « Jouer » ouvre la fenêtre (visiteur : compte requis)');
 await page.keyboard.press('Escape');
 await page.waitForTimeout(900);
 const m = await milieu(carteDe('jeu-fusee'));
@@ -151,12 +142,12 @@ await page.mouse.move(m.x - 180, m.y, { steps: 4 });
 await page.mouse.up();
 await page.waitForTimeout(120);
 check(await nomDeFace() === 'Pluie de météores', 'glisser à la souris : le manège tourne');
-check(await page.locator(fenetre).count() === 0, 'glisser ne lance pas de jeu');
+check(await page.locator('dialog[open]').count() === 0, 'glisser ne lance pas de jeu');
 await page.waitForTimeout(900);
 const cote = await milieu(carteDe('jeu-cubes'));
 await page.mouse.click(cote.x + 60, cote.y);
 await page.waitForTimeout(200);
-check(await nomDeFace() === 'Panique au phare !' && await page.locator(fenetre).count() === 0, 'carte de côté : elle vient de face, sans lancer le jeu');
+check(await nomDeFace() === 'Panique au phare !' && await page.locator('dialog[open]').count() === 0, 'carte de côté : elle vient de face, sans lancer le jeu');
 await page.waitForTimeout(900);
 await page.goto(`${base}/index.html#jeu-neon`, { waitUntil: 'networkidle' });
 check(await nomDeFace() === 'Neon Flight', 'adresse #jeu-neon : Neon Flight de face');
@@ -165,10 +156,31 @@ await page.locator('.vitrine-texte.devant h2', { hasText: 'Dragon' }).waitFor();
 check(true, 'changement d’adresse : le manège suit');
 
 // --- La difficulté se choisit à chaque lancement ------------------------------------------------------
-console.log('• Difficulté au lancement');
+console.log('• Visiteur : « Jouer » demande un compte');
+const compteRequis = '#compte-requis[open]';
 await deFace('Panique au phare !');
 await page.click('.vitrine-texte.devant a.jouer');
+await page.waitForSelector(compteRequis);
+check(await page.locator(fenetre).count() === 0, 'visiteur : pas de choix du niveau sans compte');
+await page.keyboard.press('Escape');
+check(await page.locator(compteRequis).count() === 0 && page.url().includes('index.html'), 'Échap : la fenêtre compte se ferme, aucun jeu lancé');
+await page.click('.vitrine-image.devant a.lancer');
+await page.waitForSelector(compteRequis);
+check(true, 'carte de face : demande aussi un compte');
+await Promise.all([page.waitForURL(/compte\.html\?retour=index\.html%3Fjouer%3Dcubes-de-siege#inscription/), page.click('#compte-requis-inscription')]);
+const email1 = `accueil-${Date.now()}@exemple.test`;
+const mdp = 'motdepasse-test-123';
+await page.fill('#inscription input[name="email"]', email1);
+await page.fill('#inscription input[name="motDePasse"]', mdp);
+await page.check('#inscription input[name="adulte"]');
+await page.click('#inscription button[type="submit"]');
+await page.waitForSelector('#t-moi');
+await page.fill('.carte-mon-profil input[name="pseudo"]', 'Capi');
+await Promise.all([page.waitForURL(/index\.html/), page.click('.carte-mon-profil button[type="submit"]')]);
 await page.waitForSelector(fenetre);
+check(true, 'compte créé depuis « Jouer » : retour à l’accueil, fenêtre du niveau ouverte');
+
+console.log('• Difficulté au lancement');
 check((await page.textContent('#choix-niveau-jeu')) === 'Panique au phare !', 'la fenêtre nomme le jeu');
 check(await page.locator('.choix-niveau-option').count() === 6, 'six niveaux proposés, du CP à l’Aventurier');
 check((await page.textContent('#choix-niveau-phrase'))?.includes('Tu peux changer à tout moment'), 'la phrase « Tu peux changer à tout moment » accompagne le choix');
@@ -209,16 +221,23 @@ for (const [nom, fichier, niveau] of [
   await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
   await deFace(nom);
   await page.click('.vitrine-texte.devant a.jouer');
+  await page.waitForSelector(fenetre);
+  if (fichier === 'multirail') check(/×/.test(await page.textContent('#choix-niveau-liste')) && !/[+÷]/.test(await page.textContent('#choix-niveau-liste')), 'pour MULTIRAIL, la fenêtre ne montre que des multiplications');
   await Promise.all([page.waitForURL(new RegExp(fichier)), page.click(`.choix-niveau-option[data-niveau="${niveau}"]`)]);
   await page.waitForSelector('canvas', { timeout: 15000 });
   check(new URL(page.url()).searchParams.get('niveau') === niveau, `${nom} : lancé au niveau choisi (${niveau})`);
 }
 
 // Un joueur qui revient : le manège s'ouvre sur son dernier jeu, « Reprendre » relance sans repasser par le choix.
-await page.evaluate(() => {
-  localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'ce2', mode: 'defi' }));
-  localStorage.setItem('calcoolos.historique', JSON.stringify([{ jeu: 'dragon', niveau: 'ce2', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: {}, details: {}, date: new Date().toISOString() }]));
-});
+// (Plus d'historique invité : une partie enregistrée sur le serveur pour Capi.)
+const envoyer = (r) => page.evaluate(async (r) => {
+  const etat = await (await fetch('api/etat')).json();
+  const res = await fetch('api/resultats', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Calcoolos': '1', 'X-CSRF-Token': etat.csrf }, body: JSON.stringify({ ...r, profil: etat.profils[0].id }) });
+  return res.status;
+}, r);
+await page.goto(`${base}/confidentialite.html`, { waitUntil: 'networkidle' });
+await page.evaluate(() => localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'ce2', mode: 'defi' })));
+check(await envoyer({ jeu: 'dragon', niveau: 'ce2', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: { '+': [10, 1] }, details: {} }) === 201, 'une partie de Capi enregistrée');
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 check(await nomDeFace() === 'Le Dragon gourmand', 'joueur qui revient : son dernier jeu de face');
 await page.screenshot({ path: `${out}/ordinateur-accueil-retour.png`, fullPage: true });
@@ -228,23 +247,16 @@ check((await page.textContent('#choix-niveau-jeu'))?.length > 2, 'tuile de « Me
 await page.keyboard.press('Escape');
 await Promise.all([page.waitForURL(/dragon-gourmand\.html/), page.click('.univers-reprise')]);
 check(new URL(page.url()).searchParams.get('niveau') === 'ce2' && !page.url().includes('?niveau=ce2?'), '« Reprendre » : relance directe au niveau de la dernière partie');
-// Dernière partie jouée à un ancien niveau à piments : « Reprendre » ne devine pas de classe, la fenêtre s'ouvre.
-await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-await page.evaluate(() => {
-  localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'maitre', mode: 'defi' }));
-  localStorage.setItem('calcoolos.niveau', 'maitre');
-  localStorage.setItem('calcoolos.historique', JSON.stringify([{ jeu: 'dragon', niveau: 'maitre', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: {}, details: {}, date: new Date().toISOString() }]));
-});
-await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-await page.click('.univers-reprise');
-await page.waitForSelector(fenetre);
-check(await page.locator('.choix-niveau-option.choisi').count() === 0, 'ancien niveau à piments : « Reprendre » ouvre le choix, sans classe devinée');
-await page.keyboard.press('Escape');
-await page.evaluate(() => {
-  localStorage.removeItem('calcoolos.derniere-partie');
-  localStorage.removeItem('calcoolos.historique');
-});
-await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+// (L'ancien niveau à piments dans « Reprendre » ne peut plus s'essayer ici : le serveur n'accepte plus ces niveaux.)
+await page.evaluate(() => localStorage.removeItem('calcoolos.derniere-partie'));
+// Premier compte : supprimé, puis déconnexion pour la suite (inscription depuis le carnet).
+await page.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });
+const suppr1 = await page.evaluate(async (mdp) => {
+  const etat = await (await fetch('api/etat')).json();
+  return (await fetch('api/supprimer-compte', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Calcoolos': '1', 'X-CSRF-Token': etat.csrf }, body: JSON.stringify({ motDePasse: mdp }) })).status;
+}, mdp);
+check(suppr1 === 200, 'premier compte de test supprimé');
+await page.evaluate(() => localStorage.removeItem('calcoolos.joueur'));
 
 // --- 2. Inscription depuis l'accueil -------------------------------------------------------------------
 console.log('• Inscription et profils');
@@ -255,7 +267,6 @@ check(await page.evaluate(() => document.querySelector('.grille > .carte')?.id =
 check(await page.evaluate(() => document.activeElement?.closest('#inscription') !== null), 'compte : le curseur est dans l’inscription');
 await page.screenshot({ path: `${out}/ordinateur-inscription.png` });
 const email = `chantier02-${Date.now()}@exemple.test`;
-const mdp = 'motdepasse-test-123';
 await page.fill('#inscription input[name="email"]', email);
 await page.fill('#inscription input[name="motDePasse"]', mdp);
 await page.check('#inscription input[name="adulte"]');
@@ -284,7 +295,8 @@ check(await niveauRetenu() === 'cp', 'accueil : niveau du profil de Lina (CP)');
 await page.waitForFunction(() => document.querySelector('#carnet-titre')?.textContent?.includes('Lina'));
 check(true, 'carnet : « Le carnet de Lina »');
 check(await page.locator('.barre .lien-compte', { hasText: 'Mon espace' }).isVisible(), 'barre : « Espace famille » pour un compte connecté');
-check(await page.locator('#statut-invite').isHidden(), 'accueil : plus de message « invité »');
+check(await page.locator('#accueil-visiteur').isHidden(), 'accueil : plus de boutons d’inscription une fois connecté');
+check(await page.locator('#panneau-joueur button', { hasText: 'Invité' }).count() === 0, 'panneau joueur : plus de choix « Invité »');
 await page.evaluate(() => (window.__sansRechargement = true));
 await page.click('.joueur');
 await page.waitForTimeout(400); // fin du fondu d'ouverture
@@ -351,11 +363,11 @@ for (const [nom, opts] of [
 console.log('• Déconnexion');
 await page.click('.joueur');
 await Promise.all([page.waitForNavigation(), page.click('#panneau-joueur .panneau-lien')]);
-await page.waitForSelector('.joueur-invite');
-check((await page.textContent('.joueur'))?.includes('Invité'), 'déconnexion depuis le panneau : retour en invité');
+await page.waitForSelector('.barre .bouton-compte');
+check(await page.locator('.barre .joueur').count() === 0 && await page.locator('#accueil-visiteur').isVisible(), 'déconnexion depuis le panneau : retour à l’accueil visiteur');
 
-// --- 6. Invité sur tablette et téléphone, animations réduites ---------------------------------------
-console.log('• Invité : formats, animations réduites');
+// --- 6. Visiteur sur tablette et téléphone, animations réduites ---------------------------------------
+console.log('• Visiteur : formats, animations réduites');
 for (const [nom, opts] of [
   ['tablette', { viewport: { width: 834, height: 1112 }, hasTouch: true }],
   ['telephone', { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 }],
@@ -364,7 +376,7 @@ for (const [nom, opts] of [
   const p = await c.newPage();
   await p.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
   await p.waitForTimeout(6000);
-  await p.screenshot({ path: `${out}/${nom}-accueil-invite.png` });
+  await p.screenshot({ path: `${out}/${nom}-accueil-visiteur.png` });
   const debord = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   check(debord <= 0, `${nom} : le manège ne crée aucun défilement horizontal (${debord} px)`);
   // Glisser au doigt, avec de vrais événements tactiles.
@@ -386,8 +398,8 @@ for (const [nom, opts] of [
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   };
   await toucher(carte.x + carte.width / 2, carte.y + carte.height / 2);
-  await p.waitForSelector(fenetre, { timeout: 3000 });
-  check(true, `${nom} : toucher la carte de face ouvre le choix, même juste après un glissé`);
+  await p.waitForSelector(compteRequis, { timeout: 3000 });
+  check(true, `${nom} : toucher la carte de face ouvre la fenêtre (compte requis), même juste après un glissé`);
   await p.keyboard.press('Escape');
   await p.waitForTimeout(800);
   // Défiler la page en partant d'une carte : ni rotation, ni lancement.
@@ -403,7 +415,7 @@ for (const [nom, opts] of [
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await p.waitForTimeout(500);
   check((await p.evaluate(() => scrollY)) > avant, `${nom} : glisser vers le haut sur une carte fait défiler la page`);
-  check((await nomDeFace(p)) === faceAvant && await p.locator(fenetre).count() === 0, `${nom} : défiler ne fait pas tourner le manège et ne lance rien`);
+  check((await nomDeFace(p)) === faceAvant && await p.locator(compteRequis).count() === 0, `${nom} : défiler ne fait pas tourner le manège et ne lance rien`);
   await p.evaluate(() => scrollTo(0, 0));
   await p.waitForTimeout(300);
   // Une carte de côté vient de face, sans rien lancer.
@@ -413,7 +425,7 @@ for (const [nom, opts] of [
   });
   await toucher(voisine.x, voisine.y);
   await p.waitForTimeout(300);
-  check((await nomDeFace(p)) === 'Panique au phare !' && await p.locator(fenetre).count() === 0, `${nom} : toucher une carte de côté l’amène de face, sans rien lancer`);
+  check((await nomDeFace(p)) === 'Panique au phare !' && await p.locator(compteRequis).count() === 0, `${nom} : toucher une carte de côté l’amène de face, sans rien lancer`);
   await p.waitForTimeout(800);
   // Les six jeux restent à portée de doigt.
   const boutons = p.locator('.manege-noms button');
@@ -423,11 +435,11 @@ for (const [nom, opts] of [
   check(true, `${nom} : toucher la miniature de MULTIRAIL l’amène de face`);
   await p.waitForTimeout(800);
   await p.tap('.vitrine-texte.devant a.jouer');
-  await p.waitForSelector(fenetre);
-  check(/×/.test(await p.textContent('#choix-niveau-liste')) && !/[+÷]/.test(await p.textContent('#choix-niveau-liste')), `${nom} : pour MULTIRAIL, la fenêtre ne montre que des multiplications`);
+  await p.waitForSelector(compteRequis);
+  check((await p.textContent('#compte-requis-jeu')) === 'MULTIRAIL', `${nom} : « Jouer » sur MULTIRAIL demande un compte, en nommant le jeu`);
   await p.waitForTimeout(400);
-  await p.screenshot({ path: `${out}/${nom}-choix-difficulte.png` });
-  const dansEcran = await p.locator('.choix-niveau').evaluate((d) => { const r = d.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
+  await p.screenshot({ path: `${out}/${nom}-compte-requis.png` });
+  const dansEcran = await p.locator('#compte-requis').evaluate((d) => { const r = d.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });
   check(dansEcran, `${nom} : la fenêtre tient dans l’écran`);
   await c.close();
 }

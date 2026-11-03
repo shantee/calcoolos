@@ -39,10 +39,11 @@
             <h2 id="qui-joue-titre">Qui joue ?</h2>
             <div class="qui-joue" id="qui-joue"></div>
           </section>
-          <p class="statut-invite" id="statut-invite">
-            <span class="pastille-invite" aria-hidden="true"></span>
-            <span><b>Tu joues en invité</b>, sans inscription. <a href="#carnet">Pourquoi créer un compte ?</a></span>
-          </p>
+          <!-- Visiteur : un compte gratuit est nécessaire pour jouer (plus de mode invité depuis le 03/11/2026). -->
+          <div class="accueil-visiteur" id="accueil-visiteur">
+            <a class="bouton-creer" href="compte.html#inscription">Créer mon compte</a>
+            <a class="bouton-connexion" href="compte.html#connexion">Se connecter</a>
+          </div>
         </div>
       </section>
 
@@ -274,8 +275,8 @@
           <p class="surtitre">Le carnet d’aventurier</p>
           <h2 id="carnet-titre">Garde la trace de tes exploits</h2>
           <p class="carnet-chapeau" id="carnet-chapeau">
-            Un compte gratuit garde tes scores et tes progrès, et ceux de tes enfants si tu le souhaites. Ce n’est pas obligatoire :
-            on peut toujours jouer en invité.
+            Pour jouer, il suffit d’un compte gratuit : il garde tes scores et tes progrès, et ceux de tes enfants si tu le
+            souhaites.
           </p>
           <div class="carnet-actions" id="carnet-actions">
             <a class="bouton-creer" href="compte.html#inscription">Créer mon compte gratuit</a>
@@ -313,8 +314,8 @@
       <footer class="parents" aria-labelledby="parents-titre">
         <h2 id="parents-titre">Pour tout le monde, et pour les familles</h2>
         <p>
-          Sans compte, tout reste dans ce navigateur : pas d’inscription, pas de cookie.
-          Un compte garde tes progrès ; un adulte peut aussi y ajouter ses enfants, sous un simple pseudo.
+          Un compte gratuit garde tes progrès ; un adulte peut aussi y ajouter ses enfants, sous un simple pseudo.
+          Pas de publicité, et aucun cookie avant la connexion.
         </p>
         <p class="parents-liens">
           <a class="bouton-secondaire" href="compte.html">Mon espace</a>
@@ -330,6 +331,20 @@
         <h2 id="choix-niveau-titre">Choisis ton niveau</h2>
         <p id="choix-niveau-phrase">Les niveaux correspondent approximativement aux apprentissages de chaque classe. Tu peux changer à tout moment.</p>
         <div class="choix-niveau-liste" id="choix-niveau-liste"></div>
+        <button class="choix-niveau-fermer" value="annuler" type="submit">Annuler</button>
+      </form>
+    </dialog>
+
+    <!-- Un visiteur qui veut jouer : compte gratuit ou connexion, puis retour au jeu et au choix du niveau. -->
+    <dialog class="choix-niveau compte-requis" id="compte-requis" aria-labelledby="compte-requis-titre">
+      <form method="dialog">
+        <p class="surtitre" id="compte-requis-jeu"></p>
+        <h2 id="compte-requis-titre">Pour jouer, crée ton compte ou connecte-toi</h2>
+        <p>C’est gratuit : un compte garde tes scores, tes records et tes progrès. Juste après, tu reviens ici pour choisir ton niveau.</p>
+        <div class="compte-requis-actions">
+          <a class="bouton-creer" id="compte-requis-inscription" href="compte.html#inscription">Créer mon compte</a>
+          <a class="bouton-connexion" id="compte-requis-connexion" href="compte.html#connexion">J’ai déjà un compte · Se connecter</a>
+        </div>
         <button class="choix-niveau-fermer" value="annuler" type="submit">Annuler</button>
       </form>
     </dialog>

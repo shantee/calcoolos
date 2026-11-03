@@ -257,7 +257,7 @@ h1 {
 
 /* ---------- Qui joue ---------- */
 
-.lancement-joueur:has(#qui-joue-zone:not([hidden])) .statut-invite {
+.lancement-joueur:has(#qui-joue-zone:not([hidden])) .accueil-visiteur {
   display: none;
 }
 
@@ -285,27 +285,44 @@ h1 {
   border-radius: 50%;
 }
 
-.statut-invite {
+/* Visiteur sans compte : les deux portes d'entrée, bien visibles (plus de mode invité depuis le 03/11/2026). */
+.accueil-visiteur {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
-  margin: 0;
-  color: var(--texte);
-  line-height: 1.4;
+  gap: 12px 16px;
 }
 
-.statut-invite a {
-  color: var(--safran);
-  font-weight: 700;
+.accueil-visiteur[hidden] {
+  display: none;
 }
 
-.pastille-invite {
-  flex: none;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--sarcelle);
-  box-shadow: 0 0 0 4px rgb(95 211 188 / 0.2);
+.bouton-connexion {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 10px 22px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--creme);
+  border: 3px solid var(--creme);
+  border-radius: 18px;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bouton-connexion:hover,
+.bouton-connexion:focus-visible {
+  color: var(--encre);
+  background: var(--creme);
+  outline: none;
+}
+
+.compte-requis-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  margin: 18px 0 8px;
 }
 
 /* ---------- Vitrines ---------- */
@@ -1805,4 +1822,9 @@ h1 {
 .calme .manege-noms button,
 .calme .manege-fleche {
   transition: none;
+}
+
+/* Fenêtre « Pour jouer, crée ton compte ou connecte-toi » (visiteur). */
+.choix-niveau.compte-requis {
+  width: min(600px, calc(100vw - 24px));
 }

@@ -4,11 +4,15 @@ import '../i18n/page';
 import { ecouterErreurs3d } from '../platform/diag3d';
 import { afficherSans3d } from '../platform/sans3d';
 import { demarrerSuivi } from '../platform/suivi';
+import { exigerJoueur } from '../platform/acces';
 
 ecouterErreurs3d();
 demarrerSuivi('neon');
 
-import('../game/neon/app').catch((e: unknown) => {
-  console.error(e);
-  afficherSans3d();
-});
+// Plus de mode invité : sans compte ni profil, la page part vers la connexion et le jeu ne se charge pas.
+void exigerJoueur().then(() =>
+  import('../game/neon/app').catch((e: unknown) => {
+    console.error(e);
+    afficherSans3d();
+  }),
+);

@@ -7,6 +7,7 @@ import { RocketScene, W, H } from '../game/rocket/rocket-scene';
 import { maxTextures } from '../game/render-config';
 import { installerPleinEcran } from '../game/plein-ecran';
 import { demarrerSuivi } from '../platform/suivi';
+import { exigerJoueur } from '../platform/acces';
 
 demarrerSuivi('fusee');
 
@@ -32,4 +33,5 @@ async function start(): Promise<void> {
   installerPleinEcran(game, { droite: 1036, milieu: 692 });
 }
 
-void start();
+// Plus de mode invité : sans compte ni profil, la page part vers la connexion et le jeu ne démarre pas.
+void exigerJoueur().then(start);

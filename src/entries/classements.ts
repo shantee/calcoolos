@@ -5,9 +5,9 @@ import '../styles/accueil.css';
 import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';
 import { api } from '../platform/api';
-import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
+import { avatarImg } from '../platform/avatars';
 import { activePlayer } from '../platform/player';
-import { localHistory, type GameId, type StoredResult } from '../platform/results';
+import type { GameId } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, TIER_NAMES, VARIANT_NAMES } from '../platform/stats';
 import { NIVEAU_INFOS, estNiveau, niveauRetenu } from '../platform/niveau';
 import { dateCourte, dateLongue, duree, etoiles, score } from '../platform/classement-format';
@@ -106,36 +106,31 @@ function bulle(r: Row, titre: string): HTMLElement | null {
     r.parties ? h('span', { class: 'bulle-parties' }, r.parties > 1 ? `${r.parties} parties classées à ce niveau` : 'Une seule partie à ce niveau : record du premier coup !') : null);
 }
 
-function rowEl(r: Row, me: string | undefined, guest = false): HTMLElement {
-  const moi = guest || (r.famille && r.nom === me);
+function rowEl(r: Row, me: string | undefined): HTMLElement {
+  const moi = r.famille && r.nom === me;
   const cls = [
     r.rang && r.rang <= 3 ? `podium-${r.rang}` : '',
     r.famille ? 'famille' : '',
-    moi && !guest ? 'moi' : '',
-    guest ? 'invite' : '',
+    moi ? 'moi' : '',
   ].filter(Boolean).join(' ');
-  const info = bulle(r, guest ? 'Ton record sur cet appareil' : `Record de ${r.nom}`);
+  const info = bulle(r, `Record de ${r.nom}`);
   return h('li', { class: cls || undefined, tabindex: info ? 0 : undefined },
-    h('span', { class: 'rang' }, r.rang ? place(r.rang) : guest ? 'toi' : ''),
+    h('span', { class: 'rang' }, r.rang ? place(r.rang) : ''),
     avatarImg(r.avatar, 40, ''),
     h('span', { class: 'qui' },
-      h('span', { class: 'nom' }, r.nom, moi && !guest ? h('span', { class: 'etiquette' }, 'toi') : null),
+      h('span', { class: 'nom' }, r.nom, moi ? h('span', { class: 'etiquette' }, 'toi') : null),
       r.date ? h('time', { class: 'quand', datetime: r.date }, dateCourte(r.date)) : null),
     h('span', { class: 'score' }, score(r.score)),
     info);
 }
 
-/** Un classement : le top, puis les joueurs de la famille plus loin (avec leur rang), ou le score de l'invité. */
-function boardEl(b: Board, page: string, me: string | undefined, guest: StoredResult | null, mien: boolean): HTMLElement {
+/** Un classement : le top, puis les joueurs de la famille plus loin (avec leur rang). */
+function boardEl(b: Board, page: string, me: string | undefined, mien: boolean): HTMLElement {
   const top = b.public.filter((r) => (r.rang ?? 0) <= 5);
   const after = b.public.filter((r) => (r.rang ?? 0) > 5);
   const list = h('ol', { class: 'podium' }, ...top.map((r) => rowEl(r, me)));
   if (after.length > 0) list.append(h('li', { class: 'ellipse', 'aria-hidden': 'true' }, '⋮'), ...after.map((r) => rowEl(r, me)));
-  if (guest) {
-    list.append(rowEl({ nom: 'Toi (cet appareil)', avatar: AVATAR_INVITE, score: guest.score, date: guest.date, gagne: guest.gagne,
-      etoiles: guest.etoiles, duree: guest.duree, precision: guest.precision }, me, true));
-  }
-  const vide = b.public.length === 0 && !guest;
+  const vide = b.public.length === 0;
   const info = estNiveau(b.niveau) ? NIVEAU_INFOS[b.niveau] : null;
   return h('section', { class: `classement${vide ? ' vide' : ''}${mien ? ' mon-niveau' : ''}${b.ancien ? ' ancien' : ''}`, 'data-niveau': b.niveau },
     h('header', {},
@@ -205,7 +200,7 @@ function archive(boards: Board[], me: string | undefined): HTMLElement | string 
     h('p', { class: 'chapeau' }, 'Avant le 3 novembre 2026, les niveaux s’appelaient Doux, Relevé, Piquant et Explosif. Leurs records restent ici, à part : ils ne se comparent pas aux nouveaux niveaux scolaires.'),
     ...JEUX.filter(({ jeu }) => vieux.some((b) => b.jeu === jeu)).map(({ jeu, page }) =>
       h('section', { class: 'anciens-jeu' }, h('h2', {}, GAME_NAMES[jeu]),
-        h('div', { class: 'niveaux' }, ...vieux.filter((b) => b.jeu === jeu).map((b) => boardEl(b, page, me, null, false))))));
+        h('div', { class: 'niveaux' }, ...vieux.filter((b) => b.jeu === jeu).map((b) => boardEl(b, page, me, false))))));
 }
 
 const cleOnglet = (jeu: GameId) => (VARIANTES[jeu] ? `calcoolos.classements.${jeu}` : 'calcoolos.classements.mode');
@@ -274,11 +269,6 @@ void (async () => {
   const boards = r.data.classements;
   const connected = state?.connecte === true;
   const monNiveau = (connected ? joueur?.niveau : null) ?? niveauRetenu();
-  // Invité : ses parties restent sur l'appareil ; on glisse son meilleur score dans chaque classement.
-  const history = connected ? [] : localHistory();
-  const guestBest = (b: Board) => history
-    .filter((x) => x.jeu === b.jeu && x.niveau === b.niveau && x.mode === b.mode && (x.variante ?? '') === (b.variante ?? ''))
-    .reduce<StoredResult | null>((m, x) => (!m || x.score > m.score ? x : m), null);
 
   const sections = JEUX.map(({ jeu, surtitre, page }) => {
     const mine = boards.filter((b) => b.jeu === jeu && !b.ancien);
@@ -286,7 +276,7 @@ void (async () => {
       banniere(jeu, surtitre, page, mine, me),
       barreOnglets(jeu),
       ...onglets(jeu).map((o) => h('div', { class: 'niveaux', 'data-onglet': o.id, role: 'tabpanel', id: `niveaux-${jeu}-${o.id}`, 'aria-labelledby': `onglet-${jeu}-${o.id}` },
-        ...mine.filter(o.garde).map((b) => boardEl(b, page, me, connected ? null : guestBest(b), b.niveau === monNiveau)))));
+        ...mine.filter(o.garde).map((b) => boardEl(b, page, me, b.niveau === monNiveau)))));
   });
   root.replaceChildren(
     h('h1', {}, 'Classements'),
@@ -296,8 +286,9 @@ void (async () => {
     connected
       ? familyCard(boards) ?? ''
       : h('section', { class: 'carte invite-classements' },
-        h('p', {}, 'En mode invité, tes scores restent sur cet appareil : ils apparaissent ici en pointillés, mais pas dans le classement des autres. Pour y entrer, gagné ou perdu : ',
-          h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'))),
+        h('p', {}, 'Pour jouer et entrer dans les classements, gagné ou perdu, il suffit d’un compte gratuit : ',
+          h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'), ' ',
+          h('a', { class: 'bouton petit secondaire', href: 'compte.html#connexion' }, 'Se connecter'))),
     ...sections,
     archive(boards, me),
   );

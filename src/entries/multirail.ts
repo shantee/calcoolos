@@ -4,16 +4,20 @@ import '../i18n/page';
 import { ecouterErreurs3d, ouvrirDiag3d } from '../platform/diag3d';
 import { afficherSans3d, webgl2Disponible } from '../platform/sans3d';
 import { demarrerSuivi } from '../platform/suivi';
+import { exigerJoueur } from '../platform/acces';
 
 ecouterErreurs3d();
 demarrerSuivi('multirail');
 
-if (webgl2Disponible()) {
-  import('../game/multirail/main').catch((e: unknown) => {
-    console.error(e);
+// Plus de mode invité : sans compte ni profil, la page part vers la connexion et le jeu ne se charge pas.
+void exigerJoueur().then(() => {
+  if (webgl2Disponible()) {
+    import('../game/multirail/main').catch((e: unknown) => {
+      console.error(e);
+      afficherSans3d();
+    });
+  } else {
     afficherSans3d();
-  });
-} else {
-  afficherSans3d();
-}
+  }
+});
 if (new URLSearchParams(location.search).has('diag')) void ouvrirDiag3d();

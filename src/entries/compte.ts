@@ -6,6 +6,7 @@ import '../styles/plateforme.css';
 import { topbar } from '../platform/topbar';
 import { api, apiUrl, type AccountState, type Profile } from '../platform/api';
 import { AVATAR_INVITE, AVATAR_PAR_DEFAUT, AVATARS, avatarId, avatarImg } from '../platform/avatars';
+import { destinationApresConnexion, retourSur } from '../platform/acces';
 import { activePlayer, joueurParDefaut, setActivePlayer } from '../platform/player';
 import { lireFavoris } from '../platform/favoris';
 import { GAME_NAMES, GAME_PAGES, summarize } from '../platform/stats';
@@ -19,6 +20,13 @@ import { NIVEAUX, NIVEAU_INFOS, estNiveau, niveauRetenu, retenirNiveau } from '.
 demarrerSuivi('compte');
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
+
+/**
+ * Arrivée depuis un jeu ou « Jouer » sans être connecté (`?retour=jeu/decollage.html`) : une fois connecté et un
+ * joueur choisi, on y retourne (voir platform/acces.ts). Sans retour, « Jouer » mène à l'accueil.
+ */
+const retour = retourSur(new URLSearchParams(window.location.search).get('retour'));
+const versLeJeu = (): string => destinationApresConnexion(retour);
 
 /** Choix de la classe ; un profil resté sur un ancien niveau à piments (ou sans niveau) le choisira au prochain jeu. */
 function tierSelect(name: string, value: string | null = null): HTMLSelectElement {
@@ -80,9 +88,18 @@ function messagesGoogle(texte: string, classe: 'erreur' | 'ok' | '' = 'erreur'):
   }
 }
 
-/** Juste après la connexion : le titulaire (ou le seul profil) joue, sans rien avoir à choisir. */
-function apresConnexion(state: AccountState): void {
-  if (!activePlayer()) setActivePlayer(joueurParDefaut(state.profils));
+/**
+ * Juste après la connexion : le titulaire (ou le seul profil) joue, sans rien avoir à choisir. Si l'on venait d'un
+ * jeu, on y retourne aussitôt ; s'il faut d'abord choisir ou créer un profil, Mon espace s'affiche (true = on part).
+ */
+function apresConnexion(state: AccountState): boolean {
+  const actuel = activePlayer();
+  if (!actuel || !state.profils?.some((p) => p.id === actuel.id)) setActivePlayer(joueurParDefaut(state.profils));
+  if (retour && activePlayer()) {
+    window.location.href = versLeJeu();
+    return true;
+  }
+  return false;
 }
 
 /** Jeton reçu de Google (Mon espace, non connecté) : connexion, ou création du compte. */
@@ -91,8 +108,8 @@ async function connexionGoogle(jeton: string): Promise<void> {
   const r = await api.post<AccountState>('/google', { credential: jeton, adulte: true }).catch(() => null);
   if (r?.status === 200 || r?.status === 201) {
     if (r.status === 201) etapeParcours('inscription');
-    if (window.location.hash) history.replaceState(null, '', window.location.pathname);
-    apresConnexion(r.data);
+    if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search);
+    if (apresConnexion(r.data)) return;
     return void render(r.data);
   }
   messagesGoogle(r?.data.erreur ?? t('Le serveur ne répond pas.'));
@@ -114,7 +131,7 @@ function renderGuest(googleClientId?: string): void {
     const r = await api.post<AccountState>('/connexion', { email: data.get('email'), motDePasse: data.get('motDePasse') }).catch(() => null);
     busy(login, false);
     if (r?.status === 200) {
-      apresConnexion(r.data);
+      if (apresConnexion(r.data)) return;
       return void render(r.data);
     }
     showErrors(login, msgLogin, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
@@ -160,7 +177,9 @@ function renderGuest(googleClientId?: string): void {
   const voulu = window.location.hash === '#inscription' ? 'inscription' : window.location.hash === '#connexion' ? 'connexion' : null;
   root.replaceChildren(
     h('h1', {}, 'Mon espace'),
-    h('p', { class: 'chapeau' }, 'Un compte garde tes scores, tes records et tes progrès sur tous tes appareils. Crée ton profil en un instant, et ajoute ceux de tes enfants si tu le souhaites. Sans compte, on peut toujours jouer en invité.'),
+    h('p', { class: 'chapeau' }, retour
+      ? 'Pour jouer, connecte-toi ou crée ton compte gratuit : tu reviendras aussitôt à ton jeu. Le compte garde tes scores, tes records et tes progrès sur tous tes appareils.'
+      : 'Un compte gratuit permet de jouer et garde tes scores, tes records et tes progrès sur tous tes appareils. Crée ton profil en un instant, et ajoute ceux de tes enfants si tu le souhaites.'),
     h('div', { class: 'grille' }, ...(voulu === 'inscription' ? [cartes.inscription, cartes.connexion] : [cartes.connexion, cartes.inscription])),
   );
   if (voulu) {
@@ -199,7 +218,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
   const play = h('button', { class: 'bouton petit', type: 'button' }, playing ? 'Joue en ce moment' : 'Jouer avec ce profil');
   play.addEventListener('click', () => {
     setActivePlayer(p);
-    window.location.href = 'index.html';
+    window.location.href = versLeJeu();
   });
 
   // Le titulaire désigne lui-même son profil : jamais de conversion automatique d'un profil d'enfant.
@@ -271,7 +290,7 @@ function carteMonProfil(enfants: number): HTMLElement {
         setActivePlayer(moi);
         if (estNiveau(moi.niveau)) retenirNiveau(moi.niveau);
       }
-      window.location.href = 'index.html';
+      window.location.href = versLeJeu();
       return;
     }
     showErrors(form, msg, r?.data ?? { erreur: 'Le serveur ne répond pas.' });
@@ -301,7 +320,7 @@ function bandeauJoueur(profiles: Profile[], refresh: (profiles: Profile[]) => vo
     h('div', { class: 'bandeau-qui' },
       avatarImg(actif?.avatar ?? AVATAR_INVITE, 56, ''),
       h('p', {}, h('small', {}, actif ? 'Joue en ce moment' : 'Personne n’est choisi'), h('strong', {}, actif?.pseudo ?? 'Choisis qui joue'))),
-    actif ? h('div', { class: 'actions' }, h('a', { class: 'bouton', href: 'index.html' }, 'Jouer'), h('a', { class: 'bouton secondaire', href: `tableau.html?profil=${actif.id}` }, 'Voir les progrès')) : null,
+    actif ? h('div', { class: 'actions' }, h('a', { class: 'bouton', href: versLeJeu() }, retour ? 'Reprendre mon jeu' : 'Jouer'), h('a', { class: 'bouton secondaire', href: `tableau.html?profil=${actif.id}` }, 'Voir les progrès')) : null,
     choix);
 }
 
@@ -475,7 +494,7 @@ function render(state: AccountState | null, refreshBar = true): void {
   if (!state) {
     root.replaceChildren(
       h('h1', {}, 'Mon espace'),
-      h('section', { class: 'carte' }, h('h2', {}, 'Serveur indisponible'), h('p', {}, 'Mon espace n’est pas joignable pour le moment (ou ce site fonctionne sans serveur). On peut toujours jouer en invité : les résultats restent sur cet appareil.')),
+      h('section', { class: 'carte' }, h('h2', {}, 'Serveur indisponible'), h('p', {}, 'Mon espace n’est pas joignable pour le moment : la connexion et l’inscription reviendront avec le serveur. Un joueur déjà choisi sur cet appareil peut continuer à jouer ; ses résultats partiront plus tard.')),
     );
     return;
   }

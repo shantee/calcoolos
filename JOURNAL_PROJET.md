@@ -30,6 +30,33 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-03 : Claude, suppression du mode invité (compte obligatoire pour jouer)
+
+Demande (PDF de Philippe « Supprimer le mode invité ») : suppression fonctionnelle, pas un simple masquage.
+
+Fait :
+- `src/platform/acces.ts` : garde des six pages de jeu (`exigerJoueur()`), y compris ouvertes par leur adresse. Sans
+  compte → `compte.html?retour=…#connexion` ; compte sans joueur à choisir d'office → Mon espace ; serveur injoignable →
+  un joueur déjà retenu continue. `retourSur()` n'accepte que `index.html` ou `jeu/<nom>.html` (pas d'adresse
+  extérieure). Après connexion : le jeu s'il a son niveau, sinon `index.html?jouer=<jeu>` (fenêtre du niveau ouverte).
+- Accueil : plus d'espace joueur « Invité / sans compte », plus de tableau de bord pour un visiteur (« Content de te
+  revoir », reprise, conseils, favoris, option du manège) ; « Créer mon compte » et « Se connecter » sous le logo ;
+  « Jouer » d'un visiteur ouvre `#compte-requis` (inscription ou connexion, avec retour au jeu). « Invité » retiré de
+  « Qui joue ? » et du panneau. Comptes connectés : accueil personnel inchangé.
+- `results.ts` : sans profil, rien n'est enregistré ; session terminée → file d'attente renvoyée après reconnexion ;
+  autre refus → non enregistré. `localHistory`/`addLocal` supprimés. L'ancien `calcoolos.historique` reste dans le
+  navigateur, ni lu ni effacé. Données des comptes intactes (aucune migration).
+- Mes progrès et Classements : plus de tableau ni de lignes invité, invitation à créer un compte.
+- Barre sur téléphone : un visiteur garde « Se connecter » (l'inscription était dans le panneau invité, disparu).
+- Tests : `tests/acces.test.ts` (7) ; 272 tests Vitest ; `scripts/sans-invite-e2e.mjs` 73/73 (visiteur → inscription →
+  niveau → partie, six jeux par adresse directe avec et sans niveau, compte à plusieurs profils, Progrès/Classements,
+  tablette et téléphone) ; `scripts/compte-essai.mjs` (compte d'essai local pour les scripts qui ouvrent un jeu).
+
+Limites : `accueil-e2e.mjs` adapté mais pas rejoué jusqu'au bout (arrêt à la seconde inscription, sans doute la limite
+de 5 inscriptions/heure du serveur local, demande de Philippe d'arrêter le navigateur) ; `plateforme-e2e`,
+`comptes-e2e`, `niveaux-e2e`, `verifier-en-ligne` et les parties automatiques jouent encore en invité : leur ajouter
+`preparerJoueur()` (ou une connexion) avant de les relancer.
+
 ## 2026-11-03 : Claude, six niveaux scolaires communs aux jeux
 
 **Demande de Philippe** : remplacer Doux / Relevé / Piquant / Explosif par **CP, CE1, CE2, CM1, CM2, Aventurier**,

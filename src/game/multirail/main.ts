@@ -583,7 +583,7 @@ const ui = new UI(prefs, {
 ui.renderTitle(records[recordKey()]);
 ui.showTitle(true);
 {
-  /** qui joue : le profil actif de Calcoolos, ou l'invité (résultats gardés sur l'appareil) */
+  /** qui joue : le profil actif de Calcoolos (la page exige un compte depuis le 03/11/2026, voir platform/acces.ts) */
   const who = document.createElement('div');
   who.className = 'pilot-in';
   const span = document.createElement('span');
@@ -591,7 +591,7 @@ ui.showTitle(true);
     const b = document.createElement('b');
     b.textContent = player.pseudo;
     span.append(b, 'Tes voyages sont enregistrés dans tes progrès');
-  } else span.innerHTML = '<b>Invité</b>Scores gardés sur cet appareil · <a href="../compte.html#inscription">créer un compte</a>';
+  } else span.innerHTML = '<b>Sans profil</b>Partie non enregistrée · <a href="../compte.html#connexion">se connecter</a>';
   who.append(avatarImg(player?.avatar ?? AVATAR_INVITE, 40, ''), span);
   ui.setPilot(who);
 }

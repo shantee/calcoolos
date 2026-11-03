@@ -9,13 +9,13 @@ import { CanvasRenderer } from 'echarts/renderers';
 import { topbar } from '../platform/topbar';
 import { api, type Profile } from '../platform/api';
 import { activePlayer } from '../platform/player';
-import { localHistory, type GameId, type StoredResult } from '../platform/results';
+import type { GameId, StoredResult } from '../platform/results';
 import { GAME_NAMES, GAME_PAGES, OP_NAMES, TIER_NAMES, VARIANT_NAMES, formatDuration, modeName, summarize, type Summary } from '../platform/stats';
 import {
   aReviser, bilan, contextes, essais, evolution, faits, frequentation, maitrise, parTable, partiesManquantes, pointsForts, precisionDe,
   serieDe, synthese, tempsMoyenFait, type Bilan, type Contexte, type FaitBilan, type Indicateur, type Maitrise, type Totaux,
 } from '../platform/progres';
-import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
+import { avatarImg } from '../platform/avatars';
 import { h } from '../platform/dom';
 import { t } from '../i18n/traduire';
 import { locale } from '../i18n/langue';
@@ -340,29 +340,36 @@ async function showProfile(p: Profile): Promise<void> {
   renderDashboard(p.pseudo, r.data.resultats, `Progrès de ${p.pseudo}, enregistrés sur le serveur (visibles seulement depuis ce compte).`, r.data.totaux);
 }
 
-function showGuest(): void {
-  renderDashboard('Invité', localHistory(), 'Parties jouées en invité sur cet appareil (rien n’est envoyé sur Internet).');
-}
-
 void (async () => {
   const state = await topbar('progres');
   const profiles = state?.connecte ? state.profils ?? [] : [];
   const wanted = Number(new URLSearchParams(window.location.search).get('profil')) || activePlayer()?.id;
+  // Plus de mode invité (03/11/2026) : sans compte, une invitation à s'inscrire ou à se connecter.
+  if (!state?.connecte) {
+    root.replaceChildren(h('h1', {}, 'Mes progrès'),
+      h('section', { class: 'carte invite-classements' },
+        h('p', {}, state === null
+          ? 'Le serveur ne répond pas pour le moment : tes progrès s’afficheront dès son retour.'
+          : 'Tes progrès (parties, étoiles, records, succès) sont gardés dans ton compte gratuit, sur tous tes appareils. ',
+        state === null ? '' : h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'), ' ',
+        state === null ? '' : h('a', { class: 'bouton petit secondaire', href: 'compte.html#connexion' }, 'Se connecter'))));
+    return;
+  }
   const chooser = h('div', { class: 'qui-joue', role: 'group', 'aria-label': 'Choisir un joueur' });
   root.replaceChildren(h('h1', {}, 'Mes progrès'), chooser, h('div', { id: 'tableau-corps' }));
-  const pick = (id: number | null) => {
-    for (const b of chooser.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === String(id ?? 'invite')));
+  const pick = (id: number) => {
+    for (const b of chooser.querySelectorAll('button')) b.setAttribute('aria-pressed', String(b.dataset.id === String(id)));
     const p = profiles.find((x) => x.id === id);
     if (p) void showProfile(p);
-    else showGuest();
   };
   for (const p of profiles) {
     const b = h('button', { type: 'button', 'data-id': String(p.id) }, avatarImg(p.avatar, 56, ''), p.pseudo);
     b.addEventListener('click', () => pick(p.id));
     chooser.append(b);
   }
-  const g = h('button', { type: 'button', 'data-id': 'invite' }, avatarImg(AVATAR_INVITE, 56, ''), 'Cet appareil (invité)');
-  g.addEventListener('click', () => pick(null));
-  chooser.append(g);
-  pick(profiles.some((p) => p.id === wanted) ? wanted ?? null : profiles[0]?.id ?? null);
+  if (profiles.length === 0) {
+    document.querySelector('#tableau-corps')!.replaceChildren(h('p', {}, 'Aucun profil pour l’instant : ', h('a', { href: 'compte.html' }, 'crée-le dans Mon espace'), '.'));
+    return;
+  }
+  pick(profiles.some((p) => p.id === wanted) ? (wanted as number) : profiles[0].id);
 })();
