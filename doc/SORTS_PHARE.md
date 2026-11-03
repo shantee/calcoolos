@@ -1,6 +1,6 @@
 # Panique au phare ! — jokers magiques
 
-Statut : publié le 03/11/2026 avec les sprites fournis, à confirmer visuellement par Philippe. Release 20261103-230809-008c032 sur https://calculos.zfx.fr.
+Statut : publié le 03/11/2026, arsenal unifié avec les sprites fournis, à confirmer visuellement par Philippe. Release 20261103-231934-cc581a1 sur https://calculos.zfx.fr.
 
 ## Règles
 - Six classes conservées. CM2 : plafond de base 120, deux à trois cubes ; adaptation existante conservée. Les cibles au-dessus de 120 et les solutions longues deviennent occasionnelles.
@@ -34,3 +34,4 @@ Publication des sprites réussie : release 20261103-230809-008c032, 274 tests et
 À la demande de Philippe : retrait des anciennes niches et raccourcis B/N, de la Super Poussée et du Méga-tir, de leurs dessins/effets spécifiques et de l'ancien pavé de calcul bonus. Les trois sorts et leurs sprites sont conservés. Les engins réutilisent la soucoupe et le dirigeable dessinés ; une grande zone tactile de 290 × 240 unités permet de récupérer directement une charge. Deux passages naturels, à partir de la vague 2 ; 10 s en Défi, 12 s en Tranquille. Passage manqué : aucun effet sur le score, la sélection ou la série.
 Réserve unique MagicPowers : une charge initiale, maximum deux par sort, recharge aux bonnes réponses conservée (8/6/4), sans stockage caché à plein. Le cadeau vise un sort non plein ; si celui-ci se remplit pendant le vol, repli sur un autre sort. Toute collecte est unique.
 Les trois boutons sont décalés dans la place libérée sous le phare pour éviter le recouvrement par les commandes Accueil/Plein écran sur téléphone. Les engins ne masquent plus les sorts. Ancien script bonus-auto.mjs remplacé par le contrôle du nouveau système ; anciens tests remplacés par six tests ciblés d'arsenal et livraisons.
+Validation fusion : 14 tests ciblés, puis 265 tests complets et 252 vérifications API réussis ; souris, tablette et téléphone vérifiés (livraison, calcul conservé, B/N sans effet, trois sorts utilisables, expiration neutre sur ordinateur). Première release 20261103-231934-cc581a1 écrasée immédiatement par une publication parallèle 20261103-231941-0dd13c1 ; comparaison des arbres : le changement de délai des tests de cette publication est déjà repris dans dev (fbd51d3), les seuls écarts restants sont la fusion des sorts. Republication de la version contenant les deux travaux.
