@@ -30,6 +30,26 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-03 : Claude, calculs malins : astuce et temps en plus (Décollage !)
+
+**Demande** : Philippe revient sur `147 × 5` (trop dur pour un CM1 en jeu rapide ?) : le garder, car il a une vraie
+méthode (× 10 puis moitié), mais l'accompagner (plus de temps, petit indice sans la réponse) ; distinguer ces calculs
+des calculs automatiques ; préparer une rubrique « Astuces de calcul mental ».
+
+**Fait** (worktree `calcoolos-astuces`, branche `astuces`, Codex travaillant en même temps sur le phare) :
+- `src/core/calculs.ts` : table `ASTUCES` (48 familles malines sur la grille commune) ; chaque calcul malin porte
+  `astuce`, jamais la réponse ; `TEMPS_MALIN = 1,35` dans `tempsDeReflexion` (Décollage ! et Voyage Zen).
+- Décollage ! : astuce en jaune sous l'étiquette de difficulté, 1,5 s après le calcul (`ASTUCE_APRES`), gardée
+  après une erreur ou un temps écoulé, effacée après une bonne réponse.
+- Tests : 3 nouveaux (noms des familles, réponse jamais dans l'astuce sur 54 000 calculs, longueur, exemples
+  `147 × 5` et `25 × 8`) ; 274 tests verts, typage OK ; parties CM1 et CE1 en Défi dans Chromium avec captures
+  (astuce absente à 0,4 s, présente à 2,3 s, gardée après l'erreur, lisible à 24 px).
+- `doc/ASTUCES_CALCUL_MENTAL.md` : fonctionnement, exemples, et proposition de la rubrique (page `astuces.html`,
+  4 familles, fiches en étapes, « À toi ! », personnage).
+
+**Limites** : pas d'astuce dans Pluie de météores ni dans les multiplications élaborées de Neon Flight/MULTIRAIL ;
+non publié (à la demande de Philippe) ; pas essayé sur une vraie tablette.
+
 ## 2026-11-03 : Claude, correction : jouer redevient libre, sans compte
 
 Philippe : malentendu, le compte ne doit **pas** être obligatoire. Jouer est libre, le compte est facultatif, le suivi

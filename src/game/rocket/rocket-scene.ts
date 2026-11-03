@@ -13,7 +13,7 @@ import * as A from '../../art/pixel-rocket';
 import { P, PX } from '../../art/pixel-rocket';
 import type { PixelCanvas } from '../../art/pixelforge';
 import { Sfx } from '../sfx';
-import { RocketSession, PLATFORM_ART, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
+import { RocketSession, PLATFORM_ART, SUMMIT, ZONES, MAX_VX, MAX_LIVES, astuceVisible, type Platform, type RocketEvent, type Star } from './session';
 import type { Grade } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
@@ -163,6 +163,9 @@ export class RocketScene extends Phaser.Scene {
   /** Couleur du calcul en cours (encadré vert, orange ou rouge). */
   private qGrade: Grade = 'facile';
   private qTag!: Phaser.GameObjects.Text;
+  /** Astuce d'un calcul malin, sous l'étiquette de difficulté. */
+  private qHint!: Phaser.GameObjects.Text;
+  private hintShown = false;
   private qText!: Phaser.GameObjects.BitmapText;
   private qTokens: Phaser.GameObjects.BitmapText[] = [];
   private qBar!: Phaser.GameObjects.Graphics;
@@ -646,9 +649,10 @@ export class RocketScene extends Phaser.Scene {
     this.qBg = this.add.image(0, 0, 'f-qpanel-facile').setScale(PX);
     // Étiquette de difficulté, juste sous l'encadré.
     this.qTag = this.txt(0, 74, '', style(20, P.W, 5)).setOrigin(0.5);
+    this.qHint = this.txt(0, 116, '', style(30, P.Y, 6)).setOrigin(0.5).setAlpha(0);
     this.qText = this.num(0, -8, '');
     this.qBar = this.add.graphics();
-    this.qPanel.add([this.qBg, this.qTag, this.qText, this.qBar]);
+    this.qPanel.add([this.qBg, this.qTag, this.qHint, this.qText, this.qBar]);
     this.qPanel.setVisible(false);
     fixed(this.txt(84, 14, 'Score', style(22, P.W, 5)).setDepth(60));
     this.scoreText = fixed(this.num(170, 30, '0', 3).setOrigin(0, 0.5).setDepth(60));
@@ -738,10 +742,26 @@ export class RocketScene extends Phaser.Scene {
     this.tintCalc(null);
   }
 
+  /** Montre l'astuce du calcul malin en cours (Minecraftia n'a pas le signe − : tiret simple). */
+  private showHint(astuce = this.session?.question?.expr.astuce): void {
+    if (this.hintShown || !astuce) return;
+    this.hintShown = true;
+    this.qHint.setText(`Astuce : ${astuce.replace(/−/g, '-')}`);
+    if (this.reducedMotion) this.qHint.setAlpha(1);
+    else this.tweens.add({ targets: this.qHint, alpha: { from: 0, to: 1 }, y: { from: 106, to: 116 }, duration: 300, ease: 'Sine.easeOut' });
+  }
+
+  private hideHint(): void {
+    this.hintShown = false;
+    this.tweens.killTweensOf(this.qHint);
+    this.qHint.setAlpha(0).setY(116);
+  }
+
   private drawTimer(): void {
     const q = this.session?.question;
     this.qBar.clear();
     if (!q) return;
+    if (!this.hintShown && astuceVisible(q)) this.showHint();
     const k = Phaser.Math.Clamp(q.left / q.time, 0, 1);
     const w = 352;
     const blocks = Math.ceil((w * k) / 8);
@@ -899,8 +919,9 @@ export class RocketScene extends Phaser.Scene {
     if (r.kind === 'wrong') {
       this.sfx.buzz();
       this.setFace('peur', 700);
-      // On montre la bonne réponse : on apprend aussi en se trompant.
+      // On montre la bonne réponse : on apprend aussi en se trompant (et l'astuce, pour la prochaine fois).
       this.setCalc(`${q.expr.text} = ${r.expected}`);
+      this.showHint();
       this.tintCalc(P.r);
       this.qBar.clear();
       if (!this.reducedMotion) this.tweens.add({ targets: this.qPanel, x: { from: W / 2 - 12, to: W / 2 }, duration: 400, ease: 'Elastic.easeOut' });
@@ -908,6 +929,7 @@ export class RocketScene extends Phaser.Scene {
       return;
     }
     // Bonne réponse : poussée !
+    this.hideHint();
     this.setCalc(`${q.expr.text} = ${q.expr.answer}`);
     this.tintCalc(P.L);
     this.qBar.clear();
@@ -1010,6 +1032,7 @@ export class RocketScene extends Phaser.Scene {
         const look = GRADE_LOOK[ev.q.grade];
         this.qGrade = ev.q.grade;
         this.qTag.setText(look.label).setColor(look.text);
+        this.hideHint();
         this.qPanel.setVisible(true);
         this.qPanel.setScale(1).setX(W / 2);
         this.refreshQuestion();
@@ -1019,6 +1042,7 @@ export class RocketScene extends Phaser.Scene {
       case 'timeout':
         this.sfx.timeout();
         this.setCalc(`${ev.q.expr.text} = ${ev.q.expr.answer}`);
+        this.showHint(ev.q.expr.astuce);
         this.tintCalc(P.g);
         this.qBar.clear();
         this.loseHeart(ev.lifeLost);

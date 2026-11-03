@@ -98,6 +98,9 @@ pas forcément maîtrisé à la fin : le jeu en tient compte en plaçant les acq
   entre 3 et 20 s.
 - **Aucun indice qui fait le calcul**, à une exception voulue par Philippe : au CP, Neon Flight montre les groupements
   (`3 × 2` dessiné en deux groupes de trois points), parce qu'au CP la multiplication est d'abord un dénombrement de groupes.
+- **Calculs malins** (03/11/2026, `doc/ASTUCES_CALCUL_MENTAL.md`) : les familles qui se font avec une méthode
+  (`× 5`, `+ 99`, `13 × 7`…) portent une **astuce** qui met sur la piste sans donner la réponse, et reçoivent un tiers
+  de temps en plus (`TEMPS_MALIN`). Décollage ! affiche l'astuce 1,5 s après le calcul.
 
 ## 4. La grille commune (calcul mental varié)
 
@@ -175,7 +178,6 @@ plafonne et laisse respirer).
 
 ## 8. Pour plus tard
 
-- **Rubrique « Techniques de calcul mental »** (chantier séparé, idée de Philippe) : astuces pour multiplier par 11,
-  12, 25, 50, par 4 et 8 (doubler deux ou trois fois), par 5 (× 10 puis moitié), ajouter 9 ou 99, décomposer
-  (`13 × 7 = 70 + 21`). Les procédures du programme citées ci-dessus en donnent le plan.
+- **Rubrique « Astuces de calcul mental »** (idée de Philippe) : proposition détaillée (structure, fiches,
+  personnage) dans `doc/ASTUCES_CALCUL_MENTAL.md` § 2.
 - Décimaux et fractions dans les jeux du CM (clavier avec virgule).

@@ -131,6 +131,13 @@ export interface Question {
   left: number;
 }
 
+/**
+ * Secondes avant que l'astuce d'un calcul malin (× 5, + 99, 13 × 7…) s'affiche sous l'encadré : qui connaît sa
+ * méthode répond sans la voir, qui hésite la découvre. Le temps du calcul malin est déjà plus large (TEMPS_MALIN).
+ */
+export const ASTUCE_APRES = 1.5;
+export const astuceVisible = (q: Question): boolean => !!q.expr.astuce && q.time - q.left >= ASTUCE_APRES;
+
 export interface Rocket {
   x: number;
   y: number;

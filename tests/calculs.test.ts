@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ASTUCES,
   CALCULS_AVANT_PLATEAU,
   EXEMPLES,
   GRILLE,
   OPERATIONS,
   PART_PLATEAU,
+  TEMPS_MALIN,
   TirageCalculs,
   tempsDeReflexion,
   tirerCalcul,
@@ -150,5 +152,56 @@ describe('progression dans une partie', () => {
     }
     const simple = tirerCalcul('cp', 1, createRng(1));
     expect(tempsDeReflexion(simple, 'cp')).toBeGreaterThan(tempsDeReflexion({ ...simple }, 'aventurier'));
+  });
+});
+
+describe('calculs malins : astuce et temps en plus', () => {
+  const nomsDeLaGrille = new Set(NIVEAUX.flatMap((n) => GRILLE[n].map((f) => f.nom)));
+
+  it('chaque astuce correspond à une famille de la grille (un renommage ne la perd pas en silence)', () => {
+    for (const nom of Object.keys(ASTUCES)) expect(nomsDeLaGrille, nom).toContain(nom);
+  });
+
+  it('l’astuce ne donne jamais la réponse, et presque chaque calcul d’une famille maline en a une', () => {
+    const rng = createRng(31);
+    for (const niveau of NIVEAUX) {
+      const parFamille = new Map<string, [number, number]>();
+      for (let k = 0; k < 9000; k++) {
+        const c = tirerCalcul(niveau, PALIERS[k % 3], rng);
+        if (!(c.famille in ASTUCES)) {
+          expect(c.astuce, `${niveau} : ${c.text} (calcul automatique)`).toBeUndefined();
+          continue;
+        }
+        const compte = parFamille.get(c.famille) ?? [0, 0];
+        compte[0]++;
+        if (c.astuce) {
+          compte[1]++;
+          const nombres = (c.astuce.match(/\d+/g) ?? []).map(Number);
+          expect(nombres, `${c.text} → ${c.astuce}`).not.toContain(c.answer);
+          expect(c.astuce.length, c.astuce).toBeLessThanOrEqual(48);
+        }
+        parFamille.set(c.famille, compte);
+      }
+      // Les doubles jusqu'à 20 (6 + 6, 2 × 14) sont des faits à mémoriser : sans astuce.
+      for (const [famille, [vus, avec]] of parFamille) if (famille !== 'double') expect(avec / vus, `${niveau} : ${famille}`).toBeGreaterThan(0.5);
+    }
+  });
+
+  it('exemples de Philippe : 147 × 5 et 25 × 8 reçoivent leur astuce et plus de temps', () => {
+    const avec = (texte: string): Calcul | undefined => {
+      const rng = createRng(5);
+      for (let k = 0; k < 200_000; k++) {
+        const niveau = k % 2 ? 'cm1' : 'cm2';
+        const c = tirerCalcul(niveau, 2, rng);
+        if (c.text === texte) return c;
+      }
+      return undefined;
+    };
+    const fois5 = avec('147 × 5') ?? avec('5 × 147');
+    expect(fois5?.astuce).toBe('× 5, c’est la moitié de × 10');
+    const fois25 = avec('25 × 8') ?? avec('8 × 25');
+    expect(fois25?.astuce).toBe('4 × 25 = 100');
+    const sansAstuce = { ...fois5!, astuce: undefined };
+    expect(tempsDeReflexion(fois5!, 'cm1') / tempsDeReflexion(sansAstuce, 'cm1')).toBeCloseTo(TEMPS_MALIN);
   });
 });

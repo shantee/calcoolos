@@ -28,7 +28,9 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 - **Arcade et addictif, mais au service du calcul.** Réfléchir fait progresser ; bien jouer permet de rester en vie.
 - **Pas d'indices qui font le calcul à la place de l'enfant.** Exemple : la somme en cours n'est jamais affichée dans
   Cubes de siège (« 6 + 5 = ? »), le total du ventre du dragon non plus. En cas d'erreur, on peut montrer la bonne
-  réponse **après coup** (on apprend en se trompant), jamais avant.
+  réponse **après coup** (on apprend en se trompant), jamais avant. Exception voulue (03/11/2026) : un calcul
+  « malin » peut montrer une **astuce de méthode** qui ne contient pas la réponse (« × 5, c'est la moitié de × 10 »),
+  voir `doc/ASTUCES_CALCUL_MENTAL.md`.
 - **Une erreur coûte peu** (la série, un peu de temps), jamais une humiliation. Deux modes partout : **Tranquille**
   (rien à perdre, plus lent) et **Défi** (cœurs, chrono).
 - **Aide en deux phrases** sur l'accueil et dans l'écran de début de chaque jeu.

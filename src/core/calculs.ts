@@ -32,6 +32,11 @@ export interface Calcul {
   effort: number;
   /** Famille d'origine (tests et relevés). */
   famille: string;
+  /**
+   * Calcul « malin » (il se fait avec une méthode, pas par cœur) : l'astuce qui met sur la piste, sans la réponse,
+   * par exemple « × 5, c’est la moitié de × 10 ». Absente pour un calcul automatique (fait de table, + 10…).
+   */
+  astuce?: string;
 }
 
 /** Plus grande réponse et plus grand nombre affiché : les claviers des jeux acceptent trois chiffres. */
@@ -241,6 +246,132 @@ export const GRILLE: Record<TierId, readonly Famille[]> = {
   ],
 };
 
+// ---------------------------------------------------------------- astuces des calculs malins
+
+type Pose = NonNullable<Brut>;
+type Astuce = (p: Pose) => string | undefined;
+
+const dizaineSup = (n: number): number => Math.ceil(n / 10) * 10;
+const dizaineInf = (n: number): number => Math.floor(n / 10) * 10;
+
+/** + 19 : + 20 puis − 1 ; − 29 : − 30 puis + 1 (aussi + 98, + 49…). */
+const parLeRond: Astuce = (p) => {
+  const k = p.b;
+  const e = dizaineSup(k) - k;
+  if (e < 1 || e > 2) return undefined;
+  return p.op === '+' ? `+ ${k}, c’est + ${k + e} puis − ${e}` : `− ${k}, c’est − ${k + e} puis + ${e}`;
+};
+/** 47 + 8 : passe par 50 ; 523 − 7 : passe par 520. */
+const passeParLaDizaine: Astuce = (p) => `passe par ${p.op === '+' ? dizaineSup(p.a + 1) : dizaineInf(p.a)}`;
+/** 746 + 80 : + 100 puis − 20. */
+const plusCent: Astuce = (p) => (p.b < 100 ? `+ ${p.b}, c’est + 100 puis − ${100 - p.b}` : undefined);
+/** 13 × 7 : 10 × 7 + 3 × 7 ; 21 × 35 : 20 × 35 + 35 (on coupe le facteur aux unités les plus petites). */
+const decomposer: Astuce = (p) => {
+  const coupables = [p.a, p.b].filter((n) => n > 10 && n % 10 !== 0).sort((x, y) => x % 10 - (y % 10) || x - y);
+  const m = coupables[0];
+  if (m === undefined) return undefined;
+  const k = m === p.a ? p.b : p.a;
+  const u = m % 10;
+  return u === 1 ? `${m - 1} × ${k} + ${k}` : `${m - u} × ${k} + ${u} × ${k}`;
+};
+/** 2 × 35 : double 30, puis double 5. */
+const doubler: Astuce = (p) => {
+  if (p.op !== '×') return undefined;
+  const n = p.a === 2 ? p.b : p.a;
+  const haut = n >= 100 ? Math.floor(n / 100) * 100 : dizaineInf(n);
+  return n > 20 && haut > 0 && n > haut ? `double ${haut}, puis double ${n - haut}` : undefined;
+};
+const foisQuatreOuHuit: Astuce = (p) => (Math.min(p.a, p.b) === 4 ? '× 4, c’est doubler deux fois' : '× 8, c’est doubler trois fois');
+const vingtCinqOuCinquante: Astuce = (p) => (p.a === 50 || p.b === 50 ? '× 50, c’est la moitié de × 100' : '4 × 25 = 100');
+/** 9 × 40 : 9 × 4, puis × 10. */
+const chiffreFoisDizaines: Astuce = (p) => {
+  const g = Math.max(p.a, p.b);
+  const c = Math.min(p.a, p.b);
+  return g % 100 === 0 ? `${c} × ${g / 100}, puis × 100` : `${c} × ${g / 10}, puis × 10`;
+};
+/** 84 ÷ 7 : 70 ÷ 7 + 14 ÷ 7. */
+const diviserEnMorceaux: Astuce = (p) => {
+  const d = p.b;
+  const gros = Math.floor(p.a / (10 * d)) * 10 * d;
+  if (gros === 0) return undefined;
+  return gros === p.a ? `${p.a / 10} ÷ ${d}, puis × 10` : `${gros} ÷ ${d} + ${p.a - gros} ÷ ${d}`;
+};
+/** 346 ÷ 2 : moitié de 300, puis moitié de 46. */
+const moitieEnMorceaux: Astuce = (p) => {
+  const haut = Math.floor(p.a / 100) * 100;
+  return haut > 0 && p.a > haut ? `moitié de ${haut}, puis moitié de ${p.a - haut}` : undefined;
+};
+const fixe = (texte: string): Astuce => () => texte;
+
+/**
+ * Familles malines, par nom (`GRILLE`) : celles qui se font avec une méthode de calcul mental. Les autres (faits de
+ * table, + 10, dizaines entières…) restent des calculs automatiques, sans astuce ni temps en plus.
+ */
+export const ASTUCES: Readonly<Record<string, Astuce>> = {
+  // CP
+  'table d’addition avec passage de dizaine': passeParLaDizaine,
+  'deux chiffres + un chiffre, avec retenue': passeParLaDizaine,
+  'soustraction ≤ 20 avec passage de dizaine': passeParLaDizaine,
+  'dizaine − unités': (p) => `pense à 10 − ${p.b}`,
+  '+ 9': parLeRond,
+  'deux nombres < 100': fixe('les dizaines d’abord, puis les unités'),
+  // CE1
+  'multiples de 25': fixe('compte de 25 en 25'),
+  double: doubler,
+  '+ 9, + 19, + 29': parLeRond,
+  '− 9': parLeRond,
+  'soustraire un chiffre en passant la dizaine': passeParLaDizaine,
+  'deux nombres à deux chiffres, avec retenue': fixe('les dizaines d’abord, puis les unités'),
+  '+ dizaines avec retenue': plusCent,
+  '11 à 19 × un chiffre (distributivité)': decomposer,
+  // CE2
+  '+ 8, 9, 18, 19, 28, 29, 38, 39': parLeRond,
+  '− 9, 19, 29, 39': parLeRond,
+  'trois chiffres + deux chiffres': fixe('ajoute d’abord les dizaines'),
+  '× 4 ou × 8 (doubler)': foisQuatreOuHuit,
+  'un chiffre × dizaines': chiffreFoisDizaines,
+  'deux chiffres × un chiffre (distributivité)': decomposer,
+  // CM1
+  '± dizaines avec retenue': plusCent,
+  '± 8, 9, 18, 19… 39': parLeRond,
+  'un chiffre × dizaines ou centaines': chiffreFoisDizaines,
+  '× 5 (× 10 puis moitié)': fixe('× 5, c’est la moitié de × 10'),
+  '× 4 ou × 8': foisQuatreOuHuit,
+  'multiples de 25 et 50': vingtCinqOuCinquante,
+  'distributivité (21 × 35)': decomposer,
+  'deux chiffres × un chiffre': decomposer,
+  'trois chiffres + trois chiffres': fixe('centaines, puis dizaines, puis unités'),
+  'division avec quotient jusqu’à 12': diviserEnMorceaux,
+  // CM2
+  '± 98, 99, 49… (passer par le rond)': parLeRond,
+  '× 50': fixe('× 50, c’est la moitié de × 100'),
+  '× 25': fixe('4 × 25 = 100'),
+  'dizaines × dizaines': (p) => `${p.a / 10} × ${p.b / 10}, puis × 100`,
+  '÷ 4 ou ÷ 8 (moitié de la moitié)': (p) => (p.b === 4 ? '÷ 4, c’est la moitié de la moitié' : '÷ 8, c’est trois fois la moitié'),
+  '× 5 d’un grand nombre': fixe('× 5, c’est la moitié de × 10'),
+  'distributivité (12 × 42)': decomposer,
+  'trois chiffres − trois chiffres': fixe('enlève d’abord les centaines'),
+  'moitié d’un nombre pair': moitieEnMorceaux,
+  // Aventurier
+  'tables de 11 et 12': decomposer,
+  '× 25 ou × 50': vingtCinqOuCinquante,
+  '13 à 19 × un chiffre': decomposer,
+  '× 25 d’un nombre à deux chiffres': fixe('4 × 25 = 100'),
+  '× 50 d’un nombre à deux chiffres': fixe('× 50, c’est la moitié de × 100'),
+  carrés: decomposer,
+  'deux nombres de 11 à 19': decomposer,
+  'trois facteurs avec 25': (p) => `commence par ${p.a} × 25`,
+  '× 99 ou × 11': (p) => (p.a === 99 || p.b === 99 ? `100 × ${p.a === 99 ? p.b : p.a} − ${p.a === 99 ? p.b : p.a}` : decomposer(p)),
+  'trois chiffres ÷ un chiffre': diviserEnMorceaux,
+};
+
+/** L'astuce ne doit jamais contenir la réponse (25 × 4 avec « 4 × 25 = 100 » : pas d'astuce). */
+function astuceDe(nom: string, p: Pose): string | undefined {
+  const a = ASTUCES[nom]?.(p);
+  if (!a) return undefined;
+  return (a.match(/\d+/g) ?? []).map(Number).includes(p.answer) ? undefined : a;
+}
+
 // ---------------------------------------------------------------- tirage
 
 /** Un calcul valide de la famille (réessaie tant qu'un tirage sort des règles). */
@@ -250,7 +381,10 @@ function depuis(fam: Famille, r: Rng): Calcul | null {
     if (!b) continue;
     if (!Number.isInteger(b.answer) || b.answer < 1 || b.answer > MAX_REPONSE) continue;
     if (b.nombres.some((n) => !Number.isInteger(n) || n < 0 || n > MAX_REPONSE)) continue;
-    return { text: b.text, answer: b.answer, op: b.op, a: b.a, b: b.b, ops: b.ops, palier: fam.palier, effort: fam.effort, famille: fam.nom };
+    const c: Calcul = { text: b.text, answer: b.answer, op: b.op, a: b.a, b: b.b, ops: b.ops, palier: fam.palier, effort: fam.effort, famille: fam.nom };
+    const astuce = astuceDe(fam.nom, b);
+    if (astuce) c.astuce = astuce;
+    return c;
   }
   return null;
 }
@@ -367,8 +501,10 @@ export class TirageCalculs {
  * pour les plus jeunes. Les jeux appliquent ensuite leur propre réglage (mode Tranquille, altitude…).
  */
 export const LARGESSE: Record<TierId, number> = { cp: 1.6, ce1: 1.45, ce2: 1.3, cm1: 1.2, cm2: 1.12, aventurier: 1 };
+/** Un calcul malin laisse le temps d'appliquer sa méthode (et de lire l'astuce) : un bon tiers de temps en plus. */
+export const TEMPS_MALIN = 1.35;
 export function tempsDeReflexion(c: Calcul, niveau: TierId): number {
-  return (2 + 1.5 * c.effort) * LARGESSE[niveau];
+  return (2 + 1.5 * c.effort) * LARGESSE[niveau] * (c.astuce ? TEMPS_MALIN : 1);
 }
 
 /** Exemple représentatif d'un niveau (fenêtre de choix, documentation). */
