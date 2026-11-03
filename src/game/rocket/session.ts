@@ -195,13 +195,26 @@ export interface RocketStats {
 }
 
 /**
+ * Secondes en plus selon la couleur du calcul, dans les classes où le jeu s'est montré trop serré. CM2 (Philippe,
+ * 03/11/2026) : orange + 3 s, rouge + 4 s, et + 5 s pour les rouges les plus longs (effort ≥ 5 : 12 × 42,
+ * (7 × 8) + 23…). Les verts ne changent pas.
+ */
+export const BONUS_COULEUR: Partial<Record<TierId, Record<Palier, number>>> = { cm2: { 1: 0, 2: 3, 3: 4 } };
+const bonusCouleur = (e: Expression, tier: TierId): number => {
+  const b = BONUS_COULEUR[tier]?.[e.palier] ?? 0;
+  return b > 0 && e.palier === 3 && e.effort >= 5 ? b + 1 : b;
+};
+/** Plus long temps accordé à un calcul (s). */
+export const TEMPS_MAX = 25;
+
+/**
  * Temps accordé pour un calcul : la réflexion qu'il demande dans la classe choisie (core/calculs.ts), un peu moins
- * en altitude, une seconde de plus pour tout le monde et deux en Tranquille.
+ * en altitude, une seconde de plus pour tout le monde et deux en Tranquille, plus le bonus de couleur de la classe.
  */
 export function timeFor(e: Expression, tier: TierId, mode: Mode, altitude: number): number {
   const height = 1 - 0.15 * Math.min(1, altitude / SUMMIT);
-  const extra = mode === 'tranquille' ? 2 : 1;
-  return Math.round(Math.min(20, Math.max(3, tempsDeReflexion(e, tier) * ROCKET_MODES[mode].timeFactor * height + extra)) * 10) / 10;
+  const extra = (mode === 'tranquille' ? 2 : 1) + bonusCouleur(e, tier);
+  return Math.round(Math.min(TEMPS_MAX, Math.max(3, tempsDeReflexion(e, tier) * ROCKET_MODES[mode].timeFactor * height + extra)) * 10) / 10;
 }
 
 export function zoneAt(y: number): number {

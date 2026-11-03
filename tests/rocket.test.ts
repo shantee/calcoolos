@@ -11,6 +11,7 @@ import {
   SUMMIT,
   buildWorld,
   timeFor,
+  TEMPS_MAX,
   zoneAt,
   type Platform,
   type RocketEvent,
@@ -83,7 +84,7 @@ function calcul(niveau: TierId, texte: string): Calcul {
 }
 
 describe('temps de réponse', () => {
-  it('plus court pour les calculs simples, borné entre 3 et 20 s', () => {
+  it('plus court pour les calculs simples, borné entre 3 et 25 s', () => {
     const facile = timeFor(calcul('ce1', '4 + 3'), 'ce1', 'defi', 0);
     const table = timeFor(calcul('ce1', '7 × 8'), 'ce1', 'defi', 0);
     const deux = timeFor(calcul('ce1', '2 × 5'), 'ce1', 'defi', 0);
@@ -98,10 +99,27 @@ describe('temps de réponse', () => {
         for (const mode of ['defi', 'tranquille'] as const) {
           const s = timeFor(c, t, mode, k % 2 ? SUMMIT : 0);
           expect(s).toBeGreaterThanOrEqual(3);
-          expect(s).toBeLessThanOrEqual(20);
+          expect(s).toBeLessThanOrEqual(TEMPS_MAX);
         }
       }
     }
+  });
+
+  it('CM2 : orange + 3 s, rouge + 4 s, rouge le plus long + 5 s, vert inchangé', () => {
+    const rng = createRng(77);
+    const vus = new Set<string>();
+    for (let k = 0; k < 3000; k++) {
+      const c = tirerCalcul('cm2', ((k % 3) + 1) as Palier, rng);
+      const base = timeFor(c, 'cm2', 'defi', 0);
+      const attendu = c.palier === 1 ? 0 : c.palier === 2 ? 3 : c.effort >= 5 ? 5 : 4;
+      const brut = Math.round(Math.min(TEMPS_MAX, timeFor({ ...c, palier: 1 }, 'cm2', 'defi', 0) + attendu) * 10) / 10;
+      expect(base, `${c.text} (palier ${c.palier}, effort ${c.effort})`).toBeCloseTo(brut, 1);
+      vus.add(`${c.palier}-${attendu}`);
+    }
+    expect([...vus].sort()).toEqual(['1-0', '2-3', '3-4', '3-5']);
+    // Les autres classes ne changent pas.
+    const ce2 = tirerCalcul('ce2', 3, createRng(3));
+    expect(timeFor(ce2, 'ce2', 'defi', 0)).toBeCloseTo(timeFor({ ...ce2, palier: 1 }, 'ce2', 'defi', 0), 5);
   });
 
   it('les petits ont plus de temps à calcul égal', () => {

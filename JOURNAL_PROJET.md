@@ -30,6 +30,15 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-03 : Claude, Décollage ! au CM2 : plus de temps pour les calculs orange et rouges
+
+**Demande** : après essai, Philippe trouve le CM2 trop serré : plus de temps aux calculs moyens, encore plus aux
+difficiles, surtout les plus durs (« 4 ou 5 secondes »).
+
+**Fait** : `BONUS_COULEUR` dans `src/game/rocket/session.ts` : au CM2, orange + 3 s, rouge + 4 s, rouge d'effort ≥ 5
+(12 × 42, (7 × 8) + 23…) + 5 s ; verts et autres classes inchangés ; plafond 20 → 25 s (`TEMPS_MAX`). En Défi au sol :
+orange 9,7 → 12,7 s, rouge 10,8 → 14,8 s, distributivité 15,4 → 20,4 s. Test ajouté ; 275 tests verts.
+
 ## 2026-11-03 : Claude, calculs malins : astuce et temps en plus (Décollage !)
 
 **Demande** : Philippe revient sur `147 × 5` (trop dur pour un CM1 en jeu rapide ?) : le garder, car il a une vraie
