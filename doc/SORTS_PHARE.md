@@ -17,3 +17,6 @@ Logique, effets Phaser et tests ajoutés. Compilation de production réussie. Te
 
 ## Prochaines étapes
 Confirmer la sensation de jeu sur une vraie tablette et l'équilibrage avec un enfant ; publier seulement sur demande. Les effets et sons n'ont pas été évalués par un humain.
+
+Validation finale : 271/271 tests passent (délai porté à 30 s pour les gros tests de génération : trois dépassaient les 5 s par défaut). Build réussi. Parcours Chromium tactile avec animations réduites : trois sorts activés, nouvelle solution vérifiée, abscisse identique après 7,5 s de gel puis déplacement après dégel ; aucune erreur JavaScript. Capture : CAPTURES/sorts-phare/tactile.png. Pas d'essai physique sur tablette.
+Commits locaux : be26678, 2b76c4b. L'index général est modifié mais son commit est impossible : .git du dossier parent en lecture seule.

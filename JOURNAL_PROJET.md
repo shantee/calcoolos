@@ -1243,3 +1243,4 @@ Astéroïdes en morceaux, voir `doc/IDEES_JEUX.md`) ; multiplications dans Cubes
 
 ## 03/11/2026 — Codex : trois sorts du phare et équilibrage CM2
 Implémentés localement : Coup de froid 8 s (réutilise la glace existante), Météorite soluble et Indice lumineux optimal ; charges par bonnes réponses, boutons tactiles, effets réduits. CM2 de base limité à 120, vitesse liée à la grille réelle. Détails et reprise : doc/SORTS_PHARE.md. Statut : à confirmer, non publié.
+Validation finale des sorts : 271/271 tests (timeout 30 s), build réussi, parcours Chromium tactile sans erreur, gel immobile puis reprise vérifiée. Commits locaux be26678 / 2b76c4b. Index parent non commitable (.git en lecture seule). Aucune publication ni push.
