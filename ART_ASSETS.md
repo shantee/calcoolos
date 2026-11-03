@@ -33,3 +33,6 @@ l'accueil** (chantier 01, 25/10/2026) **les avatars des profils** (27/10/2026) e
 Les polices sont servies depuis le site lui-même (pas d'appel à Google). Aucun élément n'est copié d'une œuvre
 existante. Les références citées dans le cahier des charges (floor796, Kingdom Rush, Adventure Time) n'ont servi que
 d'inspiration générale.
+
+### Sorts de Panique au phare ! — 03/11/2026
+Trois spritesheets fournies par Philippe : sources-images/phare/sort-1.png (Coup de froid), sort-2.png (Météorite), sort-3.png (Indice lumineux). Chaque planche contient l'état prêt en couleur à gauche et l'état vide en gris à droite. Découpe reproductible : scripts/decouper-sorts.py (Pillow) ; six WebP transparents 144 × 144 dans src/images/phare/, affichés à 64 × 64. Images fournies par Philippe, utilisées à sa demande.

@@ -6,6 +6,8 @@
  * La logique vit dans session.ts / round.ts ; cette scène ne fait que montrer.
  */
 import Phaser from 'phaser';
+
+const SPELL_ART = import.meta.glob('../../images/phare/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 import * as B from '../../art/variant-b';
 import * as Wd from '../../art/world-b';
 import * as Bn from '../../art/bonus-b';
@@ -152,6 +154,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private speedBoost = 1;
 
   // Bonus volants
+  private spellIcons: Phaser.GameObjects.Image[] = [];
   private spellSpent = [0, 0, 0];
   private spellLabels: Phaser.GameObjects.Text[] = [];
   private hintHalo: Phaser.GameObjects.Arc | null = null;
@@ -189,6 +192,14 @@ export class CubesDeSiegeScene extends Phaser.Scene {
 
   constructor() {
     super('cubes-de-siege');
+  }
+
+  preload(): void {
+    for (let i = 1; i <= 3; i++) {
+      for (const state of ['pret', 'vide']) {
+        this.load.image(`sort-${i}-${state}`, SPELL_ART[`../../images/phare/sort-${i}-${state}.webp`]);
+      }
+    }
   }
 
   private tex(key: string, make: () => HTMLCanvasElement): string {
@@ -1457,9 +1468,10 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   }
 
   private refreshSpells(): void {
-    const names = ['❄ Coup de froid', '☄ Météorite', '✦ Indice lumineux'];
+    const names = ['Coup de froid', 'Météorite', 'Indice lumineux'];
     this.spellLabels.forEach((label, i) => {
       const n = this.spellCharges(i);
+      this.spellIcons[i].setTexture(`sort-${i + 1}-${n > 0 ? 'pret' : 'vide'}`);
       label.parentContainer.setVisible(!this.keypadShown);
       const every = [8, 6, 4][i];
       const left = every - (this.session?.stats.hits ?? 0) % every;
@@ -1516,12 +1528,14 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   }
 
   private buildBonusUi(): void {
-    ['❄', '☄', '✦'].forEach((_, i) => {
+    [0, 1, 2].forEach((i) => {
       const x = 738 + i * 190;
       const box = this.add.container(x, 650).setDepth(60);
       const bg = this.add.rectangle(0, 0, 176, 80, 0x202b48, 0.95).setStrokeStyle(2, [0x98eaff, 0xffb56a, 0xffe994][i]);
-      const label = this.add.text(0, 0, '', style(18, B.C.cream, 800)).setOrigin(0.5).setAlign('center');
-      box.add([bg, label]);
+      const icon = this.add.image(-52, 0, `sort-${i + 1}-pret`).setDisplaySize(64, 64);
+      const label = this.add.text(32, 0, '', style(14, B.C.cream, 800)).setOrigin(0.5).setAlign('center');
+      box.add([bg, icon, label]);
+      this.spellIcons.push(icon);
       box.setSize(176, 80).setInteractive({ useHandCursor: true });
       box.on('pointerdown', () => { this.sfx.unlock(); this.castSpell(i); });
       this.spellLabels.push(label);
