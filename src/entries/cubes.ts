@@ -7,7 +7,7 @@ import { CubesDeSiegeScene, W, H } from '../game/siege/game-scene';
 import { maxTextures } from '../game/render-config';
 import { installerPleinEcran } from '../game/plein-ecran';
 import { demarrerSuivi } from '../platform/suivi';
-import { exigerJoueur } from '../platform/acces';
+import { reglerJoueur } from '../platform/acces';
 
 demarrerSuivi('cubes');
 
@@ -35,5 +35,5 @@ async function start(): Promise<void> {
   installerPleinEcran(game, { droite: 1268, milieu: 688 });
 }
 
-// Plus de mode invité : sans compte ni profil, la page part vers la connexion et le jeu ne démarre pas.
-void exigerJoueur().then(start);
+// Jouer est libre : on règle seulement qui joue (sans compte, partie anonyme, rien n'est enregistré).
+void reglerJoueur().then(start);

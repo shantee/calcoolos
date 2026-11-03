@@ -1,14 +1,11 @@
 /**
- * Accès aux jeux (03/11/2026) : plus de mode invité, il faut un compte et un profil pour jouer.
+ * Accès aux jeux : jouer est libre, le compte est facultatif (03/11/2026). `reglerJoueur()` dit seulement qui joue ;
+ * sans compte, la partie est anonyme et rien n'est enregistré.
  *
- * - `exigerJoueur()` garde chaque page de jeu, y compris ouverte directement par son adresse : sans compte, on part
- *   vers la connexion (ou l'inscription) avec `?retour=` ; après connexion, Mon espace ramène au jeu demandé.
- * - `retourSur()` ne laisse revenir que vers l'accueil ou une page de jeu du site (jamais une adresse extérieure).
- *
- * Serveur injoignable : on ne bloque pas un joueur déjà choisi sur cet appareil (ses résultats partent plus tard,
- * file d'attente de results.ts) ; sans joueur, on l'envoie vers Mon espace, qui explique la panne.
+ * `retourSur()` / `destinationApresConnexion()` : un lien « Se connecter » peut porter `?retour=` (accueil ou page de
+ * jeu du site seulement, jamais une adresse extérieure) ; Mon espace y ramène après connexion.
  */
-import { accountState, siteRoot, type AccountState } from './api';
+import { accountState, siteRoot } from './api';
 import { activePlayer, joueurParDefaut, setActivePlayer, syncActivePlayer } from './player';
 
 /** Pages vers lesquelles on peut revenir après connexion : l'accueil ou un jeu, avec leurs paramètres. */
@@ -34,41 +31,20 @@ export function pageCourante(): string {
   return `${chemin}${window.location.search}`;
 }
 
-export type Acces =
-  | { ok: true; etat: AccountState | null }
-  | { ok: false; vers: string };
-
 /**
- * Décision pure (testée) : peut-on jouer ? `etat` null = serveur injoignable.
- * Un compte sans joueur choisi prend le joueur par défaut (titulaire, ou profil unique) ; s'il faut choisir ou créer
- * un profil, on part vers Mon espace, qui ramènera au jeu.
+ * Avant de lancer un jeu : règle qui joue, sans jamais bloquer. Jouer est libre (03/11/2026, correction) :
+ * - compte connecté : son joueur (ou le titulaire, ou le profil unique) ; partie suivie ;
+ * - visiteur sans compte : partie anonyme, rien n'est enregistré (un joueur resté d'une ancienne session est oublié) ;
+ * - serveur injoignable : on garde le joueur déjà choisi (ses résultats partiront plus tard).
  */
-export function decider(etat: AccountState | null, joueur: { id: number } | null, retour: string): Acces {
-  if (etat === null) return joueur ? { ok: true, etat } : { ok: false, vers: lienCompte(retour) };
-  if (!etat.connecte) return { ok: false, vers: lienCompte(retour) };
-  const profils = etat.profils ?? [];
-  if (joueur && profils.some((p) => p.id === joueur.id)) return { ok: true, etat };
-  const defaut = joueurParDefaut(profils);
-  if (defaut) return { ok: true, etat };
-  return { ok: false, vers: `${siteRoot()}compte.html?retour=${encodeURIComponent(retourSur(retour) ?? 'index.html')}` };
-}
-
-/**
- * Garde d'une page de jeu : `true` si l'on peut jouer (le joueur actif est alors réglé), sinon la page part vers la
- * connexion et la promesse ne se résout jamais (le jeu ne démarre pas).
- */
-export async function exigerJoueur(): Promise<boolean> {
+export async function reglerJoueur(): Promise<void> {
   const etat = await accountState();
-  const d = decider(etat, activePlayer(), pageCourante());
-  if (!d.ok) {
-    window.location.replace(d.vers);
-    return new Promise<boolean>(() => {});
-  }
   if (etat?.connecte) {
     syncActivePlayer(etat.profils);
     if (!activePlayer()) setActivePlayer(joueurParDefaut(etat.profils));
+  } else if (etat) {
+    setActivePlayer(null);
   }
-  return true;
 }
 
 /**

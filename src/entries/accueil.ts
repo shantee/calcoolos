@@ -8,8 +8,7 @@ import { logo } from '../platform/logo';
 import { motsVifs } from '../platform/mots-vifs';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
-import { flushQueue, lastGame, type StoredResult } from '../platform/results';
-import { lienCompte } from '../platform/acces';
+import { flushQueue, type StoredResult } from '../platform/results';
 import { EXEMPLES_PAR_JEU, NIVEAU_INFOS, estNiveau, familleDuJeu, niveauDepart, niveauRetenu, retenirNiveau } from '../platform/niveau';
 import { monterManege, type Manege } from '../platform/manege';
 import { basculerFavori, lireFavoris, masquerPresentations, ordonnerJeux, presentationsMasquees } from '../platform/favoris';
@@ -29,9 +28,6 @@ const calmeUrl = new URLSearchParams(window.location.search).has('calme');
 const calme = calmeUrl || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let etat: AccountState | null | undefined;
-/** Se résout avec la réponse du serveur : un clic sur « Jouer » avant elle l'attend (compte ou visiteur ?). */
-let etatConnu: (e: AccountState | null) => void = () => {};
-const etatPret = new Promise<AccountState | null>((r) => (etatConnu = r));
 /** Dernier niveau choisi : proposé d'office au lancement d'un jeu. Rien pour un nouveau venu. */
 let niveauActuel: TierId | null = null;
 let leManege: Manege | null = null;
@@ -121,52 +117,18 @@ document.addEventListener('click', (e) => {
   const a = (e.target as Element).closest<HTMLAnchorElement>('a[data-jeu]:not([data-sans-choix])');
   if (!a || !dialogue?.showModal) return;
   e.preventDefault();
-  void (async () => {
-    // Plus de mode invité : sans compte, on propose d'abord de s'inscrire ou de se connecter.
-    if (!peutJouer(etat === undefined ? await etatPret : etat)) proposerCompte(a);
-    else ouvrirChoix(a);
-  })();
+  // Jouer est libre : avec ou sans compte, on choisit sa difficulté et on joue.
+  ouvrirChoix(a);
 });
 
-/** Peut-on lancer un jeu d'ici ? Compte connecté, ou serveur injoignable avec un joueur déjà choisi sur l'appareil. */
-function peutJouer(e: AccountState | null): boolean {
-  return !!e?.connecte || (e === null && activePlayer() !== null);
-}
-
-/** Nom du jeu d'un lien de lancement (vitrine ou tuile). */
+/** Nom du jeu d'un lien de lancement (vitrine, tuile ou grande présentation). */
 function nomDuJeu(a: HTMLAnchorElement): string {
-  return a.closest('.vitrine')?.querySelector('h2')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
+  return a.closest('.vitrine, .presentation')?.querySelector('h2, h3')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
 }
 
 /** « decollage » pour un lien vers jeu/decollage.html. */
 function slugDuJeu(a: HTMLAnchorElement): string | null {
   return /\/jeu\/([a-z0-9-]+)\.html$/.exec(new URL(a.href).pathname)?.[1] ?? null;
-}
-
-const compteRequis = document.querySelector<HTMLDialogElement>('#compte-requis');
-compteRequis?.addEventListener('click', (e) => {
-  if (e.target === compteRequis) compteRequis.close();
-});
-
-/** Visiteur : la fenêtre « crée ton compte ou connecte-toi », qui ramènera au choix du niveau de ce jeu. */
-function proposerCompte(a: HTMLAnchorElement): void {
-  if (!compteRequis?.showModal) {
-    window.location.href = lienCompte(retourVers(a), 'inscription');
-    return;
-  }
-  compteRequis.querySelector('#compte-requis-jeu')?.replaceChildren(nomDuJeu(a));
-  const retour = retourVers(a);
-  compteRequis.querySelector<HTMLAnchorElement>('#compte-requis-inscription')?.setAttribute('href', lienCompte(retour, 'inscription'));
-  compteRequis.querySelector<HTMLAnchorElement>('#compte-requis-connexion')?.setAttribute('href', lienCompte(retour, 'connexion'));
-  compteRequis.showModal();
-  compteRequis.querySelector<HTMLElement>('#compte-requis-inscription')?.focus();
-}
-
-/** Après connexion, retour à l'accueil sur ce jeu, fenêtre du niveau ouverte (`index.html?jouer=decollage`). */
-function retourVers(a: HTMLAnchorElement): string {
-  const slug = slugDuJeu(a);
-  const calmeQ = calmeUrl ? '&calme' : '';
-  return slug ? `index.html?jouer=${slug}${calmeQ}` : 'index.html';
 }
 
 /** La fenêtre du choix de la difficulté, pour ce lien de lancement. */
@@ -198,7 +160,6 @@ function reprendreLancement(): void {
   if (slug === null) return;
   url.searchParams.delete('jouer');
   history.replaceState(history.state, '', url.toString());
-  if (!peutJouer(etat ?? null)) return;
   const a = [...document.querySelectorAll<HTMLAnchorElement>('.vitrine a.jouer[data-jeu]')].find((l) => slugDuJeu(l) === slug);
   if (!a) return;
   const vitrines = [...document.querySelectorAll('.vitrine')];
@@ -356,8 +317,6 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
   if (reprise) {
     const record = records.get(reprise.id) ?? 0;
     // « Reprendre » relance au niveau de la dernière partie, sans repasser par le choix.
-    // Sur un autre appareil, seul le serveur connaît le dernier jeu : le manège s'y place aussi.
-    if (!window.location.hash) leManege?.aller(jeux.indexOf(reprise));
     const lien = new URL(reprise.href, window.location.href);
     // Dernière partie jouée à un ancien niveau à piments : pas de classe devinée, la fenêtre de choix s'ouvre.
     const connu = estNiveau(dernier.niveau);
@@ -415,7 +374,7 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
   apply();
 }
 
-/** Le manège : il s'ouvre sur le jeu de l'adresse (#jeu-neon), sinon sur le dernier joué. */
+/** Le manège : il s'ouvre sur le jeu de l'adresse (#jeu-neon), sinon toujours sur Décollage ! (souhait de Philippe). */
 function manege(): Manege | null {
   const racine = document.querySelector<HTMLElement>('#jeux');
   if (!racine) return null;
@@ -425,7 +384,7 @@ function manege(): Manege | null {
   return monterManege(racine, {
     calme,
     leger: appareilModeste(),
-    depart: voulu >= 0 ? voulu : Math.max(indexDe(`jeu-${lastGame()?.jeu ?? ''}`), 0),
+    depart: voulu >= 0 ? voulu : Math.max(indexDe('jeu-fusee'), 0),
     surChangement: (v) => changerAmbiance(v.dataset.univers ?? ''),
   });
 }
@@ -477,7 +436,34 @@ function pointer(): void {
   }
 }
 
+/**
+ * Les grandes présentations des six jeux, sous le manège : illustration, titre, description, particularités et
+ * « Jouer ». Recopiées des vitrines (une seule source de texte dans index.html) avant que le manège ne les prenne.
+ */
+function presentations(): void {
+  const racine = document.querySelector<HTMLElement>('#presentations');
+  if (!racine) return;
+  for (const v of document.querySelectorAll<HTMLElement>('#jeux .vitrine')) {
+    const img = v.querySelector('.vitrine-image img')?.cloneNode(true) as HTMLImageElement | undefined;
+    const texte = v.querySelector('.vitrine-texte')?.cloneNode(true) as HTMLElement | undefined;
+    if (!img || !texte) continue;
+    img.removeAttribute('fetchpriority');
+    img.loading = 'lazy';
+    img.sizes = '(min-width: 900px) 520px, 92vw';
+    texte.className = 'presentation-texte';
+    for (const el of texte.querySelectorAll('[id]')) el.removeAttribute('id');
+    const titre = texte.querySelector('h2');
+    if (titre) titre.replaceWith(h('h3', {}, titre.textContent ?? ''));
+    const lien = texte.querySelector<HTMLAnchorElement>('a.jouer');
+    if (lien) lien.classList.add('jouer-presentation');
+    racine.append(h('article', { class: 'presentation', 'data-univers': v.dataset.univers ?? '', style: `--accent: ${getComputedStyle(v).getPropertyValue('--accent').trim() || 'var(--safran)'}` },
+      h('figure', { class: 'presentation-image' }, img),
+      texte));
+  }
+}
+
 document.documentElement.classList.toggle('calme', calme);
+presentations();
 leManege = manege();
 window.addEventListener('hashchange', () => {
   const i = [...document.querySelectorAll('.vitrine')].findIndex((v) => `#${v.id}` === window.location.hash);
@@ -487,7 +473,6 @@ pointer();
 
 void (async () => {
   etat = await topbar('accueil');
-  etatConnu(etat);
   if (etat?.connecte) {
     renderPlayers(etat.profils ?? []);
     const p = activePlayer();

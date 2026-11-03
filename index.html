@@ -269,14 +269,18 @@
         </section>
       </div>
 
+      <!-- Les grandes présentations des six jeux, recopiées des vitrines par accueil.ts (sans script : les vitrines
+           restent l'une sous l'autre et suffisent). -->
+      <section class="presentations" id="presentations" aria-label="Les six jeux en détail"></section>
+
       <!-- Le carnet : ce qu'apporte un compte (visiteur), ou les vrais progrès du joueur (connecté). -->
       <section class="carnet" id="carnet" aria-labelledby="carnet-titre">
         <div class="carnet-texte">
           <p class="surtitre">Le carnet d’aventurier</p>
           <h2 id="carnet-titre">Garde la trace de tes exploits</h2>
           <p class="carnet-chapeau" id="carnet-chapeau">
-            Pour jouer, il suffit d’un compte gratuit : il garde tes scores et tes progrès, et ceux de tes enfants si tu le
-            souhaites.
+            Jouer est libre. Un compte gratuit, facultatif, garde tes scores et tes progrès, et ceux de tes enfants si tu
+            le souhaites.
           </p>
           <div class="carnet-actions" id="carnet-actions">
             <a class="bouton-creer" href="compte.html#inscription">Créer mon compte gratuit</a>
@@ -331,20 +335,6 @@
         <h2 id="choix-niveau-titre">Choisis ton niveau</h2>
         <p id="choix-niveau-phrase">Les niveaux correspondent approximativement aux apprentissages de chaque classe. Tu peux changer à tout moment.</p>
         <div class="choix-niveau-liste" id="choix-niveau-liste"></div>
-        <button class="choix-niveau-fermer" value="annuler" type="submit">Annuler</button>
-      </form>
-    </dialog>
-
-    <!-- Un visiteur qui veut jouer : compte gratuit ou connexion, puis retour au jeu et au choix du niveau. -->
-    <dialog class="choix-niveau compte-requis" id="compte-requis" aria-labelledby="compte-requis-titre">
-      <form method="dialog">
-        <p class="surtitre" id="compte-requis-jeu"></p>
-        <h2 id="compte-requis-titre">Pour jouer, crée ton compte ou connecte-toi</h2>
-        <p>C’est gratuit : un compte garde tes scores, tes records et tes progrès. Juste après, tu reviens ici pour choisir ton niveau.</p>
-        <div class="compte-requis-actions">
-          <a class="bouton-creer" id="compte-requis-inscription" href="compte.html#inscription">Créer mon compte</a>
-          <a class="bouton-connexion" id="compte-requis-connexion" href="compte.html#connexion">J’ai déjà un compte · Se connecter</a>
-        </div>
         <button class="choix-niveau-fermer" value="annuler" type="submit">Annuler</button>
       </form>
     </dialog>

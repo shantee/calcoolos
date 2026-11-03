@@ -18,6 +18,7 @@ import type { Grade } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
+import { suiviPersonnel } from '../../platform/player';
 import { partieCommence, partiePause } from '../../platform/suivi';
 import { pleinEcranAuDemarrage } from '../plein-ecran';
 
@@ -1603,6 +1604,7 @@ export class RocketScene extends Phaser.Scene {
   }
 
   private records(): Record<string, number> {
+    if (!suiviPersonnel()) return {};
     try {
       return JSON.parse(localStorage.getItem(RECORD_KEY) ?? '{}') as Record<string, number>;
     } catch {
@@ -1697,7 +1699,8 @@ export class RocketScene extends Phaser.Scene {
     if (isRecord) {
       rec[key] = s.score;
       try {
-        localStorage.setItem(RECORD_KEY, JSON.stringify(rec));
+        // Partie anonyme : aucun record gardé.
+        if (suiviPersonnel()) localStorage.setItem(RECORD_KEY, JSON.stringify(rec));
       } catch {
         /* stockage indisponible */
       }

@@ -30,6 +30,26 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-03 : Claude, correction : jouer redevient libre, sans compte
+
+Philippe : malentendu, le compte ne doit **pas** être obligatoire. Jouer est libre, le compte est facultatif, le suivi
+des progrès est réservé aux inscrits.
+
+Fait :
+- Plus aucune fenêtre ni redirection vers la connexion : « Jouer » ouvre le choix du niveau pour tous, les adresses
+  directes des six jeux marchent sans compte. `acces.ts` : `reglerJoueur()` dit seulement qui joue (sans compte :
+  partie anonyme). Fenêtre `#compte-requis` retirée.
+- Partie anonyme : aucun résultat, record (records locaux des quatre jeux Phaser, Neon Flight, MULTIRAIL), dernier
+  jeu ni historique gardés ; écran de fin « Partie libre : rien n’est enregistré ». La mesure d'audience anonyme
+  continue. Toujours pas de badge « Invité » ni de tableau de bord pour un visiteur.
+- Accueil : Décollage ! toujours de face à l'arrivée (sauf adresse `#jeu-…`) ; grandes présentations des six jeux
+  revenues sous le manège (`#presentations`, recopiées des vitrines par `presentations()`), avec leur « Jouer ».
+- Vérifications essentielles (un passage Playwright) : visiteur → niveau → partie ; partie anonyme sans rien de gardé ;
+  six adresses directes ; connecté : résultat enregistré (201) ; Décollage ! de face, six présentations. 268 tests Vitest.
+
+Limite : `scripts/sans-invite-e2e.mjs` et `accueil-e2e.mjs` décrivent encore le compte obligatoire : à remettre à jour
+avant de les relancer.
+
 ## 2026-11-03 : Claude, suppression du mode invité (compte obligatoire pour jouer)
 
 Demande (PDF de Philippe « Supprimer le mode invité ») : suppression fonctionnelle, pas un simple masquage.

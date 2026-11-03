@@ -178,8 +178,8 @@ function renderGuest(googleClientId?: string): void {
   root.replaceChildren(
     h('h1', {}, 'Mon espace'),
     h('p', { class: 'chapeau' }, retour
-      ? 'Pour jouer, connecte-toi ou crée ton compte gratuit : tu reviendras aussitôt à ton jeu. Le compte garde tes scores, tes records et tes progrès sur tous tes appareils.'
-      : 'Un compte gratuit permet de jouer et garde tes scores, tes records et tes progrès sur tous tes appareils. Crée ton profil en un instant, et ajoute ceux de tes enfants si tu le souhaites.'),
+      ? 'Connecte-toi ou crée ton compte gratuit : tu reviendras aussitôt à ton jeu, et tes scores, records et progrès seront gardés sur tous tes appareils.'
+      : 'Jouer est libre. Un compte gratuit, facultatif, garde tes scores, tes records et tes progrès sur tous tes appareils. Crée ton profil en un instant, et ajoute ceux de tes enfants si tu le souhaites.'),
     h('div', { class: 'grille' }, ...(voulu === 'inscription' ? [cartes.inscription, cartes.connexion] : [cartes.connexion, cartes.inscription])),
   );
   if (voulu) {

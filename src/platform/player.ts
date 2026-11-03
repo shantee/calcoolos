@@ -34,6 +34,11 @@ export function setActivePlayer(p: Profile | ActivePlayer | null): void {
   }
 }
 
+/** Suivi personnel (scores, records, réglages mémorisés) : seulement pour un profil d'un compte connecté. */
+export function suiviPersonnel(): boolean {
+  return activePlayer() !== null;
+}
+
 /** Qui joue juste après la connexion : le titulaire, ou le seul profil du compte ; sinon on laisse choisir. */
 export function joueurParDefaut(profiles: readonly Profile[] | undefined): Profile | null {
   return profiles?.find((p) => p.personnel) ?? (profiles?.length === 1 ? profiles[0] : null);

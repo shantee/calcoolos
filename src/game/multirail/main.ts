@@ -583,7 +583,7 @@ const ui = new UI(prefs, {
 ui.renderTitle(records[recordKey()]);
 ui.showTitle(true);
 {
-  /** qui joue : le profil actif de Calcoolos (la page exige un compte depuis le 03/11/2026, voir platform/acces.ts) */
+  /** qui joue : le profil actif de Calcoolos, ou une partie libre (sans compte, rien n'est enregistré) */
   const who = document.createElement('div');
   who.className = 'pilot-in';
   const span = document.createElement('span');
@@ -591,7 +591,7 @@ ui.showTitle(true);
     const b = document.createElement('b');
     b.textContent = player.pseudo;
     span.append(b, 'Tes voyages sont enregistrés dans tes progrès');
-  } else span.innerHTML = '<b>Sans profil</b>Partie non enregistrée · <a href="../compte.html#connexion">se connecter</a>';
+  } else span.innerHTML = '<b>Partie libre</b>Rien n’est enregistré · <a href="../compte.html#inscription">créer un compte</a>';
   who.append(avatarImg(player?.avatar ?? AVATAR_INVITE, 40, ''), span);
   ui.setPilot(who);
 }
@@ -775,7 +775,7 @@ function onCorrect(cur: Question): void {
     res = run.onCorrect(seconds, referenceTime(run.difficulty, s) * mult, gt, DIFFICULTIES[run.difficulty].combo * mult, mult);
     if (cur.fact) {
       recordAnswer(mastery, cur.fact, true, seconds, DIFFICULTIES[run.difficulty].combo);
-      store.set(MASTERY_KEY, mastery);
+      if (player) store.set(MASTERY_KEY, mastery);
     }
   }
   const rainbow = run.boiling(gt);
@@ -910,7 +910,7 @@ function onWrong(cur: Question): void {
   run.onWrong(missedOf(cur));
   if (cur.fact) {
     recordAnswer(mastery, cur.fact, false, gt - cur.start, DIFFICULTIES[run.difficulty].combo);
-    store.set(MASTERY_KEY, mastery);
+    if (player) store.set(MASTERY_KEY, mastery);
     deck.scheduleRetry(cur.fact);
   }
   if (cur.trio) elaboreesRatees++;
@@ -1029,7 +1029,7 @@ function endRun(): void {
   const isRecord = run.mode === 'aventure' && run.score > prev;
   if (isRecord) {
     records[key] = { score: run.score, distance: s };
-    store.set(RECORDS_KEY, records);
+    if (player) store.set(RECORDS_KEY, records);
   }
   state = 'over';
   q = null;

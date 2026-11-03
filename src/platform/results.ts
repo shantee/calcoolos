@@ -2,8 +2,7 @@
  * Fin de partie : le résultat est envoyé au serveur pour le profil actif. Sans réseau (ou session terminée), il
  * attend dans une file et repart au prochain passage, une fois reconnecté.
  *
- * Plus de mode invité depuis le 03/11/2026 : sans profil, rien n'est enregistré (les pages de jeu exigent un compte,
- * voir acces.ts). L'ancien historique invité (`calcoolos.historique`) reste dans le navigateur, sans être ni lu ni
+ * Jouer est libre ; sans compte, la partie est anonyme : rien n'est enregistré ni mémorisé (03/11/2026). L'ancien historique invité (`calcoolos.historique`) reste dans le navigateur, sans être ni lu ni
  * effacé.
  */
 import { api, accountState } from './api';
@@ -134,7 +133,8 @@ async function send(profile: number, r: StoredResult | GameResult, partie?: stri
 export async function reportResult(raw: GameResult): Promise<ReportOutcome> {
   const r = cleanResult(raw);
   try {
-    localStorage.setItem(LAST_KEY, JSON.stringify({ jeu: r.jeu, niveau: r.niveau, mode: r.mode }));
+    // Dernier jeu mémorisé seulement pour un profil (partie anonyme : rien).
+    if (activePlayer()) localStorage.setItem(LAST_KEY, JSON.stringify({ jeu: r.jeu, niveau: r.niveau, mode: r.mode }));
   } catch {
     /* stockage indisponible */
   }
@@ -201,7 +201,7 @@ export async function flushQueue(): Promise<number> {
 export function outcomeText(o: ReportOutcome): string {
   switch (o.kind) {
     case 'sans-compte':
-      return 'Partie non enregistrée : connecte-toi pour garder tes scores.';
+      return 'Partie libre : rien n’est enregistré. Crée un compte pour garder tes scores.';
     case 'serveur':
       return o.verifie ? `Résultat enregistré pour ${o.pseudo}${o.record ? ' : nouveau record !' : '.'}` : `Résultat enregistré pour ${o.pseudo} (non classé).`;
     case 'attente':

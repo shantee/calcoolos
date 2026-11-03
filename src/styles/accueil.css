@@ -1828,3 +1828,65 @@ h1 {
 .choix-niveau.compte-requis {
   width: min(600px, calc(100vw - 24px));
 }
+
+/* ---------- Grandes présentations des jeux, sous le manège (accueil.ts, presentations()) ---------- */
+.presentations {
+  display: grid;
+  gap: clamp(36px, 7vw, 88px);
+  padding: clamp(32px, 6vw, 72px) 0;
+}
+
+.presentation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(20px, 4vw, 48px);
+  align-items: center;
+}
+
+/* Une présentation sur deux : l'image passe à droite. */
+.presentation:nth-child(even) .presentation-image {
+  order: 2;
+}
+
+.presentation-image {
+  margin: 0;
+}
+
+.presentation-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 4px solid var(--encre);
+  border-radius: 24px;
+  box-shadow: 0 8px 0 var(--encre), 0 0 0 6px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.presentation-texte {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.presentation-texte .surtitre {
+  color: var(--accent);
+}
+
+.presentation h3 {
+  margin: -4px 0 0;
+  font-size: clamp(1.8rem, 4.2vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-shadow: 0 4px 0 var(--encre);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+  .presentation {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .presentation:nth-child(even) .presentation-image {
+    order: 0;
+  }
+}
