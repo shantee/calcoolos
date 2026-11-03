@@ -1244,3 +1244,6 @@ Astéroïdes en morceaux, voir `doc/IDEES_JEUX.md`) ; multiplications dans Cubes
 ## 03/11/2026 — Codex : trois sorts du phare et équilibrage CM2
 Implémentés localement : Coup de froid 8 s (réutilise la glace existante), Météorite soluble et Indice lumineux optimal ; charges par bonnes réponses, boutons tactiles, effets réduits. CM2 de base limité à 120, vitesse liée à la grille réelle. Détails et reprise : doc/SORTS_PHARE.md. Statut : à confirmer, non publié.
 Validation finale des sorts : 271/271 tests (timeout 30 s), build réussi, parcours Chromium tactile sans erreur, gel immobile puis reprise vérifiée. Commits locaux be26678 / 2b76c4b. Index parent non commitable (.git en lecture seule). Aucune publication ni push.
+
+### Publication des sorts — 03/11/2026, Codex
+Sur demande « publie ! » : release 20261103-225435-a63a540 mise en service sur WebDell. Tests 271, API 252, sauvegarde base et bascule réussis. Trois sorts vérifiés au doigt sur https://calculos.zfx.fr (Chromium émulé, animations réduites), nouvelle cible soluble, gel puis reprise, aucune erreur JS. Voir doc/SORTS_PHARE.md. Index général mis à jour, commit parent toujours impossible (.git en lecture seule). Aucun push.
