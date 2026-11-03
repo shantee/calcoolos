@@ -1,6 +1,6 @@
 # Panique au phare ! — jokers magiques
 
-Statut : publié le 03/11/2026, arsenal unifié avec les sprites fournis, à confirmer visuellement par Philippe. Release 20261103-231934-cc581a1 sur https://calculos.zfx.fr.
+Statut : publié le 03/11/2026, arsenal unifié avec les sprites fournis, à confirmer visuellement par Philippe. Release 20261103-232129-888acd3 sur https://calculos.zfx.fr.
 
 ## Règles
 - Six classes conservées. CM2 : plafond de base 120, deux à trois cubes ; adaptation existante conservée. Les cibles au-dessus de 120 et les solutions longues deviennent occasionnelles.
@@ -35,3 +35,4 @@ Publication des sprites réussie : release 20261103-230809-008c032, 274 tests et
 Réserve unique MagicPowers : une charge initiale, maximum deux par sort, recharge aux bonnes réponses conservée (8/6/4), sans stockage caché à plein. Le cadeau vise un sort non plein ; si celui-ci se remplit pendant le vol, repli sur un autre sort. Toute collecte est unique.
 Les trois boutons sont décalés dans la place libérée sous le phare pour éviter le recouvrement par les commandes Accueil/Plein écran sur téléphone. Les engins ne masquent plus les sorts. Ancien script bonus-auto.mjs remplacé par le contrôle du nouveau système ; anciens tests remplacés par six tests ciblés d'arsenal et livraisons.
 Validation fusion : 14 tests ciblés, puis 265 tests complets et 252 vérifications API réussis ; souris, tablette et téléphone vérifiés (livraison, calcul conservé, B/N sans effet, trois sorts utilisables, expiration neutre sur ordinateur). Première release 20261103-231934-cc581a1 écrasée immédiatement par une publication parallèle 20261103-231941-0dd13c1 ; comparaison des arbres : le changement de délai des tests de cette publication est déjà repris dans dev (fbd51d3), les seuls écarts restants sont la fusion des sorts. Republication de la version contenant les deux travaux.
+Republication finale réussie : release 20261103-232129-888acd3, tests 265 et API 252, base sauvegardée. Le site public sert le même fichier cubes-CVpcrXbZ.js que la compilation locale. Contrôle public téléphone tactile réussi : livraison capturée, calcul conservé, charges bornées, B/N inactifs, trois sorts utilisables, aucune erreur JavaScript/statique. Captures : CAPTURES/livraisons-magiques/en-ligne/. Aucun push. Index général mis à jour ; commit du parent toujours impossible (.git en lecture seule).
