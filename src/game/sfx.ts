@@ -800,30 +800,6 @@ export class Sfx {
     this.tone(520, 0.9, { wave: 'sawtooth', gain: 0.035, slideTo: 140 });
   }
 
-  /** Ressort qui se détend (Super Poussée). */
-  spring(): void {
-    this.tone(120, 0.22, { wave: 'triangle', gain: 0.16, slideTo: 900 });
-    this.tone(900, 0.3, { wave: 'sine', gain: 0.06, slideTo: 300, delay: 0.18 });
-  }
-
-  /** Gros « PAF ! » du gant. */
-  punch(): void {
-    this.noise(0.3, { gain: 0.8, filter: 400, q: 0.4 });
-    this.tone(95, 0.4, { wave: 'sine', gain: 0.55, slideTo: 35 });
-    this.noise(0.15, { gain: 0.3, filter: 2500, q: 1, delay: 0.02 });
-  }
-
-  /** Sifflement du monstre qui s'envole. */
-  fly(): void {
-    this.tone(700, 0.6, { wave: 'sine', gain: 0.07, slideTo: 1700 });
-  }
-
-  /** Atterrissage lourd. */
-  thud(): void {
-    this.tone(75, 0.3, { wave: 'sine', gain: 0.4, slideTo: 40 });
-    this.noise(0.25, { gain: 0.3, filter: 300, type: 'lowpass' });
-  }
-
   /** Gel : cristaux qui tintent. */
   freeze(): void {
     [2093, 2637, 3136, 2349, 2794].forEach((f, i) => this.tone(f, 0.25, { wave: 'sine', gain: 0.05, delay: i * 0.05 }));
@@ -836,9 +812,5 @@ export class Sfx {
     this.tone(2600, 0.2, { wave: 'triangle', gain: 0.05, slideTo: 1200 });
   }
 
-  /** Méga-tir chargé. */
-  megaCharge(): void {
-    this.tone(220, 0.6, { wave: 'sawtooth', gain: 0.05, slideTo: 880 });
-    [880, 1109, 1319].forEach((f, i) => this.tone(f, 0.2, { wave: 'square', gain: 0.04, delay: 0.5 + i * 0.06 }));
-  }
+
 }

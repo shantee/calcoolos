@@ -1,11 +1,10 @@
 /**
- * Bonus volants de « Cubes de siège » : engins, chargement, icônes des bonus et effets.
+ * Livraisons magiques de « Panique au phare ! » : engins et effets de glace.
  * Même technique que variant-b.ts (Canvas 2D à ×2, contour encré). Tout ce qui touche
  * aux bonus est doré et lumineux, pour ne jamais être confondu avec un monstre.
  */
-import { C, FONT, makeCanvas, paint, roundRectPath, blobPath } from './variant-b';
+import { C, makeCanvas, paint, roundRectPath, blobPath } from './variant-b';
 import { createRng } from '../core/rng';
-import type { PowerKind } from '../game/siege/powerups';
 
 export type Mood = 'normal' | 'surpris' | 'moqueur';
 
@@ -362,133 +361,7 @@ export function cartouche(w: number, h: number): HTMLCanvasElement {
   return c;
 }
 
-// --- Emplacements et icônes des bonus -------------------------------------------------------------
-
-/** Niche de pierre au pied du phare, où l'on range un bonus. */
-export function niche(): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(76, 76);
-  paint(ctx, () => roundRectPath(ctx, 4, 6, 68, 66, 16), '#4c4766', { shade: '#34304a', shadeOffset: [-4, -5], line: 3.5 });
-  paint(ctx, () => roundRectPath(ctx, 13, 15, 50, 48, 11), '#191629', { line: 2.5 });
-  // Joints de pierre.
-  ctx.strokeStyle = '#34304a';
-  ctx.lineWidth = 2;
-  for (const [x0, y0, x1, y1] of [[4, 40, 13, 40], [63, 34, 72, 34], [38, 6, 38, 15], [30, 63, 30, 72]]) {
-    ctx.beginPath();
-    ctx.moveTo(x0, y0);
-    ctx.lineTo(x1, y1);
-    ctx.stroke();
-  }
-  // Petite étoile en creux : la niche attend un bonus.
-  ctx.globalAlpha = 0.35;
-  star(ctx, 38, 39, 11, '#6e6890', 1.5);
-  ctx.globalAlpha = 1;
-  return c;
-}
-
-export function powerIcon(kind: PowerKind): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(64, 64);
-  if (kind === 'poussee') {
-    // Lignes de vitesse.
-    ctx.strokeStyle = C.cream;
-    ctx.lineWidth = 3;
-    for (const [y, l] of [[22, 12], [32, 16], [42, 12]]) {
-      ctx.beginPath();
-      ctx.moveTo(3, y);
-      ctx.lineTo(3 + l, y);
-      ctx.stroke();
-    }
-    drawGlove(ctx, 14, 8, 0.52);
-  } else if (kind === 'gel') {
-    snowflake(ctx, 32, 32, 26);
-  } else {
-    // Comète dorée « ×2 ».
-    ctx.fillStyle = 'rgba(255, 201, 74, 0.5)';
-    ctx.beginPath();
-    ctx.moveTo(6, 14);
-    ctx.quadraticCurveTo(26, 22, 36, 26);
-    ctx.lineTo(30, 44);
-    ctx.quadraticCurveTo(18, 30, 6, 14);
-    ctx.fill();
-    paint(ctx, circle(ctx, 38, 36, 20), GOLD, { shade: GOLD_SHADE, shadeOffset: [-4, -4], light: '#fff3c4', line: 3 });
-    ctx.font = `800 20px ${FONT}`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = C.ink;
-    ctx.strokeText('×2', 38, 38);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText('×2', 38, 38);
-  }
-  return c;
-}
-
-function snowflake(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
-  for (const pass of [{ w: 8, c: C.ink }, { w: 4, c: '#c9f3ff' }]) {
-    ctx.strokeStyle = pass.c;
-    ctx.lineWidth = pass.w;
-    for (let i = 0; i < 6; i++) {
-      const a = (i * Math.PI) / 3;
-      const ex = x + Math.cos(a) * r;
-      const ey = y + Math.sin(a) * r;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(ex, ey);
-      // Petites branches.
-      for (const s of [-1, 1]) {
-        const bx = x + Math.cos(a) * r * 0.58;
-        const by = y + Math.sin(a) * r * 0.58;
-        ctx.moveTo(bx, by);
-        ctx.lineTo(bx + Math.cos(a + s * 0.8) * r * 0.32, by + Math.sin(a + s * 0.8) * r * 0.32);
-      }
-      ctx.stroke();
-    }
-  }
-  paint(ctx, circle(ctx, x, y, r * 0.22), '#ffffff', { line: 2.5 });
-}
-
-/** Gant de boxe tourné vers la droite (`s` = échelle, coin haut-gauche en x, y). */
-function drawGlove(ctx: CanvasRenderingContext2D, x: number, y: number, s: number): void {
-  const X = (v: number) => x + v * s;
-  const Y = (v: number) => y + v * s;
-  // Poignet blanc.
-  paint(ctx, () => roundRectPath(ctx, X(0), Y(26), 26 * s, 50 * s, 8 * s), C.cream, { shade: C.creamShade, shadeOffset: [0, -4 * s], line: 4 * s + 1 });
-  // Poing.
-  paint(ctx, () => {
-    ctx.beginPath();
-    ctx.moveTo(X(20), Y(22));
-    ctx.bezierCurveTo(X(40), Y(-4), X(98), Y(0), X(100), Y(48));
-    ctx.bezierCurveTo(X(100), Y(92), X(44), Y(96), X(20), Y(78));
-    ctx.closePath();
-  }, '#e8424f', { shade: '#a8243a', shadeOffset: [-8 * s, -9 * s], light: '#ff9aa5', line: 4 * s + 1.5 });
-  // Pouce.
-  paint(ctx, () => {
-    ctx.beginPath();
-    ctx.moveTo(X(36), Y(30));
-    ctx.bezierCurveTo(X(46), Y(16), X(74), Y(20), X(70), Y(36));
-    ctx.bezierCurveTo(X(66), Y(46), X(46), Y(44), X(36), Y(30));
-    ctx.closePath();
-  }, '#f05663', { line: 3 * s + 1 });
-  // Lacets.
-  ctx.strokeStyle = C.ink;
-  ctx.lineWidth = 2 * s + 0.8;
-  for (const v of [40, 52, 64]) {
-    ctx.beginPath();
-    ctx.moveTo(X(6), Y(v));
-    ctx.lineTo(X(20), Y(v + 4));
-    ctx.stroke();
-  }
-}
-
-/** Gros gant de boxe de la Super Poussée. */
-export const GLOVE_W = 112;
-export const GLOVE_H = 104;
-export function glove(): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(GLOVE_W, GLOVE_H);
-  drawGlove(ctx, 6, 6, 1);
-  return c;
-}
-
-/** Bloc de glace qui enferme un monstre gelé. */
+/** Bloc transparent du Coup de froid, puis fissuré avant le dégel. */
 export function iceBlock(w: number, h: number, cracked: boolean): HTMLCanvasElement {
   const [c, ctx] = makeCanvas(w + 8, h + 8);
   const block = () => roundRectPath(ctx, 4, 4, w, h, 14);
@@ -543,75 +416,3 @@ export function shard(): HTMLCanvasElement {
 }
 
 /** Œil exorbité (le monstre n'en revient pas). */
-export function bigEye(): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(36, 36);
-  goofyEye(ctx, 18, 18, 15, [0.1, -0.1], 3);
-  return c;
-}
-
-/** Explosion de bande dessinée (texte posé par la scène). */
-export function bang(): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(170, 130);
-  const spiky = (rx: number, ry: number, n: number) => () => {
-    ctx.beginPath();
-    const rng = createRng(n);
-    for (let i = 0; i < n * 2; i++) {
-      const a = (i * Math.PI) / n;
-      const k = i % 2 ? 0.62 : 1 + (rng.next() - 0.5) * 0.18;
-      ctx.lineTo(85 + Math.cos(a) * rx * k, 65 + Math.sin(a) * ry * k);
-    }
-    ctx.closePath();
-  };
-  paint(ctx, spiky(82, 62, 12), C.coral, { line: 4 });
-  paint(ctx, spiky(62, 46, 11), GOLD, { line: 3 });
-  return c;
-}
-
-/** Orbe-rune dorée du Méga-tir. */
-export function goldRune(n: number): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(96, 96);
-  paint(ctx, () => blobPath(ctx, 48, 48, 40, 40, createRng(n), 0.06, 10), GOLD, { shade: GOLD_SHADE, light: '#fff6dc', line: 5 });
-  star(ctx, 48, 48, 30, 'rgba(255, 255, 255, 0.35)', 0);
-  ctx.font = `800 40px ${FONT}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.lineWidth = 7;
-  ctx.strokeStyle = C.ink;
-  ctx.strokeText(String(n), 48, 52);
-  ctx.fillStyle = '#ffffff';
-  ctx.fillText(String(n), 48, 52);
-  return c;
-}
-
-/** Touche du pavé bonus (sombre et dorée : rien à voir avec les cubes crème de la grille). */
-export function bonusKey(w: number, h: number, erase = false): HTMLCanvasElement {
-  const [c, ctx] = makeCanvas(w + 6, h + 8);
-  paint(ctx, () => roundRectPath(ctx, 3, 7, w, h, 12), C.ink, { ink: '' });
-  paint(ctx, () => roundRectPath(ctx, 3, 3, w, h, 12), '#2d2650', { shade: '#211b3d', shadeOffset: [0, -5], line: 3 });
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 2.5;
-  roundRectPath(ctx, 7, 7, w - 8, h - 8, 9);
-  ctx.stroke();
-  if (erase) {
-    const cx = 3 + w / 2;
-    const cy = 3 + h / 2;
-    paint(ctx, () => {
-      ctx.beginPath();
-      ctx.moveTo(cx - 16, cy);
-      ctx.lineTo(cx - 6, cy - 10);
-      ctx.lineTo(cx + 14, cy - 10);
-      ctx.lineTo(cx + 14, cy + 10);
-      ctx.lineTo(cx - 6, cy + 10);
-      ctx.closePath();
-    }, GOLD, { line: 2.5 });
-    ctx.strokeStyle = C.ink;
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - 1, cy - 5);
-    ctx.lineTo(cx + 8, cy + 5);
-    ctx.moveTo(cx + 8, cy - 5);
-    ctx.lineTo(cx - 1, cy + 5);
-    ctx.stroke();
-  }
-  return c;
-}

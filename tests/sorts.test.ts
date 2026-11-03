@@ -2,10 +2,10 @@ import { expect, it } from 'vitest';
 import { SiegeRound } from '../src/game/siege/round';
 import { TIERS, NIVEAUX } from '../src/core/difficulty';
 import { minCubesFor } from '../src/core/puzzle';
-import { freezeMs } from '../src/game/siege/powerups';
+import { FREEZE_MS } from '../src/game/siege/powerups';
 it('gel : huit secondes dans les deux modes', () => {
-  expect(freezeMs('defi')).toBe(8000);
-  expect(freezeMs('tranquille')).toBe(8000);
+  expect(FREEZE_MS).toBe(8000);
+  expect(FREEZE_MS).toBe(8000);
 });
 it('météorite et indice restent solubles dans les six classes', () => {
   for (const level of NIVEAUX) for (let seed = 0; seed < 60; seed++) {

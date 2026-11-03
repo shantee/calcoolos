@@ -6,9 +6,9 @@ Statut : publié le 03/11/2026 avec les sprites fournis, à confirmer visuelleme
 - Six classes conservées. CM2 : plafond de base 120, deux à trois cubes ; adaptation existante conservée. Les cibles au-dessus de 120 et les solutions longues deviennent occasionnelles.
 - Allure selon le nombre minimal de cubes, les nombres peu ronds et la rareté des solutions optimales. Au-dessus de 120, temps supplémentaire.
 - Trois gros boutons tactiles : Coup de froid (8 secondes dès activation), Météorite (cible soluble proche de 75 % de la précédente, sélection effacée sans erreur ni perte de série), Indice lumineux (un cube d'une solution optimale).
-- Une charge initiale chacun, recharge toutes les 8 / 6 / 4 bonnes réponses. Deux charges visibles au maximum.
-- Les bonus volants sont conservés. Leur gel réutilise la même glace et dure aussi huit secondes.
-- Pendant le pavé des bonus volants, les boutons magiques sont masqués pour éviter les superpositions.
+- Une charge initiale chacun, recharge toutes les 8 / 6 / 4 bonnes réponses. Deux charges au maximum, sans réserve cachée.
+- Deux livraisons volantes occasionnelles à partir de la vague 2 : toucher la soucoupe ou le dirigeable apporte une charge à un des trois sorts qui en manque (repli sur un autre sort si nécessaire).
+- Aucun ancien pouvoir, emplacement B/N, raccourci B/N ni pavé bonus. Les trois boutons restent visibles pendant les livraisons. Un engin ignoré repart sans pénalité.
 - La météorite ne déplace pas un ennemi gelé : le gel reste prioritaire. Une cible déjà minimale ne consomme pas de charge.
 - Animations allégées avec la préférence système ou ?calme.
 
@@ -29,3 +29,8 @@ Vérification générale après publication : 24/24 réussies sur ordinateur, ta
 ## Sprites fournis — 03/11/2026, Codex
 À la demande de Philippe, intégration de sort-1/2/3.png fournis dans Téléchargements. Originaux conservés dans sources-images/phare/, découpe reproductible via scripts/decouper-sorts.py. États couleur si charge disponible, gris si vide ; six WebP chargés par Phaser, icône 64 px à côté du nom et des charges. Construction réussie. Publication demandée dans le même message.
 Publication des sprites réussie : release 20261103-230809-008c032, 274 tests et 252 vérifications API, sauvegarde de base puis bascule. Contrôle tactile Chromium du site public réussi : trois sprites colorés, trois états gris après consommation, cible soluble et gel/reprise vérifiés, aucune erreur JavaScript. Captures : CAPTURES/sorts-phare/sprites-prets-en-ligne.png et sprites-vides-en-ligne.png. Commits locaux 84e45a7 / 008c032 ; aucun push. Index général actualisé mais non commitable (.git parent en lecture seule).
+
+## Fusion de l'arsenal — 03/11/2026, Codex
+À la demande de Philippe : retrait des anciennes niches et raccourcis B/N, de la Super Poussée et du Méga-tir, de leurs dessins/effets spécifiques et de l'ancien pavé de calcul bonus. Les trois sorts et leurs sprites sont conservés. Les engins réutilisent la soucoupe et le dirigeable dessinés ; une grande zone tactile de 290 × 240 unités permet de récupérer directement une charge. Deux passages naturels, à partir de la vague 2 ; 10 s en Défi, 12 s en Tranquille. Passage manqué : aucun effet sur le score, la sélection ou la série.
+Réserve unique MagicPowers : une charge initiale, maximum deux par sort, recharge aux bonnes réponses conservée (8/6/4), sans stockage caché à plein. Le cadeau vise un sort non plein ; si celui-ci se remplit pendant le vol, repli sur un autre sort. Toute collecte est unique.
+Les trois boutons sont décalés dans la place libérée sous le phare pour éviter le recouvrement par les commandes Accueil/Plein écran sur téléphone. Les engins ne masquent plus les sorts. Ancien script bonus-auto.mjs remplacé par le contrôle du nouveau système ; anciens tests remplacés par six tests ciblés d'arsenal et livraisons.

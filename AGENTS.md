@@ -76,7 +76,7 @@ Nom affiché : **Calcoolos** (provisoire, nom de travail d'origine « Projet Arc
 |---|---|
 | Socle (Vite + TypeScript + Phaser 4.2.1), accueil, niveaux | fait |
 | Direction artistique | B « 2D illustrée gouache nocturne » retenue (prototypes A et B supprimés le 26/10/2026, visibles dans l'historique git et `CAPTURES/`) |
-| Jeu 1 **Cubes de siège** | fait, validé par Philippe ; **bonus volants** (Super Poussée, Gel, Méga-tir) ajoutés en session 8 |
+| Jeu 1 **Cubes de siège** | fait, validé par Philippe ; **trois sorts** (Coup de froid, Météorite, Indice lumineux) ; engins volants rechargeant une charge au toucher (03/11/2026), anciens emplacements B/N retirés |
 | Jeu 2 **Pluie de météores** | fait (grande passe d'effets) |
 | Jeu 3 **Le Dragon gourmand** | fait |
 | Jeu 4 **Décollage !** (pixel art, idée de Philippe) | fait — **dernier jeu prévu pour le moment** |
@@ -121,7 +121,7 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | Script | Rôle |
 |---|---|
 | `scripts/partie-auto.mjs` | Cubes de siège, partie gagnée ou perdue + captures |
-| `scripts/bonus-auto.mjs` | bonus volants : chaque bonus, clavier et doigt, échec, niches pleines, partie naturelle (`SEUL1=1` : rapide) |
+| `scripts/bonus-auto.mjs` | livraisons magiques : souris/doigt, recharge bornée, passage ignoré, B/N sans effet |
 | `scripts/plein-ecran-auto.mjs` | plein écran et boutons des 4 jeux sur 6 formats |
 | `scripts/test-un-seul-monstre.mjs` | non-régression : jamais deux monstres à la fois |
 | `scripts/meteores-auto.mjs` | Pluie de météores, gagner / perdre |
