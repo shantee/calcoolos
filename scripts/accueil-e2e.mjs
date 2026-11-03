@@ -233,6 +233,7 @@ await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.evaluate(() => {
   localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'maitre', mode: 'defi' }));
   localStorage.setItem('calcoolos.niveau', 'maitre');
+  localStorage.setItem('calcoolos.historique', JSON.stringify([{ jeu: 'dragon', niveau: 'maitre', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: {}, details: {}, date: new Date().toISOString() }]));
 });
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.click('.univers-reprise');
