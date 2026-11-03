@@ -1,4 +1,9 @@
-# Niveaux de difficulté
+# Niveaux de difficulté — historique
+
+> **Depuis le 03/11/2026, les niveaux sont scolaires : CP, CE1, CE2, CM1, CM2, Aventurier.** Tout est dans
+> [`NIVEAUX_SCOLAIRES.md`](NIVEAUX_SCOLAIRES.md) (sources, grille, jeux, migration). Ce qui suit décrit les anciens
+> niveaux à piments (Doux, Relevé, Piquant, Explosif) et ne correspond plus au code ; les résultats joués à ces niveaux
+> restent en base sous leur ancien identifiant.
 
 Quatre niveaux, décrits par leurs calculs et non par un âge : **Doux** (vert, 1 piment), **Relevé** (jaune, 2),
 **Piquant** (orange, 3), **Explosif** (rouge, 4). Les identifiants techniques `eveil`, `explorateur`, `stratege`,

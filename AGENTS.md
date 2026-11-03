@@ -4,7 +4,7 @@ Ce fichier s'adresse à un agent de code (Claude Code, Codex…) ou à un dével
 **l'idée, la philosophie, les règles, l'état réel et les pièges connus**. Lis-le en entier avant de toucher au code,
 puis `JOURNAL_PROJET.md` (historique détaillé, session par session) et `doc/ARCHITECTURE.md` (règles de chaque jeu).
 
-Dernière mise à jour : 02/11/2026 (accueil en manège, difficulté choisie au lancement ; 29/10/2026 : Calcoolos Analytics, voir `doc/ANALYTICS.md` ; 27/10/2026 session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
+Dernière mise à jour : 03/11/2026 (six niveaux scolaires CP à Aventurier, `doc/NIVEAUX_SCOLAIRES.md` ; 02/11/2026 : accueil en manège, difficulté choisie au lancement ; 29/10/2026 : Calcoolos Analytics, voir `doc/ANALYTICS.md` ; 27/10/2026 session 15 : Décollage ! en couleurs de calculs, 8 cœurs et demi-cœurs ; session 14 : avatars).
 
 ---
 
@@ -127,11 +127,10 @@ Scripts Playwright (Playwright n'est pas une dépendance du projet : on utilise 
 | `scripts/fusee-auto.mjs` | Décollage !, gagner / perdre (pilote automatique) |
 | `scripts/plateforme-e2e.mjs` | parcours complet invité → compte → profils → partie → progrès → classements → isolation |
 | `scripts/accueil-e2e.mjs` | accueil : logo, espace joueur, manège (souris, clavier, doigt, défilement, carte de côté, `?leger`), difficulté au lancement, inscription, profils, formats, animations réduites |
-| `scripts/niveaux-e2e.mjs` | six jeux × quatre niveaux, par la vraie fenêtre : relève les calculs réellement posés (`JEU=MULTIRAIL`, `SAUF=MULTIRAIL` : MULTIRAIL est très lent en GPU logiciel) |
+| `scripts/niveaux-e2e.mjs` | six jeux × six niveaux scolaires, par la vraie fenêtre : relève les calculs réellement posés (`JEU=MULTIRAIL`, `SAUF=MULTIRAIL` : MULTIRAIL est très lent en GPU logiciel) |
 | `scripts/comptes-e2e.mjs` | comptes pour tous, vraie API et vraies parties : adulte seul, enfant ajouté, changement de joueur, reconnexion, six enfants, classements (`[adresse]`, comptes d'essai supprimés) |
 | `scripts/google-e2e.mjs` | « Continuer avec Google » (script de Google imité, jetons de test) : création, reconnexion, annulation, jeton refusé, compte existant puis association, tablette, Google injoignable |
 | `scripts/verifier-en-ligne.mjs` | après une publication : 4 jeux × 3 appareils, compte, reconnexion, nettoyage |
-| `scripts/multirail-explosif-e2e.mjs` | MULTIRAIL à Explosif : long voyage relu par un analyseur indépendant, erreurs, temps écoulé, Entraînement, Doux, Voyage Zen, plaque sur 4 formats (`CALCULS=40`) |
 | `scripts/neon-compat-e2e.mjs` | Neon Flight : parties avec WebGPU actif, Brave 1.93 simulé, tablette, chaque repli, contexte perdu, rapport `?diag` (`NAV=firefox`, `NAV=webkit`) |
 | `scripts/csp-check.mjs` | sert `dist/` avec les en-têtes de `deploy/nginx-calcoolos.conf` et cherche les violations |
 
@@ -145,7 +144,7 @@ et le premier perd l'accès (« Permission denied »). Pour `google-e2e.mjs`, aj
 Chromium headless : lancer avec `--use-angle=swiftshader --enable-unsafe-swiftshader`. Les captures vont dans
 `CAPTURES/` (à regarder vraiment : plusieurs bugs n'ont été vus que sur les captures).
 
-Paramètres d'URL des jeux : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123`, `?calme` (animations
+Paramètres d'URL des jeux : `?niveau=cp|ce1|ce2|cm1|cm2|aventurier`, `?graine=123`, `?calme` (animations
 réduites), `?accelere=N`, `?textures=N`. Chaque jeu expose des crochets de test sur `window` : `__siege`,
 `__meteores`, `__dragon`, `__fusee` (démarrer, répondre, nourrir, piloter, état…).
 
@@ -162,13 +161,14 @@ src/images/mascottes/      (à venir) mascottes des bannières de la page Classe
 compte.html tableau.html classements.html confidentialite.html   pages de la plateforme
 jeu/*.html                 une page par jeu
 src/core/                  logique pure partagée : rng (mulberry32), puzzle (somme minimale, sac à dos),
-                           scoring, difficulty (4 paliers), adaptive, waves, expressions (calculs par palier),
-                           calc-grade (calcul vert / orange / rouge selon le niveau)
+                           scoring, difficulty (six niveaux scolaires), adaptive, waves, calculs (grille commune du
+                           calcul mental, classe par classe et palier par palier), multiplications (Neon Flight,
+                           MULTIRAIL), expressions (façade de calculs.ts)
 src/game/siege/            Cubes de siège : round.ts, session.ts (logique), game-scene.ts (Phaser)
 src/game/meteors/          Pluie de météores : session.ts, meteor-scene.ts
 src/game/dragon/           Le Dragon gourmand : session.ts, dragon-scene.ts
 src/game/rocket/           Décollage ! : session.ts, rocket-scene.ts
-src/game/multirail/        MULTIRAIL (Three.js) : model.ts (règles), zen.ts (calculs variés), explosif.ts (calcul mental d'Explosif), main.ts
+src/game/multirail/        MULTIRAIL (Three.js) : model.ts (règles), zen.ts (Voyage Zen, grille commune), explosif.ts (calcul mental combiné du Voyage Zen en Aventurier), main.ts
 src/game/sfx.ts            tous les sons + 3 musiques jouées en direct (pistes 'espace', 'dragon', 'fusee')
 src/game/fx.ts             feu d'artifice et confettis (style B)
 src/game/render-config.ts  maxTextures (voir pièges)
@@ -214,17 +214,23 @@ Phaser qui ne fait que montrer et animer. La scène, en fin de partie, appelle `
   dès que la saisie correspond (aucune réponse à l'écran n'est le préfixe d'une autre). Météore doré, Robot-Mère,
   pilote robot à 4 visages, verrouillage, mode « en feu », baleine, chat astronaute, canard bonus.
 - **Le Dragon gourmand** (style B, ciel du soir) : on guide un dragon (souris, doigt, flèches) qui avale des lanternes
-  pour faire exactement un nombre (additions ; multiplications en Stratège/Maître) ; le total n'est jamais affiché ;
+  pour faire exactement un nombre (additions ; multiplications à partir du CE2) ; le total n'est jamais affiché ;
   trop mangé = hoquet. Objectif toujours atteignable, jamais coincé après une bouchée. Trois ciels (chauves-souris,
   orage), souffle de feu, écailles d'or.
 - **Décollage !** (pixel art ×4) : un calcul chronométré est toujours affiché, dans un encadré vert, orange ou rouge
-  selon sa difficulté pour le niveau (`src/core/calc-grade.ts`) ; plus il est dur, plus il donne de temps et de
+  selon son palier dans la classe (vert = acquis, orange = cœur de l'année, rouge = découverte) ; plus il est dur, plus il donne de temps et de
   points ; en Défi, 8 cœurs, un calcul raté coûte ½ cœur (1 si vert) ; bonne réponse = poussée ; on pilote la fusée pour se poser sur des plateformes, du village à la
   planète Bonbon (5 étages). Plateformes mobiles et fragiles (qui se reforment), bonus, étoiles, montgolfière de
   secours. Chaque plateforme est à portée d'une poussée (testé sur 200 mondes).
 
-Paliers (`src/core/difficulty.ts`, `doc/NIVEAUX.md`) : Doux (`eveil`), Relevé (`explorateur`), Piquant (`stratege`), Explosif (`maitre`), décrits par leurs calculs, jamais par un âge. **Cubes de siège s'appelle Panique au phare ! depuis le 30/10/2026** (identifiant `cubes` inchangé).
-Menus de calculs : `src/core/expressions.ts` (jamais de division avec reste, jamais de négatif).
+Niveaux (depuis le 03/11/2026, `doc/NIVEAUX_SCOLAIRES.md`) : **CP, CE1, CE2, CM1, CM2, Aventurier** (`cp`…`aventurier`),
+calés approximativement sur les programmes 2026 (cycle 2 : BO du 31/10/2024 ; cycle 3 : BO du 17/04/2025), tous
+libres de choix. Grille commune : `src/core/calculs.ts` (trois paliers par classe, plateau, temps selon l'effort,
+réponses entières de 1 à 999) ; multiplications de Neon Flight et MULTIRAIL : `src/core/multiplications.ts` (que des
+×, à tous les niveaux). Anciens niveaux à piments (`eveil`, `explorateur`, `stratege`, `maitre`) : résultats gardés
+tels quels, classés à part (« Anciens records »), jamais traduits en classe ; profils remis à « à choisir »
+(migration 007, ancien niveau dans `profils.niveau_avant`). **Cubes de siège s'appelle Panique au phare ! depuis le 30/10/2026** (identifiant `cubes` inchangé).
+Changer une famille de calculs : `GRILLE` de `calculs.ts`, puis `npm test` (360 000 calculs relus par un évaluateur indépendant).
 
 ## 8. Plateforme et serveur (résumé ; détails dans `doc/ARCHITECTURE.md` et `doc/DEPLOIEMENT.md`)
 

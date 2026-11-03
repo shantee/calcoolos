@@ -30,6 +30,43 @@
 - **Site en ligne** : https://calculos.zfx.fr. Reste à faire relire la page de confidentialité (identité du
   responsable, hébergement). Publication et retour arrière : `doc/DEPLOIEMENT.md`.
 
+## 2026-11-03 : Claude, six niveaux scolaires communs aux jeux
+
+**Demande de Philippe** : remplacer Doux / Relevé / Piquant / Explosif par **CP, CE1, CE2, CM1, CM2, Aventurier**,
+cohérents avec les programmes 2026 (pas un simple renommage), dans les six jeux et toute la plateforme ; plus aucun
+piment ; tous les niveaux libres ; chaque jeu garde son identité (Neon Flight et MULTIRAIL : que des multiplications) ;
+aucun score supprimé, anciens records gardés à part ; phrase « Les niveaux correspondent approximativement aux
+apprentissages de chaque classe. Tu peux changer à tout moment. »
+
+**Fait** (worktree `calcoolos-niveaux`, branche `niveaux-scolaires`) :
+
+- Étude des programmes : cycle 2 (BO n° 41 du 31/10/2024), cycle 3 (BO n° 16 du 17/04/2025), repères et exemples de
+  réussite. Éduscol et education.gouv.fr étaient injoignables depuis le poste (erreur du relais) : textes lus sur des
+  copies académiques et sur le Café pédagogique, sources détaillées dans `doc/NIVEAUX_SCOLAIRES.md`.
+- `src/core/calculs.ts` : grille commune classe par classe, trois paliers (acquis, cœur de l'année, découverte),
+  plateau sans montée sans fin, recul après des erreurs, temps selon l'effort, réponses entières de 1 à 999.
+  Remplace `expressions.ts` (devenu façade), `calc-grade.ts` et `trois-termes.ts` (supprimés).
+- `src/core/multiplications.ts` : faits de table par classe (CP : petits groupements dessinés dans Neon Flight ;
+  CE1 : facteurs 1 à 5 d'abord) et multiplications élaborées dès le CE2 (× dizaines, × 25, × 50, 13 × 14…).
+- Jeux : Panique au phare ! (cubes et cibles par classe, allure des monstres), Dragon (lanternes et produits dès le
+  CE2), Météores et Décollage ! (grille commune, chute et temps selon l'effort ; calculs longs en écriture réduite),
+  Neon Flight (groupements au CP), MULTIRAIL (tables seulement en Aventure et Entraînement ; Voyage Zen sur la grille
+  commune, calcul mental combiné en Aventurier ; le calcul mental d'Explosif en Aventure disparaît).
+- Fenêtre de choix : six pastilles colorées (CP vert … Aventurier ★ doré), nom complet, exemple propre à chaque jeu,
+  phrase de Philippe. Profils, barre, Mes progrès, administration : nouveaux noms, anciens affichés « (ancien) ».
+- Serveur : `Games::TIERS` = six classes, `TIERS_ANCIENS` encore acceptés pour un résultat en file d'attente ;
+  classements des six classes + tableaux « ancien » (seulement s'ils ont des scores), repliés en bas de la page
+  Classements ; profil à niveau vide accepté. Migration `007_niveaux_scolaires.php` : `profils.niveau_avant` garde
+  l'ancien niveau, `niveau` devient vide (choix au prochain jeu). Aucun résultat modifié.
+
+**Vérifié** : `npm test` 265 tests (dont 360 000 calculs de la grille et 55 000 multiplications élaborées par niveau,
+relus par un évaluateur indépendant), API 252 vérifications (dont anciens niveaux), migration 007 essayée sur une base
+d'avant, `scripts/niveaux-e2e.mjs` six jeux × six niveaux dans Chromium.
+
+**Limites** : décimaux et fractions du CM hors des jeux (claviers sans virgule) ; réglages de difficulté fondés sur
+les programmes, pas encore sur des essais avec des enfants de chaque classe ; `scripts/multirail-explosif-e2e.mjs`
+retiré avec la fonction qu'il testait.
+
 ## 2026-11-02 : Claude, nouvelle accroche animée
 
 **Demande** : un slogan plus court et des mots qui changent, sans toucher au fonctionnement de l'accueil ni au manège.

@@ -28,3 +28,11 @@ synthétisés) et le monde de l'archipel (mêmes monstres rouges, même phare, m
 **Recommandation de Claude :** **Astéroïdes en morceaux**, qui réutilise le monde spatial et le pavé numérique de Pluie
 de météores tout en entraînant une compétence différente (décomposer). Puis **Cubes de siège ×** (multiplications),
 qui reprend presque tout le code existant.
+
+## Rubrique « Techniques de calcul mental » (idée de Philippe, 03/11/2026)
+
+Pas un jeu : une rubrique d'astuces courtes et animées, reliée aux niveaux scolaires (`doc/NIVEAUX_SCOLAIRES.md`).
+Plan possible, tiré des procédures des programmes : × 10 / × 100 ; × 5 (× 10 puis moitié) ; × 4 et × 8 (doubler deux
+ou trois fois) ; × 11 et × 12 ; × 25 (× 100 puis quart) et × 50 (× 100 puis moitié) ; + 9, + 19, + 99 (passer par le
+rond) ; décomposer (`13 × 7 = 70 + 21`, `21 × 35 = 700 + 35`). Chaque astuce pourrait renvoyer au jeu et au niveau où
+on la rencontre (Neon Flight en Aventurier pour × 25 et × 50…).

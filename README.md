@@ -44,7 +44,7 @@ Pages :
 - `/compte.html` (espace parents), `/tableau.html` (mes progrès), `/classements.html`, `/confidentialite.html` ;
 - (les prototypes A et B du choix de direction artistique ont été retirés le 26/10/2026 : historique git).
 
-Paramètres d'URL utiles : `?niveau=eveil|explorateur|stratege|maitre`, `?graine=123` (partie reproductible),
+Paramètres d'URL utiles : `?niveau=cp|ce1|ce2|cm1|cm2|aventurier`, `?graine=123` (partie reproductible),
 `?calme` (animations réduites, comme le réglage système « réduire les animations »), `?accelere=4` (monstres
 accélérés, pour les tests).
 
@@ -53,14 +53,14 @@ accélérés, pour les tests).
 Partie complète jouée automatiquement (gagnée, ou perdue avec `perdre`) :
 
 ```bash
-node scripts/partie-auto.mjs http://localhost:4173 CAPTURES tranquille explorateur
-node scripts/partie-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
-node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES gagner stratege
-node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES perdre explorateur
+node scripts/partie-auto.mjs http://localhost:4173 CAPTURES tranquille ce1
+node scripts/partie-auto.mjs http://localhost:4173 CAPTURES perdre ce1
+node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES gagner ce2
+node scripts/meteores-auto.mjs http://localhost:4173 CAPTURES perdre ce1
 node scripts/test-un-seul-monstre.mjs http://localhost:4173
-node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES gagner stratege
-node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES perdre explorateur
-node scripts/fusee-auto.mjs http://localhost:5173 CAPTURES gagner explorateur
+node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES gagner ce2
+node scripts/dragon-auto.mjs http://localhost:5173 CAPTURES perdre ce1
+node scripts/fusee-auto.mjs http://localhost:5173 CAPTURES gagner ce1
 node scripts/plateforme-e2e.mjs http://localhost:5173 CAPTURES   # parcours complet (npm run api + npm run dev)
 node scripts/csp-check.mjs                                        # dist/ avec les en-têtes de sécurité de Nginx
 ```
