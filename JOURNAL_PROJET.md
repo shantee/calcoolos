@@ -39,6 +39,16 @@ difficiles, surtout les plus durs (« 4 ou 5 secondes »).
 (12 × 42, (7 × 8) + 23…) + 5 s ; verts et autres classes inchangés ; plafond 20 → 25 s (`TEMPS_MAX`). En Défi au sol :
 orange 9,7 → 12,7 s, rouge 10,8 → 14,8 s, distributivité 15,4 → 20,4 s. Test ajouté ; 275 tests verts.
 
+**Publié** à 23 h 21 (`calcoolos-20261103-232108-fbd51d3`) ; vérifié en ligne au CM2 (18 calculs : orange 12,3 à
+13,5 s, rouge 16,3 à 20,1 s, vert ~5 s, aucune erreur). Limite des grands tirages de `calculs.test.ts` portée à
+30 s (ils dépassaient 5 s quand la machine est chargée et bloquaient `publier.sh`).
+
+**Incident (Claude)** : à 23 h 19, une publication lancée depuis le worktree `calcoolos-temps` est partie alors que la
+fusion dans `dev` venait d'échouer (commandes enchaînées par `;`) : elle a remplacé pendant environ 1 min 30 la
+version de Codex publiée 7 s plus tôt (`cc581a1`, pouvoirs du phare). Corrigé aussitôt : rebasage sur `cc581a1`, puis
+republication de l'ensemble. Leçon : publier depuis un worktree seulement si `HEAD` = `dev` au moment même, tout
+enchaîner avec `&&`.
+
 ## 2026-11-03 : Claude, calculs malins : astuce et temps en plus (Décollage !)
 
 **Demande** : Philippe revient sur `147 × 5` (trop dur pour un CM1 en jeu rapide ?) : le garder, car il a une vraie
