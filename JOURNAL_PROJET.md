@@ -1271,3 +1271,4 @@ Vérification publique finale : 24/24 réussies (trois formats, comptes, progres
 
 ### 03/11/2026 — Codex : sprites des sorts fournis par Philippe
 Trois planches intégrées aux boutons du phare, états prêts colorés et vides grisés ; originaux et découpe reproductible conservés. Images WebP transparentes, nom/compteur lisibles à côté. Voir doc/SORTS_PHARE.md et ART_ASSETS.md. Publication autorisée par Philippe.
+Sprites publiés : release 20261103-230809-008c032. 274 tests et API 252 réussis. Contrôle public tactile et visuel des six états réussi, aucune erreur JS. Sauvegarde de base faite par le script de publication. Index général actualisé, commit parent impossible (.git en lecture seule). Aucun push.

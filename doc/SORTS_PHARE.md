@@ -1,6 +1,6 @@
 # Panique au phare ! — jokers magiques
 
-Statut : publié le 03/11/2026, à confirmer visuellement par Philippe. Release 20261103-225435-a63a540 sur https://calculos.zfx.fr.
+Statut : publié le 03/11/2026 avec les sprites fournis, à confirmer visuellement par Philippe. Release 20261103-230809-008c032 sur https://calculos.zfx.fr.
 
 ## Règles
 - Six classes conservées. CM2 : plafond de base 120, deux à trois cubes ; adaptation existante conservée. Les cibles au-dessus de 120 et les solutions longues deviennent occasionnelles.
@@ -28,3 +28,4 @@ Vérification générale après publication : 24/24 réussies sur ordinateur, ta
 
 ## Sprites fournis — 03/11/2026, Codex
 À la demande de Philippe, intégration de sort-1/2/3.png fournis dans Téléchargements. Originaux conservés dans sources-images/phare/, découpe reproductible via scripts/decouper-sorts.py. États couleur si charge disponible, gris si vide ; six WebP chargés par Phaser, icône 64 px à côté du nom et des charges. Construction réussie. Publication demandée dans le même message.
+Publication des sprites réussie : release 20261103-230809-008c032, 274 tests et 252 vérifications API, sauvegarde de base puis bascule. Contrôle tactile Chromium du site public réussi : trois sprites colorés, trois états gris après consommation, cible soluble et gel/reprise vérifiés, aucune erreur JavaScript. Captures : CAPTURES/sorts-phare/sprites-prets-en-ligne.png et sprites-vides-en-ligne.png. Commits locaux 84e45a7 / 008c032 ; aucun push. Index général actualisé mais non commitable (.git parent en lecture seule).
