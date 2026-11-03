@@ -58,11 +58,17 @@ export interface DragonTier {
   hunger: number;
 }
 
+/**
+ * Le dragon additionne toujours des lanternes. Le niveau règle leurs valeurs, la cible et le nombre de lanternes de
+ * la meilleure solution ; à partir du CE2 (tables connues), quelques objectifs sont des produits de lanternes.
+ */
 export const DRAGON_TIERS: Record<TierId, DragonTier> = {
-  eveil: { orbs: 6, minValue: 1, maxValue: 9, add: { targetMin: 6, targetMax: 15, minOptimal: 2, maxOptimal: 2 }, mul: null, mulShare: 0, hunger: 40 },
-  explorateur: { orbs: 7, minValue: 1, maxValue: 12, add: { targetMin: 10, targetMax: 25, minOptimal: 2, maxOptimal: 3 }, mul: null, mulShare: 0, hunger: 34 },
-  stratege: { orbs: 8, minValue: 2, maxValue: 10, add: { targetMin: 14, targetMax: 36, minOptimal: 2, maxOptimal: 3 }, mul: { targetMin: 12, targetMax: 90, minOptimal: 2, maxOptimal: 2 }, mulShare: 0.4, hunger: 30 },
-  maitre: { orbs: 9, minValue: 2, maxValue: 12, add: { targetMin: 24, targetMax: 60, minOptimal: 2, maxOptimal: 4 }, mul: { targetMin: 24, targetMax: 240, minOptimal: 2, maxOptimal: 3 }, mulShare: 0.5, hunger: 27 },
+  cp: { orbs: 6, minValue: 1, maxValue: 9, add: { targetMin: 6, targetMax: 15, minOptimal: 2, maxOptimal: 2 }, mul: null, mulShare: 0, hunger: 42 },
+  ce1: { orbs: 7, minValue: 2, maxValue: 19, add: { targetMin: 12, targetMax: 35, minOptimal: 2, maxOptimal: 3 }, mul: null, mulShare: 0, hunger: 38 },
+  ce2: { orbs: 8, minValue: 2, maxValue: 25, add: { targetMin: 18, targetMax: 50, minOptimal: 2, maxOptimal: 3 }, mul: { targetMin: 12, targetMax: 81, minOptimal: 2, maxOptimal: 2 }, mulShare: 0.25, hunger: 34 },
+  cm1: { orbs: 8, minValue: 3, maxValue: 39, add: { targetMin: 28, targetMax: 90, minOptimal: 2, maxOptimal: 3 }, mul: { targetMin: 18, targetMax: 100, minOptimal: 2, maxOptimal: 2 }, mulShare: 0.3, hunger: 32 },
+  cm2: { orbs: 9, minValue: 4, maxValue: 49, add: { targetMin: 40, targetMax: 130, minOptimal: 2, maxOptimal: 4 }, mul: { targetMin: 24, targetMax: 150, minOptimal: 2, maxOptimal: 3 }, mulShare: 0.35, hunger: 30 },
+  aventurier: { orbs: 9, minValue: 6, maxValue: 60, add: { targetMin: 60, targetMax: 180, minOptimal: 3, maxOptimal: 4 }, mul: { targetMin: 60, targetMax: 300, minOptimal: 2, maxOptimal: 3 }, mulShare: 0.4, hunger: 30 },
 };
 
 export interface StagePlan {

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MAX_ERRORS, MAX_SLOTS, PASSES_PER_GAME, POWERS, PUSH, PowerUps, flightMs, freezeMs, pushTarget, type UseContext } from '../src/game/siege/powerups';
 import { SiegeSession } from '../src/game/siege/session';
-import { evaluate } from '../src/core/expressions';
+import { OPERATIONS } from '../src/core/calculs';
+import { lire } from './outils-calculs';
 import { TIERS, type TierId } from '../src/core/difficulty';
 import { WAVES } from '../src/core/waves';
 
@@ -21,7 +22,7 @@ describe('passages des engins', () => {
     const w2 = w1 + WAVES[1].length;
     const total = WAVES.flat().length;
     for (let seed = 1; seed < 300; seed++) {
-      const p = new PowerUps('explorateur', 'defi', seed);
+      const p = new PowerUps('ce1', 'defi', seed);
       expect(p.plan).toHaveLength(PASSES_PER_GAME);
       expect(p.plan[0]).toBeGreaterThanOrEqual(w1);
       expect(p.plan[0]).toBeLessThan(w2);
@@ -31,7 +32,7 @@ describe('passages des engins', () => {
   });
 
   it('aucun passage avant le monstre prévu, ni au-delà du nombre prévu', () => {
-    const p = new PowerUps('eveil', 'tranquille', 7);
+    const p = new PowerUps('cp', 'tranquille', 7);
     expect(p.due(p.plan[0] - 1)).toBe(false);
     expect(p.due(p.plan[0])).toBe(true);
     // Si le monstre prévu disparaît trop vite, le passage reste dû pour les suivants.
@@ -46,7 +47,7 @@ describe('passages des engins', () => {
   });
 
   it('un seul engin à la fois', () => {
-    const p = new PowerUps('stratege', 'defi', 3);
+    const p = new PowerUps('ce2', 'defi', 3);
     expect(p.launch()).not.toBeNull();
     expect(p.due(99)).toBe(false);
     expect(p.launch(true)).toBeNull();
@@ -58,32 +59,35 @@ describe('passages des engins', () => {
         const p = new PowerUps(tier, 'defi', seed);
         const f = p.launch(true)!;
         const e = f.expr;
-        expect(evaluate(e.a, e.op, e.b)).toBe(e.answer);
-        expect(Number.isInteger(e.answer)).toBe(true);
+        expect(lire(e.text).valeur, e.text).toBe(e.answer);
+        expect(OPERATIONS[tier]).toContain(e.op);
         expect(e.a).toBeGreaterThan(1);
         expect(e.b).toBeGreaterThan(1);
         expect(e.answer).toBeGreaterThanOrEqual(5);
-        if (tier === 'eveil') {
-          expect(['+', '−']).toContain(e.op);
-          expect(e.answer).toBeLessThanOrEqual(20);
-        }
+        // Le bonus passe vite : un calcul acquis ou du cœur de l'année, jamais de découverte.
+        expect(e.palier).toBeLessThanOrEqual(2);
+        if (tier === 'cp') expect(e.answer).toBeLessThanOrEqual(100);
       }
     }
   });
 
-  it('durée : 4 à 7 secondes, plus longue en Tranquille', () => {
+  it('durée : 5,5 à 11 secondes selon l’effort du calcul et la classe, plus longue en Tranquille', () => {
     for (const tier of TIER_IDS) {
       expect(flightMs(tier, 'tranquille')).toBeGreaterThan(flightMs(tier, 'defi'));
+      expect(flightMs(tier, 'defi', 3)).toBeGreaterThan(flightMs(tier, 'defi', 1));
       for (const mode of ['tranquille', 'defi'] as const) {
-        expect(flightMs(tier, mode)).toBeGreaterThanOrEqual(4000);
-        expect(flightMs(tier, mode)).toBeLessThanOrEqual(7000);
+        for (const effort of [1, 2, 3]) {
+          expect(flightMs(tier, mode, effort)).toBeGreaterThanOrEqual(5500);
+          expect(flightMs(tier, mode, effort)).toBeLessThanOrEqual(11000);
+        }
       }
     }
+    expect(flightMs('cp', 'defi', 2)).toBeGreaterThan(flightMs('aventurier', 'defi', 2));
     expect(freezeMs('tranquille')).toBeGreaterThan(freezeMs('defi'));
   });
 
   it('deux engins différents, et le premier chargement est la Super Poussée', () => {
-    const p = new PowerUps('explorateur', 'defi', 11);
+    const p = new PowerUps('ce1', 'defi', 11);
     const a = p.launch(true)!;
     expect(a.cargo).toBe('poussee');
     expect(a.vehicle).toBe('soucoupe');
@@ -98,7 +102,7 @@ describe('passages des engins', () => {
 
 describe('réponse au calcul bonus', () => {
   it('bonne réponse : attrapé, puis rangé dans le premier emplacement libre', () => {
-    const p = new PowerUps('explorateur', 'defi', 5);
+    const p = new PowerUps('ce1', 'defi', 5);
     p.launch(true);
     expect(answer(p)).toBe('caught');
     expect(p.collect()).toBe(0);
@@ -108,8 +112,8 @@ describe('réponse au calcul bonus', () => {
 
   it('un chiffre à la fois, effacement possible, rien d’autre n’est accepté', () => {
     let seed = 9;
-    let p = new PowerUps('maitre', 'defi', seed);
-    while (p.launch(true)!.expr.answer < 10) p = new PowerUps('maitre', 'defi', ++seed);
+    let p = new PowerUps('aventurier', 'defi', seed);
+    while (p.launch(true)!.expr.answer < 10) p = new PowerUps('aventurier', 'defi', ++seed);
     const ans = String(p.flight!.expr.answer);
     expect(p.type('x')).toBe('ignored');
     expect(p.type(ans[0])).toBe('typing');
@@ -120,7 +124,7 @@ describe('réponse au calcul bonus', () => {
   });
 
   it('mauvaise réponse : on peut réessayer une fois, puis l’engin s’enfuit (sans pénalité)', () => {
-    const p = new PowerUps('stratege', 'defi', 21);
+    const p = new PowerUps('ce2', 'defi', 21);
     const f = p.launch(true)!;
     // Même nombre de chiffres, dernier chiffre changé.
     const ans = String(f.expr.answer);
@@ -139,7 +143,7 @@ describe('réponse au calcul bonus', () => {
   });
 
   it('temps écoulé : rien n’est gagné, rien n’est perdu', () => {
-    const p = new PowerUps('eveil', 'tranquille', 2);
+    const p = new PowerUps('cp', 'tranquille', 2);
     p.launch(true);
     p.expire();
     expect(p.collect()).toBe(-1);
@@ -150,7 +154,7 @@ describe('réponse au calcul bonus', () => {
 
 describe('emplacements', () => {
   it('deux emplacements au plus ; pleins = plus aucun engin, donc aucun bonus perdu', () => {
-    const p = new PowerUps('explorateur', 'tranquille', 4);
+    const p = new PowerUps('ce1', 'tranquille', 4);
     for (let k = 0; k < MAX_SLOTS; k++) {
       p.launch(true);
       answer(p);
@@ -168,7 +172,7 @@ describe('emplacements', () => {
   });
 
   it('bonus inutilisable au mauvais moment : il est gardé, avec une explication', () => {
-    const p = new PowerUps('explorateur', 'defi', 4);
+    const p = new PowerUps('ce1', 'defi', 4);
     p.slots[0] = 'poussee';
     p.slots[1] = 'gel';
     const no = (slot: number, ctx: Partial<UseContext>) => p.check(slot, { ...ready, ...ctx });
@@ -209,7 +213,7 @@ describe('Super Poussée et Méga-tir', () => {
   });
 
   it('Méga-tir : le prochain coup réussi fait double dégâts, une seule fois', () => {
-    const tier = TIERS.explorateur;
+    const tier = TIERS.ce1;
     const a = new SiegeSession(tier, 42, 'defi');
     const b = new SiegeSession(tier, 42, 'defi');
     for (const s of [a, b]) s.nextEnemy(0);
@@ -232,7 +236,7 @@ describe('Super Poussée et Méga-tir', () => {
   });
 
   it('les bonus ne changent pas la partie sans eux : victoire et score identiques', () => {
-    const s = new SiegeSession(TIERS.stratege, 77, 'defi');
+    const s = new SiegeSession(TIERS.ce2, 77, 'defi');
     let t = 0;
     for (;;) {
       if (!s.nextEnemy(t)) {

@@ -632,8 +632,12 @@ final class Api
         return $v;
     }
 
+    /** Niveau d'un profil : une des six classes, ou '' (« à choisir au prochain jeu », profils d'avant le 03/11/2026). */
     private static function tier(mixed $v): string
     {
+        if ($v === '') {
+            return '';
+        }
         if (!is_string($v) || !in_array($v, Games::TIERS, true)) {
             throw new HttpError(422, 'Vérifie le formulaire.', ['niveau' => 'Niveau inconnu.']);
         }
@@ -853,12 +857,15 @@ final class Api
     private function leaderboards(): Response
     {
         // Un tableau par jeu × niveau × mode classé × variante (Neon Flight : série de tables, Arcade seulement).
+        // Les anciens niveaux à piments forment des tableaux à part (« Anciens records »), gardés s'ils ont un score :
+        // on ne compare que des parties jouées à la même difficulté.
         $boards = [];
         foreach (array_keys(Games::CATALOG) as $jeu) {
-            foreach (Games::TIERS as $niveau) {
+            foreach ([...Games::TIERS, ...Games::TIERS_ANCIENS] as $niveau) {
+                $ancien = in_array($niveau, Games::TIERS_ANCIENS, true);
                 foreach (Games::boards($jeu) as [$mode, $variante]) {
                     $boards["$jeu/$niveau/$mode/$variante"] = ['jeu' => $jeu, 'niveau' => $niveau, 'mode' => $mode, 'public' => []]
-                        + ($variante === '' ? [] : ['variante' => $variante]);
+                        + ($variante === '' ? [] : ['variante' => $variante]) + ($ancien ? ['ancien' => true] : []);
                 }
             }
         }
@@ -931,6 +938,7 @@ final class Api
                 }
             }
         }
+        $boards = array_filter($boards, static fn (array $b): bool => !isset($b['ancien']) || $b['public'] !== []);
         return new Response(200, ['classements' => array_values($boards)]);
     }
 }

@@ -4,7 +4,7 @@ import { cleanResult, type StoredResult } from '../src/platform/results';
 
 const base: StoredResult = {
   jeu: 'dragon',
-  niveau: 'explorateur',
+  niveau: 'ce1',
   mode: 'defi',
   score: 1000,
   gagne: true,

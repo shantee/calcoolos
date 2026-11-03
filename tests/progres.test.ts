@@ -13,7 +13,7 @@ function partie(j: number, o: { justes?: number; fausses?: number; median?: numb
   const justes = o.justes ?? 18;
   const fausses = o.fausses ?? 2;
   return {
-    jeu: o.jeu ?? 'neon', niveau: o.niveau ?? 'explorateur', mode: 'defi', variante: o.variante ?? 'petites',
+    jeu: o.jeu ?? 'neon', niveau: o.niveau ?? 'ce1', mode: 'defi', variante: o.variante ?? 'petites',
     score: o.score ?? 1000, gagne: true, etoiles: 1, duree: 120, actif: o.actif ?? 100, precision: justes / (justes + fausses),
     ops: { '×': [justes, fausses] }, details: {}, date: jour(j),
     mesures: { calculs: justes + fausses, justes, fausses, tempsMoyen: o.median ?? 3000, tempsMedian: o.median ?? 3000, serie: 7, ...(o.faits ? { faits: o.faits } : {}) },
@@ -22,7 +22,7 @@ function partie(j: number, o: { justes?: number; fausses?: number; median?: numb
 
 /** Une ancienne partie, enregistrée avant les mesures communes. */
 const ancienne = (j: number): StoredResult => ({
-  jeu: 'dragon', niveau: 'explorateur', mode: 'defi', score: 500, gagne: false, etoiles: 0, duree: 90, precision: 0.5,
+  jeu: 'dragon', niveau: 'ce1', mode: 'defi', score: 500, gagne: false, etoiles: 0, duree: 90, precision: 0.5,
   ops: { '+': [5, 5] }, details: {}, date: jour(j),
 });
 
@@ -50,7 +50,7 @@ describe('bilan', () => {
 
 describe('évolution sur des parties comparables', () => {
   it('sépare les contextes (jeu, niveau, mode, variante)', () => {
-    const cs = contextes([partie(1), partie(2), partie(3, { variante: 'grandes' }), partie(4, { niveau: 'maitre' })]);
+    const cs = contextes([partie(1), partie(2), partie(3, { variante: 'grandes' }), partie(4, { niveau: 'aventurier' })]);
     expect(cs.map((c) => c.parties.length)).toEqual([2, 1, 1]);
   });
 

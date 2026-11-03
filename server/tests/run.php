@@ -104,7 +104,7 @@ function section(string $name): void
 
 $newClient = static fn (string $ip = '203.0.113.7'): Client => Client::make($db, new MemorySession(), $config, $clock, $ip);
 $result = static fn (int $profile, array $over = []): array => array_merge([
-    'profil' => $profile, 'jeu' => 'dragon', 'niveau' => 'explorateur', 'mode' => 'defi', 'score' => 8000,
+    'profil' => $profile, 'jeu' => 'dragon', 'niveau' => 'ce1', 'mode' => 'defi', 'score' => 8000,
     'gagne' => true, 'etoiles' => 2, 'duree' => 240, 'precision' => 0.9, 'ops' => ['+' => [17, 2]], 'details' => ['objectifs' => 17],
 ], $over);
 
@@ -139,28 +139,28 @@ assert_status($newClient('198.51.100.9')->post('/inscription', ['email' => 'alic
 section('Jeton CSRF');
 $saved = $alice->csrf;
 $alice->csrf = 'faux';
-assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 403, 'mauvais jeton refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'ce1']), 403, 'mauvais jeton refusé');
 $alice->csrf = $saved;
 
 section('Profils');
-assert_status($alice->post('/profils', ['pseudo' => 'L', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 422, 'pseudo trop court');
-assert_status($alice->post('/profils', ['pseudo' => '<script>', 'avatar' => 'astronaute', 'niveau' => 'explorateur']), 422, 'pseudo avec balise refusé');
-assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'licorne', 'niveau' => 'explorateur']), 422, 'avatar inconnu');
-assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'chouette', 'niveau' => 'explorateur']), 422, 'ancien avatar refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'L', 'avatar' => 'astronaute', 'niveau' => 'ce1']), 422, 'pseudo trop court');
+assert_status($alice->post('/profils', ['pseudo' => '<script>', 'avatar' => 'astronaute', 'niveau' => 'ce1']), 422, 'pseudo avec balise refusé');
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'licorne', 'niveau' => 'ce1']), 422, 'avatar inconnu');
+assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'chouette', 'niveau' => 'ce1']), 422, 'ancien avatar refusé');
 assert_status($alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'expert']), 422, 'niveau inconnu');
-$r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'explorateur']);
+$r = $alice->post('/profils', ['pseudo' => 'Lina', 'avatar' => 'astronaute', 'niveau' => 'ce1']);
 assert_status($r, 201, 'profil créé');
 $lina = $r->data['profils'][0];
 assert_true(array_keys($lina) === ['id', 'pseudo', 'avatar', 'niveau', 'personnel'], 'profil : pseudo, avatar, niveau, rien d\'autre');
-$r = $alice->post('/profils', ['pseudo' => 'Noé', 'avatar' => 'robot', 'niveau' => 'eveil']);
+$r = $alice->post('/profils', ['pseudo' => 'Noé', 'avatar' => 'robot', 'niveau' => 'cp']);
 $noe = $r->data['profils'][1];
 for ($i = 0; $i < 4; $i++) {
-    $alice->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'chat-noir', 'niveau' => 'eveil']);
+    $alice->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'chat-noir', 'niveau' => 'cp']);
 }
-assert_status($alice->post('/profils', ['pseudo' => 'Septième', 'avatar' => 'chat-noir', 'niveau' => 'eveil']), 422, 'six profils au maximum');
-$r = $alice->post("/profils/{$noe['id']}/modifier", ['niveau' => 'explorateur', 'avatar' => 'requin']);
+assert_status($alice->post('/profils', ['pseudo' => 'Septième', 'avatar' => 'chat-noir', 'niveau' => 'cp']), 422, 'six profils au maximum');
+$r = $alice->post("/profils/{$noe['id']}/modifier", ['niveau' => 'ce1', 'avatar' => 'requin']);
 assert_status($r, 200, 'profil modifié');
-assert_true($r->data['profils'][1]['niveau'] === 'explorateur' && $r->data['profils'][1]['avatar'] === 'requin', 'modifications enregistrées');
+assert_true($r->data['profils'][1]['niveau'] === 'ce1' && $r->data['profils'][1]['avatar'] === 'requin', 'modifications enregistrées');
 
 section('Résultats');
 $r = $alice->post('/resultats', $result($lina['id']));
@@ -188,7 +188,7 @@ assert_true($r->data['resultats'][0]['score'] === 7000 && $r->data['resultats'][
 section('Isolation entre familles');
 $bob = $newClient('198.51.100.2');
 assert_status($bob->post('/inscription', ['email' => 'bob@exemple.fr', 'motDePasse' => 'un-autre-mot-de-passe', 'adulte' => true]), 201, 'deuxième compte');
-$r = $bob->post('/profils', ['pseudo' => 'Sam', 'avatar' => 'canard', 'niveau' => 'explorateur']);
+$r = $bob->post('/profils', ['pseudo' => 'Sam', 'avatar' => 'canard', 'niveau' => 'ce1']);
 $sam = $r->data['profils'][0];
 assert_status($bob->get("/profils/{$lina['id']}/resultats"), 404, 'Bob ne lit pas les résultats de Lina');
 assert_status($bob->post("/profils/{$lina['id']}/modifier", ['pseudo' => 'Pirate']), 404, 'Bob ne modifie pas Lina');
@@ -207,8 +207,8 @@ $board = static fn (Response $r, string $jeu, string $niveau, string $mode): arr
     static fn (array $b): bool => $b['jeu'] === $jeu && $b['niveau'] === $niveau && $b['mode'] === $mode,
 ))[0];
 $r = $guest->get('/classements');
-assert_true(count($r->data['classements']) === 4 * 4 * 2 + 4 * 4 + 4 * 4, 'tous les classements d’un coup (jeu × niveau × mode ; Neon Flight et MULTIRAIL : niveau × variante)');
-$b = $board($r, 'dragon', 'explorateur', 'defi');
+assert_true(count($r->data['classements']) === 4 * 6 * 2 + 6 * 4 + 6 * 4, 'tous les classements d’un coup (jeu × niveau × mode ; Neon Flight et MULTIRAIL : niveau × variante)');
+$b = $board($r, 'dragon', 'ce1', 'defi');
 assert_true(!isset($b['famille']), 'pas de classement familial pour un invité');
 $row = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0] ?? null;
 assert_true($row !== null, 'Lina au classement public sous son pseudo, sans autorisation à donner');
@@ -216,24 +216,38 @@ assert_true($row['score'] === 8000, 'seul le meilleur score VÉRIFIÉ compte (pa
 assert_true(!str_contains($r->body(), '@'), 'jamais l\'e-mail au classement public');
 assert_true(array_keys($row) === ['rang', 'nom', 'avatar', 'score', 'parties', 'date', 'gagne', 'etoiles', 'duree', 'precision'], 'seulement le jeu exposé, rien du compte');
 assert_true($row['parties'] === 2 && preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ$/', $row['date']) === 1, 'date du record et nombre de parties vérifiées');
-assert_true($board($r, 'cubes', 'maitre', 'tranquille')['public'] === [], 'classement vide sans partie');
+assert_true($board($r, 'cubes', 'aventurier', 'tranquille')['public'] === [], 'classement vide sans partie');
 $r = $alice->get('/classements');
-$b = $board($r, 'dragon', 'explorateur', 'defi');
+$b = $board($r, 'dragon', 'ce1', 'defi');
 $mark = array_values(array_filter($b['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
 assert_true(($mark['famille'] ?? false) === true, 'Lina marquée « famille » pour sa famille');
 assert_true(!isset($b['famille']), 'pas de classement familial avec un seul membre');
 $now += 30;
 assert_status($alice->post('/resultats', $result($noe['id'], ['score' => 5000])), 201, 'résultat de Noé');
-$b = $board($alice->get('/classements'), 'dragon', 'explorateur', 'defi');
+$b = $board($alice->get('/classements'), 'dragon', 'ce1', 'defi');
 assert_true(array_column($b['famille'] ?? [], 'nom') === ['Lina', 'Noé'], 'classement familial dès deux membres, sans rang public');
 $r = $bob->get('/classements');
-$seen = array_values(array_filter($board($r, 'dragon', 'explorateur', 'defi')['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
+$seen = array_values(array_filter($board($r, 'dragon', 'ce1', 'defi')['public'], static fn (array $x): bool => $x['nom'] === 'Lina'))[0];
 assert_true(!isset($seen['famille']), 'Lina n’est pas marquée « famille » chez Bob');
+
+section('Anciens niveaux à piments (avant le 03/11/2026)');
+assert_status($alice->post('/profils', ['pseudo' => 'Ancien', 'avatar' => 'robot', 'niveau' => 'maitre']), 422, 'un profil ne peut plus prendre un ancien niveau');
+$r = $alice->post("/profils/{$noe['id']}/modifier", ['niveau' => '']);
+assert_true($r->status === 200 && $r->data['profils'][1]['niveau'] === '', 'niveau vide accepté : « à choisir au prochain jeu »');
+$alice->post("/profils/{$noe['id']}/modifier", ['niveau' => 'ce1']);
+$now += 30;
+assert_status($alice->post('/resultats', $result($noe['id'], ['score' => 7000, 'niveau' => 'maitre'])), 201, 'résultat en file d’attente sous un ancien niveau : accepté');
+$r = $guest->get('/classements');
+$vieux = array_values(array_filter($r->data['classements'], static fn (array $b): bool => $b['niveau'] === 'maitre'));
+assert_true(count($vieux) === 1 && ($vieux[0]['ancien'] ?? false) === true && $vieux[0]['jeu'] === 'dragon', 'ancien niveau : un tableau à part, seulement s’il a des scores');
+assert_true(array_column($vieux[0]['public'], 'score') === [7000], 'l’ancien record garde son niveau, rien n’est réattribué');
+assert_true(!in_array(7000, array_column($board($r, 'dragon', 'aventurier', 'defi')['public'], 'score'), true)
+    && !in_array(7000, array_column($board($r, 'dragon', 'cm2', 'defi')['public'], 'score'), true), 'Explosif n’est compté ni en CM2 ni en Aventurier');
 
 section('Neon Flight et mesures communes');
 // Une partie Neon Flight réaliste : 40 calculs, 36 justes, mode Arcade (Défi), tables 2 à 5.
 $neon = static fn (int $profile, array $over = []): array => array_replace_recursive([
-    'profil' => $profile, 'jeu' => 'neon', 'niveau' => 'explorateur', 'mode' => 'defi', 'variante' => 'petites', 'score' => 21000,
+    'profil' => $profile, 'jeu' => 'neon', 'niveau' => 'ce1', 'mode' => 'defi', 'variante' => 'petites', 'score' => 21000,
     'gagne' => true, 'etoiles' => 1, 'duree' => 130, 'actif' => 120, 'debut' => gmdate('Y-m-d\TH:i:s\Z', $now - 130),
     'precision' => 0.9, 'ops' => ['×' => [36, 4]], 'details' => ['distance' => 3100, 'altitude' => 140, 'crash' => 1],
     'mesures' => ['calculs' => 40, 'justes' => 36, 'fausses' => 4, 'serie' => 12, 'tempsMoyen' => 2400, 'tempsMedian' => 2100,
@@ -266,16 +280,16 @@ $now += 30;
 $r = $alice->post('/resultats', $neon($lina['id'], ['variante' => 'perso', 'score' => 80000, 'partie' => 'partieNEONAAAAAAAAA6']));
 assert_status($r, 201, 'tables au choix enregistrées');
 $now += 30;
-$r = $alice->post('/resultats', $neon($noe['id'], ['score' => 25000, 'variante' => 'expert', 'niveau' => 'maitre', 'partie' => 'partieNEONAAAAAAAAA7']));
+$r = $alice->post('/resultats', $neon($noe['id'], ['score' => 25000, 'variante' => 'expert', 'niveau' => 'aventurier', 'partie' => 'partieNEONAAAAAAAAA7']));
 assert_status($r, 201, 'Noé, autre profil de la même famille');
 $r = $alice->get('/classements');
 $nb = static fn (Response $r, string $niveau, string $variante): array => array_values(array_filter($r->data['classements'],
     static fn (array $b): bool => $b['jeu'] === 'neon' && $b['niveau'] === $niveau && ($b['variante'] ?? '') === $variante))[0] ?? [];
-assert_true(array_column($nb($r, 'explorateur', 'petites')['public'], 'score') === [21000], 'classement Neon (Explorateur, tables 2 à 5) : le seul score vérifié de la série');
-assert_true(array_column($nb($r, 'maitre', 'expert')['public'], 'nom') === ['Noé'], 'Noé classé à part (Maître, tables 2 à 12)');
+assert_true(array_column($nb($r, 'ce1', 'petites')['public'], 'score') === [21000], 'classement Neon (CE1, tables 2 à 5) : le seul score vérifié de la série');
+assert_true(array_column($nb($r, 'aventurier', 'expert')['public'], 'nom') === ['Noé'], 'Noé classé à part (Aventurier, tables 2 à 12)');
 assert_true(count(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'neon' && $b['mode'] === 'tranquille')) === 0, 'pas de classement Neon en Entraînement');
 assert_true(!str_contains(json_encode(array_column(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'neon'), 'public')), '80000'), 'tables « perso » hors classement');
-assert_true(!isset($board($r, 'dragon', 'explorateur', 'defi')['variante']), 'les autres jeux n’ont pas de variante');
+assert_true(!isset($board($r, 'dragon', 'ce1', 'defi')['variante']), 'les autres jeux n’ont pas de variante');
 $h = $alice->get("/profils/{$lina['id']}/resultats")->data;
 $first = array_values(array_filter($h['resultats'], static fn (array $x): bool => ($x['cle'] ?? '') === 'partieNEONAAAAAAAAA1'))[0];
 assert_true($first['mesures']['tempsMedian'] === 2100 && $first['mesures']['faits']['7×8'] === [1, 2, 5200, 1] && $first['actif'] === 120 && $first['variante'] === 'petites', 'historique : mesures, faits, temps actif et série relus');
@@ -285,7 +299,7 @@ assert_true($h['totaux']['neon']['parties'] === 6 && $h['totaux']['dragon']['par
 assert_true(count(array_filter($alice->get("/profils/{$noe['id']}/resultats")->data['resultats'], static fn (array $x): bool => $x['jeu'] === 'neon')) === 1, 'les résultats de Noé restent les siens');
 
 $rail = static fn (int $profile, array $over = []): array => array_replace_recursive([
-    'profil' => $profile, 'jeu' => 'multirail', 'niveau' => 'explorateur', 'mode' => 'defi', 'variante' => 'zen', 'score' => 42000,
+    'profil' => $profile, 'jeu' => 'multirail', 'niveau' => 'ce1', 'mode' => 'defi', 'variante' => 'zen', 'score' => 42000,
     'gagne' => true, 'etoiles' => 2, 'duree' => 300, 'actif' => 290, 'debut' => gmdate('Y-m-d\TH:i:s\Z', $now - 300),
     'precision' => 0.9, 'ops' => ['+' => [20, 2], '×' => [16, 2]], 'details' => ['distance' => 4200, 'regions' => 4, 'voyageurs' => 6],
     'mesures' => ['calculs' => 40, 'justes' => 36, 'fausses' => 4, 'serie' => 9, 'tempsMoyen' => 6400, 'tempsMedian' => 5900,
@@ -306,7 +320,7 @@ $r = $alice->post('/resultats', $rail($lina['id'], ['mode' => 'tranquille', 'sco
 assert_status($r, 201, 'MULTIRAIL Entraînement enregistré');
 $r = $alice->get('/classements');
 $rails = array_values(array_filter($r->data['classements'], static fn (array $b): bool => $b['jeu'] === 'multirail'));
-$zen = array_values(array_filter($rails, static fn (array $b): bool => ($b['variante'] ?? '') === 'zen' && $b['niveau'] === 'explorateur'))[0] ?? [];
+$zen = array_values(array_filter($rails, static fn (array $b): bool => ($b['variante'] ?? '') === 'zen' && $b['niveau'] === 'ce1'))[0] ?? [];
 assert_true(array_column($zen['public'] ?? [], 'score') === [42000], 'classement MULTIRAIL Voyage Zen (Explorateur)');
 assert_true(!str_contains(json_encode(array_column($rails, 'public')), '77000') && !str_contains(json_encode(array_column($rails, 'public')), '88000'), 'MULTIRAIL : tables « perso » et Entraînement hors classement');
 
@@ -398,7 +412,7 @@ $r = $camille->post('/google', ['credential' => $token(), 'adulte' => true]);
 assert_status($r, 201, 'nouveau compte créé avec Google');
 assert_true($r->data['email'] === 'camille@gmail.com' && $r->data['google'] === true && $r->data['motDePasse'] === false, 'compte Google sans mot de passe');
 assert_true($camille->session->regenerations === 1, 'nouvel identifiant de session');
-$r = $camille->post('/profils', ['pseudo' => 'Jade', 'avatar' => 'chat-noir', 'niveau' => 'eveil']);
+$r = $camille->post('/profils', ['pseudo' => 'Jade', 'avatar' => 'chat-noir', 'niveau' => 'cp']);
 assert_status($r, 201, 'profil sur un compte Google (même système de profils)');
 $jade = $r->data['profils'][0];
 $now += 30;
@@ -465,12 +479,12 @@ assert_true($row && $row['appareil'] === 'tablette' && $row['entree'] === 'accue
 assert_status($track($inv, ['v' => 'court', 's' => $S]), 422, 'identifiant invalide refusé');
 assert_status($track($inv, ['v' => $V, 's' => $S], ['origin' => 'https://mechant.example']), 403, 'autre origine refusée');
 assert_status($track($aClient('192.0.2.51'), ['v' => 'autreVisiteurBBBBBBBB', 's' => $S]), 422, 'la visite d’un autre navigateur ne peut pas être reprise');
-assert_status($track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P, 'jeu' => 'pirate', 'niveau' => 'eveil', 'mode' => 'defi']]]), 422, 'jeu inconnu refusé');
+assert_status($track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P, 'jeu' => 'pirate', 'niveau' => 'cp', 'mode' => 'defi']]]), 422, 'jeu inconnu refusé');
 assert_true((int) $db->query('SELECT SUM(refuses) FROM suivi_journal')->fetchColumn() >= 3, 'envois refusés comptés (santé)');
 $now += 5;
-$r = $track($inv, ['v' => $V, 's' => $S, 'actif' => 5, 'ev' => [['type' => 'niveau'], ['type' => 'debut', 'p' => $P, 'jeu' => 'fusee', 'niveau' => 'eveil', 'mode' => 'tranquille']]]);
+$r = $track($inv, ['v' => $V, 's' => $S, 'actif' => 5, 'ev' => [['type' => 'niveau'], ['type' => 'debut', 'p' => $P, 'jeu' => 'fusee', 'niveau' => 'cp', 'mode' => 'tranquille']]]);
 assert_status($r, 200, 'début de partie');
-$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P, 'jeu' => 'fusee', 'niveau' => 'eveil', 'mode' => 'tranquille']]]);
+$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P, 'jeu' => 'fusee', 'niveau' => 'cp', 'mode' => 'tranquille']]]);
 assert_true((int) $db->query("SELECT COUNT(*) FROM parties WHERE cle = '$P'")->fetchColumn() === 1, 'début envoyé deux fois : une seule partie');
 $now += 100;
 $track($inv, ['v' => $V, 's' => $S, 'actif' => 9000, 'ev' => [['type' => 'jeu', 'p' => $P, 'actif' => 5000]]]);
@@ -489,30 +503,30 @@ assert_true($row['etat'] === 'terminee' && (int) $row['actif'] === 95 && (int) $
 assert_true((int) $db->query("SELECT actif FROM visites WHERE cle = '$S'")->fetchColumn() === 150, 'temps actif de la visite : cumul le plus grand, borné (9 000 annoncées → 105 s écoulées + 45)');
 // Partie perdue (onglet fermé brutalement, plus aucun signal).
 $P2 = 'partieAAAAAAAAAAAAAA2';
-$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P2, 'jeu' => 'cubes', 'niveau' => 'maitre', 'mode' => 'defi']]]);
+$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'debut', 'p' => $P2, 'jeu' => 'cubes', 'niveau' => 'aventurier', 'mode' => 'defi']]]);
 $now += 30;
 $track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'jeu', 'p' => $P2, 'actif' => 25]]]);
 // Fin dont le début s'est perdu en route : la partie est reconstituée.
 $P3 = 'partieAAAAAAAAAAAAAA3';
-$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'fin', 'p' => $P3, 'actif' => 20, 'issue' => 'abandon', 'jeu' => 'meteores', 'niveau' => 'stratege', 'mode' => 'defi']]]);
+$track($inv, ['v' => $V, 's' => $S, 'ev' => [['type' => 'fin', 'p' => $P3, 'actif' => 20, 'issue' => 'abandon', 'jeu' => 'meteores', 'niveau' => 'cm1', 'mode' => 'defi']]]);
 assert_true($db->query("SELECT etat FROM parties WHERE cle = '$P3'")->fetchColumn() === 'abandon', 'fin sans début : partie reconstituée');
 
 section('Suivi d’audience (profil connecté)');
 $dad = $aClient('192.0.2.60');
 assert_status($dad->post('/inscription', ['email' => 'papa@exemple.fr', 'motDePasse' => 'mot-de-passe-papa', 'adulte' => true]), 201, 'inscription papa');
-$lea = $dad->post('/profils', ['pseudo' => 'Léa', 'avatar' => 'renard', 'niveau' => 'explorateur'])->data['profils'][0];
+$lea = $dad->post('/profils', ['pseudo' => 'Léa', 'avatar' => 'renard', 'niveau' => 'ce1'])->data['profils'][0];
 $other = $aClient('192.0.2.61');
 $other->post('/inscription', ['email' => 'autre@exemple.fr', 'motDePasse' => 'mot-de-passe-autre', 'adulte' => true]);
-$tom = $other->post('/profils', ['pseudo' => 'Tom', 'avatar' => 'robot', 'niveau' => 'eveil'])->data['profils'][0];
+$tom = $other->post('/profils', ['pseudo' => 'Tom', 'avatar' => 'robot', 'niveau' => 'cp'])->data['profils'][0];
 $V2 = 'visiteurPAPAAAAAAAAA1';
 $S2 = 'visitePAPAAAAAAAAAAA1';
 $track($dad, ['v' => $V2, 's' => $S2, 'page' => 'compte', 'ev' => [['type' => 'inscription']]]);
 assert_true((int) $db->query("SELECT compte_id FROM visites WHERE cle = '$S2'")->fetchColumn() > 0, 'visite reliée au compte (lu dans la session du serveur)');
 $P4 = 'partiePAPAAAAAAAAAAA1';
-$track($dad, ['v' => $V2, 's' => $S2, 'profil' => $tom['id'], 'ev' => [['type' => 'debut', 'p' => $P4, 'jeu' => 'dragon', 'niveau' => 'explorateur', 'mode' => 'defi']]]);
+$track($dad, ['v' => $V2, 's' => $S2, 'profil' => $tom['id'], 'ev' => [['type' => 'debut', 'p' => $P4, 'jeu' => 'dragon', 'niveau' => 'ce1', 'mode' => 'defi']]]);
 assert_true($db->query("SELECT profil_id FROM parties WHERE cle = '$P4'")->fetchColumn() === null, 'profil d’une autre famille ignoré');
 $P5 = 'partiePAPAAAAAAAAAAA2';
-$track($dad, ['v' => $V2, 's' => $S2, 'profil' => $lea['id'], 'ev' => [['type' => 'debut', 'p' => $P5, 'jeu' => 'dragon', 'niveau' => 'explorateur', 'mode' => 'defi']]]);
+$track($dad, ['v' => $V2, 's' => $S2, 'profil' => $lea['id'], 'ev' => [['type' => 'debut', 'p' => $P5, 'jeu' => 'dragon', 'niveau' => 'ce1', 'mode' => 'defi']]]);
 assert_true((int) $db->query("SELECT profil_id FROM parties WHERE cle = '$P5'")->fetchColumn() === $lea['id'], 'partie rattachée au profil de la famille');
 $now += 200;
 $track($dad, ['v' => $V2, 's' => $S2, 'profil' => $lea['id'], 'ev' => [['type' => 'fin', 'p' => $P5, 'actif' => 180, 'issue' => 'terminee', 'gagne' => true, 'score' => 8000]]]);
@@ -586,7 +600,7 @@ $S4 = 'visitePAPAAAAAAAAAAA9';
 $now += 60;
 $track($dad, ['v' => $V2, 's' => $S4, 'page' => 'accueil', 'ev' => [['type' => 'page']]]);
 assert_true((int) $db->query("SELECT inscription FROM visites WHERE cle = '$S4'")->fetchColumn() === 0, 'compte plus ancien que la visite : pas une inscription');
-$track($inv, ['v' => $V, 's' => 'visiteDIRECTAAAAAAAA1', 'ev' => [['type' => 'debut', 'p' => 'partieDIRECTAAAAAAA1', 'jeu' => 'meteores', 'niveau' => 'eveil', 'mode' => 'defi']]]);
+$track($inv, ['v' => $V, 's' => 'visiteDIRECTAAAAAAAA1', 'ev' => [['type' => 'debut', 'p' => 'partieDIRECTAAAAAAA1', 'jeu' => 'meteores', 'niveau' => 'cp', 'mode' => 'defi']]]);
 $d = $adm('/admin/direct')->data;
 assert_true($d['enJeu'] === 1 && $d['parJeu']['meteores'] === 1, 'activité en direct');
 $avant = $adm('/admin/resume', $per)->data['chiffres'];
@@ -596,7 +610,7 @@ assert_true((int) $db->query('SELECT COUNT(*) FROM visites')->fetchColumn() === 
 $apres = $adm('/admin/resume', ['debut' => $per['debut'], 'fin' => gmdate('Y-m-d', $now)])->data;
 assert_true(array_sum($apres['series']['commencees']) === $avant['partiesCommencees'] && $avant['partiesCommencees'] === 6, 'les totaux par jour restent (bilans)');
 assert_true((int) $db->query('SELECT COUNT(*) FROM resultats WHERE profil_id = ' . $lea['id'])->fetchColumn() === 2, 'les résultats des joueurs ne sont jamais effacés par la conservation');
-$track($dad, ['v' => $V2, 's' => 'visitePAPAAAAAAAAAAA2', 'profil' => $lea['id'], 'ev' => [['type' => 'debut', 'p' => 'partiePAPAAAAAAAAAAA3', 'jeu' => 'fusee', 'niveau' => 'eveil', 'mode' => 'defi']]]);
+$track($dad, ['v' => $V2, 's' => 'visitePAPAAAAAAAAAAA2', 'profil' => $lea['id'], 'ev' => [['type' => 'debut', 'p' => 'partiePAPAAAAAAAAAAA3', 'jeu' => 'fusee', 'niveau' => 'cp', 'mode' => 'defi']]]);
 assert_status($dad->post('/supprimer-compte', ['motDePasse' => 'mot-de-passe-papa']), 200, 'suppression du compte');
 assert_true((int) $db->query("SELECT COUNT(*) FROM parties WHERE cle = 'partiePAPAAAAAAAAAAA3'")->fetchColumn() === 0, 'ses parties suivies sont effacées');
 assert_true($db->query("SELECT compte_id FROM visites WHERE cle = 'visitePAPAAAAAAAAAAA2'")->fetchColumn() === null, 'ses visites deviennent anonymes');
@@ -606,15 +620,15 @@ $solo = $aClient('192.0.2.70');
 assert_status($solo->post('/inscription', ['email' => 'solo@exemple.fr', 'motDePasse' => 'mot-de-passe-solo', 'adulte' => false]), 422, 'compte réservé à un adulte');
 $r = $solo->post('/inscription', ['email' => 'solo@exemple.fr', 'motDePasse' => 'mot-de-passe-solo', 'adulte' => true]);
 assert_true($r->data['profils'] === [], 'compte neuf sans profil imposé');
-$r = $solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]);
+$r = $solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'aventurier', 'personnel' => true]);
 assert_status($r, 201, 'profil personnel créé');
 assert_true($r->data['profils'][0]['personnel'] === true, 'profil marqué personnel');
 $moi = $r->data['profils'][0];
-assert_status($solo->post('/profils', ['pseudo' => 'Solo2', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]), 422, 'un seul profil personnel');
+assert_status($solo->post('/profils', ['pseudo' => 'Solo2', 'avatar' => 'robot', 'niveau' => 'aventurier', 'personnel' => true]), 422, 'un seul profil personnel');
 for ($i = 1; $i <= 6; $i++) {
-    assert_status($solo->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'robot', 'niveau' => 'eveil']), 201, "enfant $i : le profil personnel ne compte pas dans les six");
+    assert_status($solo->post('/profils', ['pseudo' => "Enfant $i", 'avatar' => 'robot', 'niveau' => 'cp']), 201, "enfant $i : le profil personnel ne compte pas dans les six");
 }
-assert_status($solo->post('/profils', ['pseudo' => 'Enfant 7', 'avatar' => 'robot', 'niveau' => 'eveil']), 422, 'sept enfants refusés');
+assert_status($solo->post('/profils', ['pseudo' => 'Enfant 7', 'avatar' => 'robot', 'niveau' => 'cp']), 422, 'sept enfants refusés');
 $r = $solo->get('/etat');
 assert_true(count($r->data['profils']) === 7 && $r->data['profils'][0]['id'] === $moi['id'], 'titulaire en premier');
 $enfant = $r->data['profils'][1];
@@ -629,7 +643,7 @@ assert_true($r->data['profils'][0]['id'] === $enfant['id'], 'le titulaire peut d
 $r = $solo->post("/profils/{$enfant['id']}/supprimer");
 assert_true(array_filter($r->data['profils'], static fn ($p) => $p['personnel']) === [], 'profil personnel supprimé : le compte peut en recréer un');
 assert_true($db->query("SELECT profil_personnel FROM comptes WHERE email = 'solo@exemple.fr'")->fetchColumn() === null, 'lien remis à zéro');
-assert_status($solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'maitre', 'personnel' => true]), 201, 'nouveau profil personnel');
+assert_status($solo->post('/profils', ['pseudo' => 'Solo', 'avatar' => 'robot', 'niveau' => 'aventurier', 'personnel' => true]), 201, 'nouveau profil personnel');
 assert_true($solo->get('/export')->data['profils'][0]['personnel'] === true, 'export complet avec le profil personnel');
 
 echo "\n" . ($failures === 0 ? "OK : $count vérifications ($dsn)\n" : "$failures échec(s) sur $count vérifications\n");

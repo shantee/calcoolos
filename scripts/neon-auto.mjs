@@ -9,7 +9,7 @@ const { chromium } = createRequire(process.env.NODE_PATH ? `${process.env.NODE_P
 
 const base = process.argv[2] ?? 'http://127.0.0.1:4173';
 const out = process.argv[3] ?? 'CAPTURES/neon';
-const niveau = process.argv[4] ?? 'explorateur';
+const niveau = process.argv[4] ?? 'ce1';
 const [w, hgt] = (process.argv[5] ?? '1280x800').split('x').map(Number);
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const page = await browser.newPage({ viewport: { width: w, height: hgt }, locale: 'fr-FR', hasTouch: w < 900, isMobile: w < 900 });

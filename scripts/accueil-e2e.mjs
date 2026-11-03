@@ -170,7 +170,9 @@ await deFace('Panique au phare !');
 await page.click('.vitrine-texte.devant a.jouer');
 await page.waitForSelector(fenetre);
 check((await page.textContent('#choix-niveau-jeu')) === 'Panique au phare !', 'la fenêtre nomme le jeu');
-check(await page.locator('.choix-niveau-option').count() === 4, 'quatre difficultés proposées');
+check(await page.locator('.choix-niveau-option').count() === 6, 'six niveaux proposés, du CP à l’Aventurier');
+check((await page.textContent('#choix-niveau-phrase'))?.includes('Tu peux changer à tout moment'), 'la phrase « Tu peux changer à tout moment » accompagne le choix');
+check(!/piment|🌶/i.test(await page.textContent('#choix-niveau')), 'plus aucun piment dans la fenêtre');
 check(await page.locator('.choix-niveau-option.choisi').count() === 0, 'nouveau venu : aucune difficulté présélectionnée');
 await page.waitForTimeout(400); // fin du fondu d'ouverture
 await page.screenshot({ path: `${out}/ordinateur-choix-niveau.png` });
@@ -183,26 +185,26 @@ check(await page.locator(fenetre).count() === 0 && page.url().includes('index.ht
 await page.click('.vitrine-image.devant a.lancer');
 await page.waitForSelector(fenetre);
 check(true, 'carte de face : ouvre aussi le choix de la difficulté');
-await Promise.all([page.waitForURL(/cubes-de-siege\.html/), page.click('.choix-niveau-option[data-niveau="stratege"]')]);
-check(new URL(page.url()).searchParams.get('niveau') === 'stratege', 'Panique au phare ! lancé au niveau Piquant');
+await Promise.all([page.waitForURL(/cubes-de-siege\.html/), page.click('.choix-niveau-option[data-niveau="ce2"]')]);
+check(new URL(page.url()).searchParams.get('niveau') === 'ce2', 'Panique au phare ! lancé au niveau CE2');
 
 // Retour : la dernière difficulté est proposée, mais la fenêtre s'ouvre à chaque fois.
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
-check(await niveauRetenu() === 'stratege', 'retour à l’accueil : niveau Piquant retenu');
+check(await niveauRetenu() === 'ce2', 'retour à l’accueil : niveau CE2 retenu');
 await page.click('.vitrine-texte.devant a.jouer');
 await page.waitForSelector(fenetre);
-check(await page.locator('.choix-niveau-option.choisi').getAttribute('data-niveau') === 'stratege', 'la dernière difficulté est mise en évidence');
-check(await page.evaluate(() => document.activeElement?.getAttribute('data-niveau')) === 'stratege', 'le focus est sur la dernière difficulté');
+check(await page.locator('.choix-niveau-option.choisi').getAttribute('data-niveau') === 'ce2', 'la dernière difficulté est mise en évidence');
+check(await page.evaluate(() => document.activeElement?.getAttribute('data-niveau')) === 'ce2', 'le focus est sur la dernière difficulté');
 await page.keyboard.press('Escape');
 
 // Les six jeux reçoivent la difficulté choisie, et chaque niveau est bien transmis.
 for (const [nom, fichier, niveau] of [
-  ['Panique au phare !', 'cubes-de-siege', 'eveil'],
-  ['Pluie de météores', 'pluie-de-meteores', 'explorateur'],
-  ['Le Dragon gourmand', 'dragon-gourmand', 'stratege'],
-  ['Décollage !', 'decollage', 'maitre'],
-  ['Neon Flight', 'neon-flight', 'eveil'],
-  ['MULTIRAIL', 'multirail', 'maitre'],
+  ['Panique au phare !', 'cubes-de-siege', 'cp'],
+  ['Pluie de météores', 'pluie-de-meteores', 'ce1'],
+  ['Le Dragon gourmand', 'dragon-gourmand', 'ce2'],
+  ['Décollage !', 'decollage', 'aventurier'],
+  ['Neon Flight', 'neon-flight', 'cp'],
+  ['MULTIRAIL', 'multirail', 'aventurier'],
 ]) {
   await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
   await deFace(nom);
@@ -214,8 +216,8 @@ for (const [nom, fichier, niveau] of [
 
 // Un joueur qui revient : le manège s'ouvre sur son dernier jeu, « Reprendre » relance sans repasser par le choix.
 await page.evaluate(() => {
-  localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'stratege', mode: 'defi' }));
-  localStorage.setItem('calcoolos.historique', JSON.stringify([{ jeu: 'dragon', niveau: 'stratege', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: {}, details: {}, date: new Date().toISOString() }]));
+  localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'ce2', mode: 'defi' }));
+  localStorage.setItem('calcoolos.historique', JSON.stringify([{ jeu: 'dragon', niveau: 'ce2', mode: 'defi', score: 420, gagne: true, etoiles: 2, duree: 60, precision: 0.9, ops: {}, details: {}, date: new Date().toISOString() }]));
 });
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 check(await nomDeFace() === 'Le Dragon gourmand', 'joueur qui revient : son dernier jeu de face');
@@ -225,7 +227,18 @@ await page.waitForSelector(fenetre);
 check((await page.textContent('#choix-niveau-jeu'))?.length > 2, 'tuile de « Mes jeux » : choix de la difficulté, avec le nom du jeu');
 await page.keyboard.press('Escape');
 await Promise.all([page.waitForURL(/dragon-gourmand\.html/), page.click('.univers-reprise')]);
-check(new URL(page.url()).searchParams.get('niveau') === 'stratege' && !page.url().includes('?niveau=stratege?'), '« Reprendre » : relance directe au niveau de la dernière partie');
+check(new URL(page.url()).searchParams.get('niveau') === 'ce2' && !page.url().includes('?niveau=ce2?'), '« Reprendre » : relance directe au niveau de la dernière partie');
+// Dernière partie jouée à un ancien niveau à piments : « Reprendre » ne devine pas de classe, la fenêtre s'ouvre.
+await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+await page.evaluate(() => {
+  localStorage.setItem('calcoolos.derniere-partie', JSON.stringify({ jeu: 'dragon', niveau: 'maitre', mode: 'defi' }));
+  localStorage.setItem('calcoolos.niveau', 'maitre');
+});
+await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
+await page.click('.univers-reprise');
+await page.waitForSelector(fenetre);
+check(await page.locator('.choix-niveau-option.choisi').count() === 0, 'ancien niveau à piments : « Reprendre » ouvre le choix, sans classe devinée');
+await page.keyboard.press('Escape');
 await page.evaluate(() => {
   localStorage.removeItem('calcoolos.derniere-partie');
   localStorage.removeItem('calcoolos.historique');
@@ -256,8 +269,8 @@ const ajouter = async (pseudo, avatar, niveau) => {
   await form.locator('button[type="submit"]').click();
   await page.waitForSelector(`article.profil h3:has-text("${pseudo}")`);
 };
-await ajouter('Lina', 'chat-noir', 'eveil');
-await ajouter('Noé', 'sorcier', 'maitre');
+await ajouter('Lina', 'chat-noir', 'cp');
+await ajouter('Noé', 'sorcier', 'aventurier');
 check(true, 'compte créé, deux profils ajoutés');
 
 // --- 3. Accueil connecté --------------------------------------------------------------------------------
@@ -265,8 +278,8 @@ console.log('• Accueil connecté');
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
 check((await page.textContent('.joueur'))?.includes('Lina'), 'barre : Lina joue (premier profil)');
-check((await page.textContent('.joueur'))?.includes('Niveau Doux'), 'barre : niveau du profil affiché');
-check(await niveauRetenu() === 'eveil', 'accueil : niveau du profil de Lina (Éveil)');
+check((await page.textContent('.joueur'))?.includes('Niveau CP'), 'barre : niveau du profil affiché');
+check(await niveauRetenu() === 'cp', 'accueil : niveau du profil de Lina (CP)');
 await page.waitForFunction(() => document.querySelector('#carnet-titre')?.textContent?.includes('Lina'));
 check(true, 'carnet : « Le carnet de Lina »');
 check(await page.locator('.barre .lien-compte', { hasText: 'Mon espace' }).isVisible(), 'barre : « Espace famille » pour un compte connecté');
@@ -278,26 +291,26 @@ await page.screenshot({ path: `${out}/ordinateur-panneau-famille.png` });
 await page.click('#panneau-joueur .panneau-profils button:has-text("Noé")');
 await page.waitForFunction(() => document.querySelector('.joueur')?.textContent?.includes('Noé'));
 check(await page.evaluate(() => window.__sansRechargement === true), 'changer de joueur depuis la barre : sans recharger la page');
-check(await niveauRetenu() === 'maitre', 'changer de joueur : le niveau suit (Maître pour Noé)');
+check(await niveauRetenu() === 'aventurier', 'changer de joueur : le niveau suit (Aventurier pour Noé)');
 await page.waitForFunction(() => document.querySelector('#carnet-titre')?.textContent?.includes('Noé'));
 check(true, 'changer de joueur : le carnet suit');
-// Noé choisit Piquant au lancement : enregistré sur son profil avant de partir au jeu.
+// Noé choisit le CE2 au lancement : enregistré sur son profil avant de partir au jeu.
 await page.click('.vitrine-texte.devant a.jouer');
 await page.waitForSelector(fenetre);
-await Promise.all([page.waitForURL(/jeu\//), page.click('.choix-niveau-option[data-niveau="stratege"]')]);
+await Promise.all([page.waitForURL(/jeu\//), page.click('.choix-niveau-option[data-niveau="ce2"]')]);
 await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
 const profils = await page.evaluate(async () => (await (await fetch('api/etat')).json()).profils);
-check(profils.find((p) => p.pseudo === 'Noé')?.niveau === 'stratege', 'difficulté choisie au lancement : enregistrée sur le profil de Noé');
-check((await page.textContent('.joueur'))?.includes('Niveau Piquant'), 'barre : niveau mis à jour');
+check(profils.find((p) => p.pseudo === 'Noé')?.niveau === 'ce2', 'difficulté choisie au lancement : enregistrée sur le profil de Noé');
+check((await page.textContent('.joueur'))?.includes('Niveau CE2'), 'barre : niveau mis à jour');
 await page.reload({ waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
-check((await page.textContent('.joueur'))?.includes('Noé') && (await niveauRetenu()) === 'stratege', 'après rechargement : Noé, niveau Piquant');
+check((await page.textContent('.joueur'))?.includes('Noé') && (await niveauRetenu()) === 'ce2', 'après rechargement : Noé, niveau CE2');
 await page.waitForTimeout(1500); // fin de la rotation vers le dernier jeu
 await page.screenshot({ path: `${out}/ordinateur-accueil-connecte.png`, fullPage: true });
 // « Qui joue ? » sur l'accueil.
 await page.locator('#qui-joue button', { hasText: 'Lina' }).click();
-check(await niveauRetenu() === 'eveil' && (await page.textContent('.joueur'))?.includes('Lina'), '« Qui joue ? » : Lina, niveau Éveil');
+check(await niveauRetenu() === 'cp' && (await page.textContent('.joueur'))?.includes('Lina'), '« Qui joue ? » : Lina, niveau CP');
 
 // --- 4. Tablette et téléphone (même compte) ---------------------------------------------------------
 console.log('• Tablette et téléphone');
@@ -410,7 +423,7 @@ for (const [nom, opts] of [
   await p.waitForTimeout(800);
   await p.tap('.vitrine-texte.devant a.jouer');
   await p.waitForSelector(fenetre);
-  check(/Tables de 2/.test(await p.textContent('#choix-niveau-liste')), `${nom} : pour MULTIRAIL, la fenêtre parle de tables`);
+  check(/×/.test(await p.textContent('#choix-niveau-liste')) && !/[+÷]/.test(await p.textContent('#choix-niveau-liste')), `${nom} : pour MULTIRAIL, la fenêtre ne montre que des multiplications`);
   await p.waitForTimeout(400);
   await p.screenshot({ path: `${out}/${nom}-choix-difficulte.png` });
   const dansEcran = await p.locator('.choix-niveau').evaluate((d) => { const r = d.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; });

@@ -74,7 +74,7 @@ async function jouerJusquALaFin(hook, limite = 240000, pauseMs = 0) {
 const resume = {};
 console.log('• Invité : accueil, choix du niveau');
 await page.goto(`${base}/`, { waitUntil: 'load', timeout: 90000 });
-await page.click('input[value="explorateur"]');
+await page.click('input[value="ce1"]');
 await page.waitForTimeout(800);
 verifier(envois.some((e) => e.ev?.some((x) => x.type === 'page')) && envois.some((e) => e.ev?.some((x) => x.type === 'niveau')), 'visite et choix du niveau envoyés');
 const visiteur = envois[0]?.v;
@@ -84,7 +84,7 @@ verifier(!(await ctx.cookies()).length, 'aucun cookie pour un invité');
 for (const j of JEUX) {
   console.log(`• Invité : ${j.id}`);
   const avant = envois.length;
-  await page.goto(`${base}/jeu/${j.page}?niveau=explorateur&graine=7${j.params}`, { waitUntil: 'load', timeout: 90000 });
+  await page.goto(`${base}/jeu/${j.page}?niveau=ce1&graine=7${j.params}`, { waitUntil: 'load', timeout: 90000 });
   await page.waitForFunction((h) => window[h] !== undefined, j.hook, { timeout: 20000 });
   await page.waitForTimeout(800);
   await page.evaluate((h) => window[h].start('defi'), j.hook);
@@ -104,7 +104,7 @@ for (const j of JEUX) {
 }
 
 console.log('• Invité : abandon (page quittée en pleine partie)');
-await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=maitre&graine=3`, { waitUntil: 'load', timeout: 90000 });
+await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=aventurier&graine=3`, { waitUntil: 'load', timeout: 90000 });
 await page.waitForFunction(() => window.__siege !== undefined);
 await page.evaluate(() => window.__siege.start('tranquille'));
 for (let i = 0; i < 4; i++) {
@@ -126,12 +126,12 @@ const email = `analytics-${Date.now()}@exemple.fr`;
 let r = await api('/inscription', { email, motDePasse: 'mot-de-passe-de-test', adulte: true });
 verifier(r.status === 201, 'inscription');
 const csrf = r.data.csrf;
-r = await api('/profils', { pseudo: 'SuperChat42', avatar: 'chat-lunettes', niveau: 'explorateur' }, csrf);
+r = await api('/profils', { pseudo: 'SuperChat42', avatar: 'chat-lunettes', niveau: 'ce1' }, csrf);
 const profil = r.data.profils?.[0];
 verifier(!!profil, 'profil créé');
 await page.evaluate((p) => localStorage.setItem('calcoolos.joueur', JSON.stringify({ id: p.id, pseudo: p.pseudo, avatar: p.avatar, niveau: p.niveau })), profil);
 const avantP = envois.length;
-await page.goto(`${base}/jeu/decollage.html?niveau=explorateur&graine=5`, { waitUntil: 'load', timeout: 90000 });
+await page.goto(`${base}/jeu/decollage.html?niveau=ce1&graine=5`, { waitUntil: 'load', timeout: 90000 });
 await page.waitForFunction(() => window.__fusee !== undefined);
 await page.evaluate(() => window.__fusee.start('defi'));
 const dP = await jouerJusquALaFin('__fusee');

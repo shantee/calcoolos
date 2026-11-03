@@ -9,7 +9,7 @@ import { motsVifs } from '../platform/mots-vifs';
 import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer, setActivePlayer } from '../platform/player';
 import { flushQueue, lastGame, localHistory, type StoredResult } from '../platform/results';
-import { EXPLOSIF_MULTIRAIL, NIVEAU_INFOS, NIVEAU_TABLES, estNiveau, niveauDepart, niveauRetenu, pimentsHtml, retenirNiveau } from '../platform/niveau';
+import { EXEMPLES_PAR_JEU, NIVEAU_INFOS, estNiveau, familleDuJeu, niveauDepart, niveauRetenu, retenirNiveau } from '../platform/niveau';
 import { monterManege, type Manege } from '../platform/manege';
 import { basculerFavori, lireFavoris, masquerPresentations, ordonnerJeux, presentationsMasquees } from '../platform/favoris';
 import { conseilsAccueil } from '../platform/progres';
@@ -76,10 +76,9 @@ async function setLevel(value: TierId, source: 'joueur' | 'profil' | 'retenu'): 
   }
 }
 
-function piments(id: TierId): HTMLElement {
-  const zone = h('span', { class: 'niveau-piments', 'data-niveau': id, 'aria-hidden': 'true' });
-  zone.innerHTML = pimentsHtml(id);
-  return zone;
+/** Pastille colorée du niveau (« CE1 », ★ pour Aventurier). */
+function pastille(id: TierId): HTMLElement {
+  return h('span', { class: 'niveau-pastille', 'data-niveau': id, 'aria-hidden': 'true' }, NIVEAU_INFOS[id].sigle);
 }
 
 {
@@ -98,8 +97,8 @@ if (dialogue) {
   const liste = dialogue.querySelector<HTMLElement>('#choix-niveau-liste');
   for (const [id, info] of Object.entries(NIVEAU_INFOS) as Array<[TierId, (typeof NIVEAU_INFOS)[TierId]]>) {
     const b = h('button', { type: 'button', class: 'choix-niveau-option', 'data-niveau': id },
-      piments(id),
-      h('span', { class: 'niveau-nom' }, info.nom),
+      pastille(id),
+      h('span', { class: 'niveau-nom' }, info.long),
       h('span', { class: 'choix-niveau-exemple', 'aria-hidden': 'true' }),
       h('small'));
     b.addEventListener('click', async () => {
@@ -121,15 +120,15 @@ document.addEventListener('click', (e) => {
   cible = a;
   const nom = a.closest('.vitrine')?.querySelector('h2')?.textContent ?? a.querySelector('strong')?.textContent ?? '';
   dialogue.querySelector('#choix-niveau-jeu')?.replaceChildren(nom);
-  const tables = /neon-flight|multirail/.test(a.href);
+  const exemples = EXEMPLES_PAR_JEU[familleDuJeu(a.href)];
   for (const [id, b] of options) {
-    const { exemple, detail } = id === 'maitre' && /multirail/.test(a.href) ? EXPLOSIF_MULTIRAIL : tables ? NIVEAU_TABLES[id] : NIVEAU_INFOS[id];
+    const { exemple, detail } = exemples[id];
     b.querySelector('.choix-niveau-exemple')?.replaceChildren(exemple);
     b.querySelector('small')?.replaceChildren(detail);
     b.classList.toggle('choisi', id === niveauActuel);
   }
   dialogue.showModal();
-  options.get(niveauActuel ?? 'eveil')?.focus();
+  options.get(niveauActuel ?? 'cp')?.focus();
 });
 
 // --- Qui joue ? (compte connecté) ---------------------------------------------------------------
@@ -294,8 +293,10 @@ function renderUnivers(resultats: readonly StoredResult[] | null): void {
     // Sur un autre appareil, seul le serveur connaît le dernier jeu : le manège s'y place aussi.
     if (!window.location.hash) leManege?.aller(jeux.indexOf(reprise));
     const lien = new URL(reprise.href, window.location.href);
-    lien.searchParams.set('niveau', estNiveau(dernier.niveau) ? dernier.niveau : (niveauActuel ?? 'explorateur'));
-    blocs.push(h('a', { class: 'univers-reprise', 'data-jeu': '', 'data-sans-choix': '', href: lien.toString() },
+    // Dernière partie jouée à un ancien niveau à piments : pas de classe devinée, la fenêtre de choix s'ouvre.
+    const connu = estNiveau(dernier.niveau);
+    if (connu) lien.searchParams.set('niveau', dernier.niveau);
+    blocs.push(h('a', { class: 'univers-reprise', 'data-jeu': '', ...(connu ? { 'data-sans-choix': '' } : {}), href: lien.toString() },
       h('img', { src: reprise.image, alt: '', width: 480, height: 360 }),
       h('span', { class: 'reprise-texte' },
         h('small', {}, 'Ton dernier jeu'),

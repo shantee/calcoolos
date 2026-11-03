@@ -4,6 +4,7 @@
  * le son commun, l'enregistrement du résultat (reportResult) et la mesure du temps de jeu actif.
  */
 import "./style.css";
+import { aideVisuelle } from "../../core/multiplications";
 import { CEILING, COMBO_TIME, Flight, RECORD_KEY, SERIES, SETTINGS_KEY, TIME_LIMIT, loadSettings, tablesDuNiveau, parJoueur, readRecord, save, seriesOf, starsFor, type SeriesId, type Settings } from "./model";
 import { Fx } from "./fx";
 import { dangerAltitude, placeAt } from "./stages";
@@ -22,7 +23,7 @@ const app = document.querySelector<HTMLDivElement>("#app")!;
 const params = new URLSearchParams(location.search);
 const player = activePlayer();
 const tierParam = params.get("niveau");
-let tier: TierId = estNiveau(tierParam) ? tierParam : estNiveau(player?.niveau) ? player.niveau : niveauRetenu() ?? "explorateur";
+let tier: TierId = estNiveau(tierParam) ? tierParam : estNiveau(player?.niveau) ? player.niveau : niveauRetenu() ?? "ce1";
 const settingsKey = parJoueur(SETTINGS_KEY, player?.id),
   recordsKey = parJoueur(RECORD_KEY, player?.id);
 const settings = loadSettings(tier, settingsKey),
@@ -56,7 +57,7 @@ let shownScore = 0,
 app.innerHTML = `<div class="vignette"></div><header><a class="home-link" href="../index.html" title="Retour à l’accueil de Calcoolos">← Accueil</a><div class="tools"><button id="sound" aria-label="Activer ou couper le son"></button><button id="fullscreen" aria-label="Plein écran" title="Plein écran"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="pause" hidden>Ⅱ Pause</button></div></header>
 <section id="title" class="title-screen"><div class="hero"><h1>NEON<br><span>FLIGHT</span><b>MULTIPLY</b></h1><p class="tagline">Tes réponses sont ton carburant.</p><p class="intro">De la forêt jusqu’à la mégapole.</p></div>
 <div class="setup panel"><div class="pilot" id="pilot"></div><div class="segmented" id="modes"><button data-mode="arcade">Arcade <small>Vise le record · classé</small></button><button data-mode="training">Entraînement <small>Prends ton temps</small></button></div><div class="label-row"><label id="tables-label">Tes tables</label><span id="series-note" class="series-note"></span></div><div class="series" role="group" aria-labelledby="tables-label">${Object.entries(SERIES).map(([id, s]) => `<button data-series="${id}">${s.name.replace("Tables ", "")}</button>`).join("")}</div><div class="tables">${Array.from({ length: 11 }, (_, i) => `<button data-table="${i + 2}" aria-label="Table de ${i + 2}">${i + 2}</button>`).join("")}</div><div class="select-row"><label>Niveau<select id="difficulty">${NIVEAUX.map((n) => `<option value="${n}">${NIVEAU_INFOS[n].nom} · ${TIME_LIMIT[n]} s</option>`).join("")}</select></label><label>Graphismes<select id="quality"><option value="low">Éco</option><option value="medium">Équilibré</option><option value="high">Spectaculaire</option></select></label></div><button id="play" class="primary" disabled>INITIALISATION…</button><p class="hint">Tape ta réponse, puis <kbd>Entrée</kbd>.</p><div class="record"><span id="best-label">TON RECORD</span><strong id="best"></strong></div></div></section>
-<section id="hud" hidden><div class="top-hud"><div class="score-block"><strong id="score">0</strong><small id="combo"></small><div class="mult" id="mult">×1</div><div class="heat"><span id="heat-label">🌈</span><div class="heat-track"><i id="heat-fill"></i></div></div></div><div class="telemetry"><span id="stage"></span><span id="distance">0 KM</span></div></div><div id="altitude" class="altimeter"><strong id="alt">100 <small>M</small></strong><div class="alt-track"><i id="alt-fill"></i><b></b></div><small id="alt-label"></small><b id="vario" class="vario">▼ 0,0 m/s</b></div><div id="event" role="status" aria-live="polite"></div><div class="question panel"><div class="question-top"><span id="question-label"></span><span id="seconds"></span></div><div class="time-track"><i id="time-fill"></i></div><div class="equation"><span id="equation">2 × 3</span><span class="equals">=</span><output id="answer" aria-label="Ta réponse">?</output></div><div id="feedback" aria-live="polite"></div><div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "↵"].map((v) => `<button data-key="${v}" aria-label="${v === "⌫" ? "Effacer" : v === "↵" ? "Valider" : v}">${v}</button>`).join("")}</div></div><button id="finish" class="finish" hidden>Terminer le vol</button></section>
+<section id="hud" hidden><div class="top-hud"><div class="score-block"><strong id="score">0</strong><small id="combo"></small><div class="mult" id="mult">×1</div><div class="heat"><span id="heat-label">🌈</span><div class="heat-track"><i id="heat-fill"></i></div></div></div><div class="telemetry"><span id="stage"></span><span id="distance">0 KM</span></div></div><div id="altitude" class="altimeter"><strong id="alt">100 <small>M</small></strong><div class="alt-track"><i id="alt-fill"></i><b></b></div><small id="alt-label"></small><b id="vario" class="vario">▼ 0,0 m/s</b></div><div id="event" role="status" aria-live="polite"></div><div class="question panel"><div class="question-top"><span id="question-label"></span><span id="seconds"></span></div><div class="time-track"><i id="time-fill"></i></div><div class="equation"><span id="equation">2 × 3</span><span class="equals">=</span><output id="answer" aria-label="Ta réponse">?</output></div><div id="groupes" class="groupes" hidden aria-hidden="true"></div><div id="feedback" aria-live="polite"></div><div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, "⌫", 0, "↵"].map((v) => `<button data-key="${v}" aria-label="${v === "⌫" ? "Effacer" : v === "↵" ? "Valider" : v}">${v}</button>`).join("")}</div></div><button id="finish" class="finish" hidden>Terminer le vol</button></section>
 <section id="pause-screen" class="overlay" hidden><div class="panel modal"><p class="eyebrow">RÉACTEURS EN VEILLE</p><h2>Petite escale.</h2><p>Ton vol t’attend.</p><button id="resume" class="primary">REPRENDRE ↗</button><button id="quit" class="secondary">Retour à la base</button></div></section>
 <section id="results" class="overlay" hidden><div class="panel modal results"><p class="eyebrow" id="result-label">VOL TERMINÉ</p><h2 id="result-title">Une belle traversée.</h2><div class="final-score"><strong id="final-score">0</strong><span>POINTS</span></div><div id="stars" class="stars" aria-label=""></div><div id="stats" class="stats"></div><div id="mastery" class="mastery"></div><p id="outcome" class="outcome" role="status"></p><button id="replay" class="primary">REJOUER ↗</button><button id="home" class="secondary">Choisir mes tables</button><a class="secondary progress-link" href="../tableau.html">Voir mes progrès</a></div></section>`;
 const fx = new Fx(app);
@@ -377,6 +378,7 @@ function renderHud() {
   vario.textContent = `${flight.vario < 0 ? "▼" : "▲"} ${Math.abs(flight.vario).toLocaleString("fr-FR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m/s`;
   vario.classList.toggle("up", flight.vario >= 0);
   $("#equation").textContent = flight.enonce;
+  dessinerGroupes();
   $(".equation").classList.toggle("longue", !!flight.trio);
   $("#answer").textContent = input || "?";
   $("#time-fill").style.width = (flight.remaining / flight.limit) * 100 + "%";
@@ -516,3 +518,25 @@ window.addEventListener(
     }
   },
 );
+
+/**
+ * Au CP, la multiplication est d'abord un nombre de groupes : « 3 × 2 » se montre en deux groupes de trois points.
+ * Rien à partir du CE1, ni pour une multiplication élaborée.
+ */
+let groupesDessines = "";
+function dessinerGroupes() {
+  const zone = $("#groupes");
+  const voir = aideVisuelle(settings.difficulty) && !flight.trio && flight.state === "playing";
+  const cle = voir ? `${flight.a}×${flight.b}` : "";
+  if (cle === groupesDessines) return;
+  groupesDessines = cle;
+  zone.hidden = !voir;
+  zone.replaceChildren();
+  if (!voir) return;
+  for (let g = 0; g < flight.b; g++) {
+    const groupe = document.createElement("span");
+    groupe.className = "groupe";
+    for (let i = 0; i < flight.a; i++) groupe.append(document.createElement("i"));
+    zone.append(groupe);
+  }
+}

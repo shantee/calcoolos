@@ -195,7 +195,7 @@ const ctxP = await browser.newContext(telephone);
 const f = await ctxP.newPage();
 surveiller(f);
 await inscrire(f, famille);
-for (let i = 1; i <= 6; i++) check((await call(f, 'POST', '/profils', { pseudo: `Enfant ${i}`, avatar: 'robot', niveau: 'eveil' })).status === 201, `enfant ${i}`);
+for (let i = 1; i <= 6; i++) check((await call(f, 'POST', '/profils', { pseudo: `Enfant ${i}`, avatar: 'robot', niveau: 'cp' })).status === 201, `enfant ${i}`);
 await f.goto(`${base}/compte.html`, { waitUntil: 'networkidle' });
 await f.waitForSelector('.carte-mon-profil');
 check((await f.textContent('#t-moi'))?.includes('Toi aussi'), 'proposition de profil personnel');

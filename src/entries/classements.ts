@@ -9,7 +9,7 @@ import { AVATAR_INVITE, avatarImg } from '../platform/avatars';
 import { activePlayer } from '../platform/player';
 import { localHistory, type GameId, type StoredResult } from '../platform/results';
 import { GAME_NAMES, MODE_NAMES, TIER_NAMES, VARIANT_NAMES } from '../platform/stats';
-import { NIVEAUX, NIVEAU_INFOS, estNiveau, niveauRetenu } from '../platform/niveau';
+import { NIVEAU_INFOS, estNiveau, niveauRetenu } from '../platform/niveau';
 import { dateCourte, dateLongue, duree, etoiles, score } from '../platform/classement-format';
 import { h } from '../platform/dom';
 import { TIER_SERIES } from '../game/neon/model';
@@ -40,6 +40,8 @@ interface Board {
   variante?: string;
   public: Row[];
   famille?: Row[];
+  /** Ancien niveau à piments (avant le 03/11/2026) : classé à part, présent seulement s'il a des scores. */
+  ancien?: boolean;
 }
 
 /** Ordre et présentation des jeux, comme sur l'accueil. */
@@ -134,12 +136,11 @@ function boardEl(b: Board, page: string, me: string | undefined, guest: StoredRe
       etoiles: guest.etoiles, duree: guest.duree, precision: guest.precision }, me, true));
   }
   const vide = b.public.length === 0 && !guest;
-  const info = NIVEAU_INFOS[b.niveau as keyof typeof NIVEAU_INFOS];
-  const rang = NIVEAUX.indexOf(b.niveau as (typeof NIVEAUX)[number]) + 1;
-  return h('section', { class: `classement${vide ? ' vide' : ''}${mien ? ' mon-niveau' : ''}`, 'data-niveau': b.niveau },
+  const info = estNiveau(b.niveau) ? NIVEAU_INFOS[b.niveau] : null;
+  return h('section', { class: `classement${vide ? ' vide' : ''}${mien ? ' mon-niveau' : ''}${b.ancien ? ' ancien' : ''}`, 'data-niveau': b.niveau },
     h('header', {},
-      h('span', { class: 'crans', 'aria-hidden': 'true' }, ...[1, 2, 3, 4].map((i) => h('i', { class: i <= rang ? 'plein' : undefined }))),
-      h('h3', {}, TIER_NAMES[b.niveau] ?? b.niveau),
+      info ? h('span', { class: 'niveau-pastille petite', 'aria-hidden': 'true' }, info.sigle) : null,
+      h('h3', {}, b.ancien ? `${TIER_NAMES[b.niveau] ?? b.niveau} · ${nomTableau(b)}` : TIER_NAMES[b.niveau] ?? b.niveau),
       info ? h('span', { class: 'public' }, info.public) : null,
       mien ? h('span', { class: 'etiquette' }, 'ton niveau') : null),
     vide
@@ -192,6 +193,21 @@ function banniere(jeu: GameId, surtitre: string, page: string, boards: Board[], 
 }
 
 /** Choix de l'onglet : Défi / Tranquille commun aux quatre jeux, série à part pour Neon Flight ; retenu sur l'appareil. */
+/**
+ * Anciens records (niveaux à piments, avant le 03/11/2026) : gardés tels quels, repliés en bas de page. Ils ne se
+ * comparent pas aux nouveaux niveaux (Explosif n'est ni le CM2 ni l'Aventurier).
+ */
+function archive(boards: Board[], me: string | undefined): HTMLElement | string {
+  const vieux = boards.filter((b) => b.ancien && b.public.length > 0);
+  if (!vieux.length) return '';
+  return h('details', { class: 'carte anciens-records' },
+    h('summary', {}, 'Anciens records (niveaux à piments)'),
+    h('p', { class: 'chapeau' }, 'Avant le 3 novembre 2026, les niveaux s’appelaient Doux, Relevé, Piquant et Explosif. Leurs records restent ici, à part : ils ne se comparent pas aux nouveaux niveaux scolaires.'),
+    ...JEUX.filter(({ jeu }) => vieux.some((b) => b.jeu === jeu)).map(({ jeu, page }) =>
+      h('section', { class: 'anciens-jeu' }, h('h2', {}, GAME_NAMES[jeu]),
+        h('div', { class: 'niveaux' }, ...vieux.filter((b) => b.jeu === jeu).map((b) => boardEl(b, page, me, null, false))))));
+}
+
 const cleOnglet = (jeu: GameId) => (VARIANTES[jeu] ? `calcoolos.classements.${jeu}` : 'calcoolos.classements.mode');
 function ongletRetenu(jeu: GameId, defaut: string): string {
   const ids = onglets(jeu).map((o) => o.id);
@@ -265,7 +281,7 @@ void (async () => {
     .reduce<StoredResult | null>((m, x) => (!m || x.score > m.score ? x : m), null);
 
   const sections = JEUX.map(({ jeu, surtitre, page }) => {
-    const mine = boards.filter((b) => b.jeu === jeu);
+    const mine = boards.filter((b) => b.jeu === jeu && !b.ancien);
     return h('section', { class: 'jeu-classements', id: `jeu-${jeu}`, 'data-univers': jeu, 'aria-label': GAME_NAMES[jeu] },
       banniere(jeu, surtitre, page, mine, me),
       barreOnglets(jeu),
@@ -283,6 +299,7 @@ void (async () => {
         h('p', {}, 'En mode invité, tes scores restent sur cet appareil : ils apparaissent ici en pointillés, mais pas dans le classement des autres. Pour y entrer, gagné ou perdu : ',
           h('a', { class: 'bouton petit', href: 'compte.html#inscription' }, 'Créer mon compte'))),
     ...sections,
+    archive(boards, me),
   );
   choisirOnglet('cubes', ongletRetenu('cubes', 'defi'), false);
   // Neon Flight : d'office, la série proposée au niveau du joueur (comme dans le jeu).

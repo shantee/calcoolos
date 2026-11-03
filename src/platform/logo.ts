@@ -322,7 +322,7 @@ export function logo(taille: LogoTaille, options: LogoOptions = {}): HTMLElement
 
   const bulle = creerBulle();
   mot.append(bulle.boite);
-  const niveau = () => options.niveau?.() ?? 'explorateur';
+  const niveau = () => options.niveau?.() ?? 'ce1';
   let visible = true;
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(racine);

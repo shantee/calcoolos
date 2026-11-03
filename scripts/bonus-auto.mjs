@@ -80,7 +80,7 @@ function finish() {
 }
 
 // --- 1. Engins forcés -------------------------------------------------------------------------
-await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=explorateur&graine=18`, { waitUntil: 'networkidle' });
+await page.goto(`${base}/jeu/cubes-de-siege.html?niveau=ce1&graine=18`, { waitUntil: 'networkidle' });
 await page.waitForFunction(() => window.__siege !== undefined, null, { timeout: 15000 });
 await page.waitForTimeout(800);
 await S(() => window.__siege.start('tranquille'));
@@ -230,7 +230,7 @@ p2.on('console', (m) => {
   if (m.type() === 'error' || m.type() === 'warning') problems.push(`console ${m.type()} : ${m.text()}`);
 });
 p2.on('pageerror', (e) => problems.push(`erreur : ${e.message}`));
-await p2.goto(`${base}/jeu/cubes-de-siege.html?niveau=explorateur&graine=31`, { waitUntil: 'networkidle' });
+await p2.goto(`${base}/jeu/cubes-de-siege.html?niveau=ce1&graine=31`, { waitUntil: 'networkidle' });
 await p2.waitForFunction(() => window.__siege !== undefined, null, { timeout: 15000 });
 await p2.evaluate(() => window.__siege.start('tranquille'));
 const t0 = Date.now();

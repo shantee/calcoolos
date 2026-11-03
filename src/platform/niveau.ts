@@ -1,47 +1,89 @@
 /**
- * Niveau de difficulté choisi sur l'accueil et transmis aux jeux (?niveau=…).
+ * Niveau scolaire choisi au lancement d'un jeu et transmis aux jeux (?niveau=cp…).
  *
- * Règle : le niveau du profil actif l'emporte ; sinon le dernier niveau choisi sur cet appareil ; sinon rien,
- * et l'accueil demande de choisir avant la première partie (pas de niveau imposé en silence à un nouveau venu).
+ * Règle : le niveau du profil actif l'emporte ; sinon le dernier niveau choisi sur cet appareil ; sinon rien, et
+ * l'accueil demande de choisir (pas de niveau imposé en silence). Un ancien niveau à piments (eveil…, avant le
+ * 03/11/2026) n'est pas un niveau valable : il ne se traduit pas en classe, le joueur choisit de nouveau.
  */
-import { TIERS, type TierId } from '../core/difficulty';
+import { NIVEAUX as LISTE, TIERS, estNiveauScolaire, type TierId } from '../core/difficulty';
 
 const CLE = 'calcoolos.niveau';
 
-export const NIVEAUX: TierId[] = ['eveil', 'explorateur', 'stratege', 'maitre'];
+export const NIVEAUX: TierId[] = [...LISTE];
 
-export const estNiveau = (v: unknown): v is TierId => typeof v === 'string' && (NIVEAUX as string[]).includes(v);
+export const estNiveau = estNiveauScolaire;
+
+/** Phrase affichée près du choix du niveau. */
+export const PHRASE_NIVEAUX = 'Les niveaux correspondent approximativement aux apprentissages de chaque classe. Tu peux changer à tout moment.';
+
+/** Comment le niveau se lit dans un jeu : chaque jeu garde sa mécanique, l'exemple change avec lui. */
+export type FamilleDeJeu = 'calcul' | 'cubes' | 'dragon' | 'tables';
+
+/** Famille d'un jeu d'après l'adresse de sa page. */
+export function familleDuJeu(href: string): FamilleDeJeu {
+  if (/neon-flight|multirail/.test(href)) return 'tables';
+  if (/cubes-de-siege/.test(href)) return 'cubes';
+  if (/dragon-gourmand/.test(href)) return 'dragon';
+  return 'calcul';
+}
+
+interface Fiche {
+  nom: string;
+  /** Ce qu'on y travaille, en quelques mots (fiches de profils, classements). */
+  public: string;
+  /** Pastille courte du sélecteur. */
+  sigle: string;
+  /** Nom complet, pour les parents (« Cours élémentaire 1 »). */
+  long: string;
+}
+
+export const NIVEAU_INFOS: Record<TierId, Fiche> = {
+  cp: { nom: 'CP', sigle: 'CP', long: 'Cours préparatoire', public: TIERS.cp.public },
+  ce1: { nom: 'CE1', sigle: 'CE1', long: 'Cours élémentaire 1', public: TIERS.ce1.public },
+  ce2: { nom: 'CE2', sigle: 'CE2', long: 'Cours élémentaire 2', public: TIERS.ce2.public },
+  cm1: { nom: 'CM1', sigle: 'CM1', long: 'Cours moyen 1', public: TIERS.cm1.public },
+  cm2: { nom: 'CM2', sigle: 'CM2', long: 'Cours moyen 2', public: TIERS.cm2.public },
+  aventurier: { nom: 'Aventurier', sigle: '★', long: 'Aventurier · pour aller plus loin', public: TIERS.aventurier.public },
+};
 
 /**
- * Ce que chaque niveau propose (d'après src/core/expressions.ts et difficulty.ts). Les niveaux se lisent à la
- * difficulté des calculs, jamais à l'âge : couleur, nombre de piments et nom se complètent. Les identifiants
- * (eveil…) restent ceux des profils et des résultats enregistrés.
+ * Exemple représentatif et description, par niveau et par famille de jeu (doc/NIVEAUX_SCOLAIRES.md). Les exemples
+ * sont de vrais calculs du niveau, vérifiés par les tests.
  */
-/** Neon Flight et MULTIRAIL posent des tables, puis des calculs à trois nombres à partir de Relevé. */
-export const NIVEAU_TABLES: Record<TierId, { exemple: string; detail: string }> = {
-  eveil: { exemple: '3 × 4', detail: 'Tables de 2 à 5, avec tout ton temps.' },
-  explorateur: { exemple: '4 × 6', detail: 'Tables de 2 à 5 et quelques calculs à trois nombres.' },
-  stratege: { exemple: '7 × 8', detail: 'Tables de 2 à 10 et calculs à trois nombres, le rythme monte.' },
-  maitre: { exemple: '3 × 8 + 12', detail: 'Grandes tables et calculs à trois nombres, à toute vitesse.' },
+export const EXEMPLES_PAR_JEU: Record<FamilleDeJeu, Record<TierId, { exemple: string; detail: string }>> = {
+  calcul: {
+    cp: { exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 100.' },
+    ce1: { exemple: '47 + 28', detail: 'Nombres jusqu’à 1 000, premières tables.' },
+    ce2: { exemple: '8 × 7', detail: 'Toutes les tables, premières divisions.' },
+    cm1: { exemple: '5 × 36', detail: 'Grands nombres, × 5, × 25, distributivité.' },
+    cm2: { exemple: '50 × 14', detail: '× 50, ÷ 4, ÷ 8, calculs en plusieurs étapes.' },
+    aventurier: { exemple: '13 × 14', detail: 'Grands facteurs et calculs enchaînés.' },
+  },
+  cubes: {
+    cp: { exemple: '13 = 6 + 7', detail: 'Cibles jusqu’à 18, deux cubes.' },
+    ce1: { exemple: '34 = 15 + 19', detail: 'Cibles jusqu’à 40, deux ou trois cubes.' },
+    ce2: { exemple: '52 = 27 + 25', detail: 'Cibles jusqu’à 60, nombres à deux chiffres.' },
+    cm1: { exemple: '87 = 39 + 48', detail: 'Cibles jusqu’à 100, retenues.' },
+    cm2: { exemple: '134 = 45 + 52 + 37', detail: 'Cibles jusqu’à 160, jusqu’à quatre cubes.' },
+    aventurier: { exemple: '213 = 87 + 69 + 57', detail: 'Grandes cibles, trois ou quatre cubes.' },
+  },
+  dragon: {
+    cp: { exemple: '12 = 7 + 5', detail: 'Petites lanternes, sommes jusqu’à 15.' },
+    ce1: { exemple: '31 = 17 + 14', detail: 'Sommes jusqu’à 35, deux ou trois lanternes.' },
+    ce2: { exemple: '42 = 6 × 7', detail: 'Sommes jusqu’à 50, quelques produits des tables.' },
+    cm1: { exemple: '76 = 28 + 19 + 29', detail: 'Sommes jusqu’à 90, produits des tables.' },
+    cm2: { exemple: '108 = 9 × 12', detail: 'Grandes sommes et grands produits.' },
+    aventurier: { exemple: '180 = 12 × 15', detail: 'Sommes et produits pour têtes bien faites.' },
+  },
+  tables: {
+    cp: { exemple: '3 × 2', detail: 'Petits groupements, dessinés pour compter.' },
+    ce1: { exemple: '4 × 6', detail: 'Les tables, une à une.' },
+    ce2: { exemple: '7 × 40', detail: 'Toutes les tables, × 10, × 100, 7 × 13.' },
+    cm1: { exemple: '25 × 8', detail: '× 25, × 5, × centaines, 6 × 34.' },
+    cm2: { exemple: '8 × 47', detail: '× 25, × 50, dizaines × dizaines.' },
+    aventurier: { exemple: '13 × 14', detail: 'Facteurs 11 à 19, 25, 50 et 99.' },
+  },
 };
-
-/** MULTIRAIL à Explosif : plus de tables isolées, un vrai calcul mental qui monte au fil du voyage. */
-export const EXPLOSIF_MULTIRAIL = { exemple: '(7 × 8) + 23', detail: 'Vrai calcul mental, de plus en plus élaboré au fil du voyage.' };
-
-export const NIVEAU_INFOS: Record<TierId, { nom: string; public: string; exemple: string; detail: string; piments: number }> = {
-  eveil: { nom: TIERS.eveil.label, public: TIERS.eveil.public, exemple: '8 + 5', detail: 'Additions et soustractions jusqu’à 20.', piments: 1 },
-  explorateur: { nom: TIERS.explorateur.label, public: TIERS.explorateur.public, exemple: '27 + 15', detail: 'Additions et soustractions jusqu’à 50, tables de 2, 5 et 10.', piments: 2 },
-  stratege: { nom: TIERS.stratege.label, public: TIERS.stratege.public, exemple: '7 × 8', detail: 'Calculs jusqu’à 100, toutes les tables, divisions.', piments: 3 },
-  maitre: { nom: TIERS.maitre.label, public: TIERS.maitre.public, exemple: '84 ÷ 7', detail: 'Calculs jusqu’à 200, tables jusqu’à 12, divisions, moins de temps.', piments: 4 },
-};
-
-const PIMENT =
-  '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.6 7.2c2.6.3 4.6 2.6 4 5.6-.9 4.5-6.6 8.2-14.4 8.2-1 0-1.4-1.2-.5-1.6 4.4-1.9 6.4-5.3 7.2-9.2.5-2.2 1.900-3.200 3.700-3z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M15.500 7c0-2 .9-3.400 2.800-4"/></svg>';
-
-/** Rangée de piments d'un niveau (dessin constant, décoratif : le nom du niveau l'accompagne toujours). */
-export function pimentsHtml(id: TierId): string {
-  return PIMENT.repeat(NIVEAU_INFOS[id].piments);
-}
 
 export function niveauRetenu(): TierId | null {
   try {
@@ -61,8 +103,8 @@ export function retenirNiveau(v: TierId): void {
 }
 
 /**
- * Niveau de départ de l'accueil. `confirme` est faux pour un nouveau venu : il n'a encore rien choisi.
- * Logique pure (testée).
+ * Niveau de départ de l'accueil. `confirme` est faux pour un nouveau venu (ou un profil resté sur un ancien niveau à
+ * piments) : il n'a encore rien choisi. Logique pure (testée).
  */
 export function niveauDepart(profil: string | null | undefined, retenu: string | null): { niveau: TierId | null; confirme: boolean } {
   if (estNiveau(profil)) return { niveau: profil, confirme: true };

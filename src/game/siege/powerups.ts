@@ -7,7 +7,8 @@
  * ne coûte rien : l'engin repart avec son chargement.
  */
 import { createRng, type Rng } from '../../core/rng';
-import { pickExpression, type Expression } from '../../core/expressions';
+import type { Expression } from '../../core/expressions';
+import { LARGESSE, tirerCalcul } from '../../core/calculs';
 import type { TierId } from '../../core/difficulty';
 import { WAVES, type EnemyKind, type Mode } from '../../core/waves';
 
@@ -40,10 +41,13 @@ export interface Flight {
 
 export type TypeResult = 'typing' | 'caught' | 'wrong' | 'escaped' | 'ignored';
 
-/** Durée de la traversée : plus de temps en Tranquille, un peu moins pour les grands. */
-export function flightMs(tier: TierId, mode: Mode): number {
-  const base: Record<TierId, number> = { eveil: 7000, explorateur: 7000, stratege: 6500, maitre: 6000 };
-  return mode === 'tranquille' ? base[tier] : base[tier] - 1500;
+/**
+ * Durée de la traversée : le temps de réfléchir au calcul porté (son effort, core/calculs.ts), un peu plus pour les
+ * plus jeunes, et 1,5 s de plus en Tranquille.
+ */
+export function flightMs(tier: TierId, mode: Mode, effort = 1.5): number {
+  const base = Math.round(Math.min(9500, Math.max(5500, 4200 + 1000 * effort * LARGESSE[tier])) / 100) * 100;
+  return mode === 'tranquille' ? base + 1500 : base;
 }
 
 /** Durée du gel (ms). */
@@ -77,11 +81,9 @@ export interface UseContext {
 
 export type UseCheck = { ok: true; kind: PowerKind } | { ok: false; reason: string };
 
-/** Un calcul bonus ne doit pas être trivial (pas de « 3 + 1 » ni de « × 1 »). */
+/** Un calcul bonus se lit d'un coup d'œil : palier 1 ou 2 de la classe, jamais trivial (pas de « 3 + 1 »). */
 function bonusExpression(tier: TierId, rng: Rng): Expression {
-  let e = pickExpression(tier, rng);
-  for (let k = 0; k < 40 && (e.a <= 1 || e.b <= 1 || e.answer < 5); k++) e = pickExpression(tier, rng);
-  return e;
+  return tirerCalcul(tier, rng.next() < 0.6 ? 1 : 2, rng, (e) => e.answer < 5 || e.a <= 1 || e.b <= 1);
 }
 
 export class PowerUps {
@@ -124,11 +126,12 @@ export class PowerUps {
     if (this.flight || this.slotsFull) return null;
     if (!force && this.launched >= this.plan.length) return null;
     const cargo: PowerKind = this.caught === 0 && !this.slots.includes('poussee') ? 'poussee' : this.rollCargo();
+    const expr = bonusExpression(this.tier, this.rng);
     this.flight = {
-      expr: bonusExpression(this.tier, this.rng),
+      expr,
       cargo,
       vehicle: this.launched % 2 === 0 ? 'soucoupe' : 'dirigeable',
-      durationMs: flightMs(this.tier, this.mode),
+      durationMs: flightMs(this.tier, this.mode, expr.effort),
       typed: '',
       errors: 0,
       state: 'flying',

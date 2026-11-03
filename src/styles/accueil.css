@@ -944,7 +944,7 @@ h1 {
 
 .choix-niveau-liste {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin: 8px 0 4px;
 }
@@ -969,8 +969,8 @@ h1 {
 .choix-niveau-option:hover,
 .choix-niveau-option:focus-visible,
 .choix-niveau-option.choisi {
-  background: color-mix(in srgb, var(--piment) 20%, #101a30);
-  border-color: var(--piment);
+  background: color-mix(in srgb, var(--niveau) 20%, #101a30);
+  border-color: var(--niveau);
 }
 
 .choix-niveau-option:hover,
@@ -994,7 +994,7 @@ h1 {
   font-size: 1.15rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  color: var(--piment);
+  color: var(--niveau);
 }
 
 .choix-niveau-fermer {
@@ -1162,27 +1162,43 @@ h1 {
   transition: none;
 }
 
-/* --- Échelle de difficulté : piments, couleur et nom se complètent (chantier du 30/10/2026). --- */
-[data-niveau='eveil'] { --piment: #58cf7c; }
-[data-niveau='explorateur'] { --piment: #f4d03f; }
-[data-niveau='stratege'] { --piment: #ff9838; }
-[data-niveau='maitre'] { --piment: #ff5a4f; }
+/* --- Six niveaux scolaires (03/11/2026) : couleur, pastille et nom de la classe se complètent. --- */
+[data-niveau='cp'] { --niveau: #58cf7c; }
+[data-niveau='ce1'] { --niveau: #3fd3c4; }
+[data-niveau='ce2'] { --niveau: #5aa9ff; }
+[data-niveau='cm1'] { --niveau: #b48cff; }
+[data-niveau='cm2'] { --niveau: #ff9838; }
+[data-niveau='aventurier'] { --niveau: #ffcf3f; }
 
-.niveau-piments {
-  display: flex;
-  justify-content: center;
-  min-height: 20px;
-  color: var(--piment);
+.niveau-pastille {
+  display: inline-grid;
+  place-items: center;
+  min-width: 58px;
+  height: 40px;
+  padding: 0 10px;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #10192b;
+  background: var(--niveau);
+  border: 3px solid var(--encre);
+  border-radius: 14px;
+  box-shadow: 0 4px 0 var(--encre);
 }
 
-.niveau-piments svg {
-  width: 20px;
-  height: 20px;
-  margin-inline: -2px;
+.niveau-pastille[data-niveau='aventurier'] {
+  font-size: 1.4rem;
+  background: linear-gradient(135deg, #ffe680, #ffb02e 55%, #ff6a4a);
 }
 
-.choix-niveau-option .niveau-piments {
+.choix-niveau-option .niveau-pastille {
   order: -1;
+  margin-bottom: 6px;
+}
+
+.choix-niveau-option .niveau-nom {
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 /* --- L'univers du joueur. --- */

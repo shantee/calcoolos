@@ -1,8 +1,8 @@
 /**
- * La difficulté choisie au lancement est-elle vraiment appliquée ? Pour chacun des six jeux et des quatre niveaux :
- * passe par la vraie fenêtre de l'accueil, lance une partie et relève les calculs réellement posés au joueur.
- * Les niveaux s'enchaînent dans le même navigateur, puis on redescend à Doux : des réglages mémorisés à un autre
- * niveau (le bug de MULTIRAIL : Explosif mais 2 × 2) feraient échouer le relevé.
+ * Le niveau choisi au lancement est-il vraiment appliqué ? Pour chacun des six jeux et des six niveaux scolaires
+ * (CP à CM2, Aventurier) : passe par la vraie fenêtre de l'accueil, lance une partie et relève les calculs réellement
+ * posés au joueur. Les niveaux s'enchaînent dans le même navigateur, puis on redescend au CP : des réglages mémorisés
+ * à un autre niveau (l'ancien bug de MULTIRAIL : niveau le plus dur mais 2 × 2) feraient échouer le relevé.
  *
  * Prérequis : `npm run preview` (l'API n'est pas nécessaire).
  * Usage : node scripts/niveaux-e2e.mjs [urlDeBase] (MULTIRAIL et Neon Flight sont lents en GPU logiciel, 10 min environ)
@@ -20,7 +20,10 @@ const { chromium } = await loadPlaywright();
 const base = process.argv[2] ?? 'http://127.0.0.1:4173';
 const seul = process.env.JEU; // pour relancer un seul jeu : JEU=MULTIRAIL
 const sauf = process.env.SAUF; // pour écarter un jeu lent : SAUF=MULTIRAIL
-const NIVEAUX = ['eveil', 'explorateur', 'stratege', 'maitre', 'eveil'];
+const NIVEAUX = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', 'aventurier', 'cp'];
+const RETOUR = NIVEAUX.length - 1;
+/** opérations permises par classe (doc/NIVEAUX_SCOLAIRES.md) */
+const OPERATIONS = { cp: '+−', ce1: '+−×', ce2: '+−×÷', cm1: '+−×÷', cm2: '+−×÷', aventurier: '+−×÷' };
 const problems = [];
 let total = 0;
 const check = (cond, what) => {
@@ -30,7 +33,7 @@ const check = (cond, what) => {
 };
 const pause = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Calcul mental d'Explosif : (7 × 8) + 23, 250 − (9 × 8) + 17. Les parenthèses d'abord, puis de gauche à droite. */
+/** Calcul à plusieurs étapes : (7 × 8) + 23, 4 × 9 × 25. Les parenthèses d'abord, puis de gauche à droite. */
 const lireParentheses = (texte) => {
   const jetons = texte.match(/\d+|[()+−×÷]/g) ?? [];
   let i = 0;
@@ -199,32 +202,38 @@ for (const jeu of JEUX) {
     check(calculs.length > 0, `${niveau} : calculs relevés`);
     const valeurs = calculs.filter((c) => c.valeur !== undefined || c.a !== undefined).map((c) => c.valeur ?? (c.op === '×' ? c.a * c.b : c.op === '÷' ? c.a : c.op === '-' || c.op === '−' ? c.a : c.a + c.b));
     const moyenne = valeurs.length ? Math.round(valeurs.reduce((x, y) => x + y, 0) / valeurs.length) : 0;
-    if (rang < 4) moyennes[niveau] = moyenne;
-    synthese.push(`${jeu.nom.padEnd(20)} ${(rang === 4 ? 'eveil (retour)' : niveau).padEnd(15)} moyenne ${String(moyenne).padStart(4)} : ${calculs.slice(0, 7).map((c) => c.texte).join(' ; ')}`);
-    if (jeu.nom === 'Neon Flight') {
-      const trois = calculs.filter((c) => c.troisNombres);
-      if (niveau === 'eveil') check(trois.length === 0, `Doux : que des tables (${trois.map((c) => c.texte).join(', ') || 'aucun autre calcul'})`);
-      if (niveau === 'maitre') check(trois.length > 0, `Explosif : des calculs à trois nombres (${trois.map((c) => c.texte).join(', ')})`);
+    if (rang < RETOUR) moyennes[niveau] = moyenne;
+    synthese.push(`${jeu.nom.padEnd(20)} ${(rang === RETOUR ? 'cp (retour)' : niveau).padEnd(15)} moyenne ${String(moyenne).padStart(4)} : ${calculs.slice(0, 7).map((c) => c.texte).join(' ; ')}`);
+    const ecrits = calculs.filter((c) => typeof c.texte === 'string' && !c.texte.startsWith('faire '));
+    const signes = (c) => c.texte.match(/[+−×÷]/g) ?? [];
+    for (const c of ecrits) check(c.valeur === undefined || (Number.isInteger(c.valeur) && c.valeur >= 1 && c.valeur <= 999), `${niveau} : ${c.texte} donne un entier de 1 à 999`);
+    if (jeu.nom === 'Neon Flight' || jeu.nom === 'MULTIRAIL') {
+      // Jeux de multiplications : rien d'autre que des ×, à tous les niveaux.
+      const autres = ecrits.filter((c) => signes(c).some((o) => o !== '×'));
+      check(autres.length === 0, `${niveau} : que des multiplications (${autres.map((c) => c.texte).join(', ') || 'oui'})`);
+      if (niveau === 'cp') {
+        const gros = ecrits.filter((c) => c.op !== '×' || c.a * c.b > (c.a === 10 || c.b === 10 ? 50 : 30));
+        check(gros.length === 0, `${niveau} : petits groupements, produits jusqu’à 30 (${gros.map((c) => c.texte).join(', ') || 'oui'})`);
+      }
+      if (jeu.nom === 'Neon Flight' && (niveau === 'cp' || niveau === 'ce1')) check(ecrits.every((c) => c.op === '×'), `${niveau} : que des faits de table`);
+    } else {
+      const horsNiveau = ecrits.filter((c) => signes(c).some((o) => !OPERATIONS[niveau].includes(o)));
+      check(horsNiveau.length === 0, `${niveau} : opérations de la classe seulement (${horsNiveau.map((c) => c.texte).join(', ') || 'oui'})`);
     }
-    if (jeu.nom === 'MULTIRAIL') {
-      const mental = calculs.filter((c) => c.combine || c.op !== '×').length;
-      if (niveau === 'maitre') check(mental === calculs.length, `Explosif : que du calcul mental (${calculs.map((c) => c.texte).join(' ; ')})`);
-      else check(calculs.every((c) => !c.combine), `${niveau} : pas de calcul d'Explosif`);
-    }
-    if (niveau === 'maitre') {
+    if (niveau === 'aventurier') {
       const trop = calculs.filter((c) => c.op === '×' && (Math.min(c.a, c.b) <= 1 || Math.max(c.a, c.b) <= 3));
-      check(trop.length === 0, `Explosif : aucun calcul trivial (${trop.map((c) => c.texte).join(', ') || 'aucun'})`);
+      check(trop.length === 0, `Aventurier : aucun calcul trivial (${trop.map((c) => c.texte).join(', ') || 'aucun'})`);
     }
-    if (niveau === 'eveil' && rang === 4) {
+    if (rang === RETOUR) {
       // sur deux calculs relevés (MULTIRAIL), une moyenne ne prouve rien : pour les tables, on vérifie la table elle-même
       const produits = calculs.filter((c) => c.op === '×');
       if (produits.length === calculs.length) {
         const horsSerie = produits.filter((c) => Math.min(c.a, c.b) > 5);
-        check(horsSerie.length === 0, `retour à Doux : tables de 2 à 5 (${horsSerie.map((c) => c.texte).join(', ') || 'aucune autre'})`);
-      } else check(moyenne <= moyennes.stratege, `retour à Doux : les calculs redeviennent simples (moyenne ${moyenne})`);
+        check(horsSerie.length === 0, `retour au CP : tables de 2 à 5 (${horsSerie.map((c) => c.texte).join(', ') || 'aucune autre'})`);
+      } else check(moyenne <= moyennes.ce2, `retour au CP : les calculs redeviennent simples (moyenne ${moyenne})`);
     }
   }
-  check(moyennes.eveil < moyennes.maitre, `Explosif plus dur que Doux (moyennes ${moyennes.eveil} < ${moyennes.maitre})`);
+  check(moyennes.cp < moyennes.aventurier, `Aventurier plus dur que le CP (moyennes ${moyennes.cp} < ${moyennes.aventurier})`);
   await ctx.close();
   console.log(synthese.splice(0).join('\n'));
 }

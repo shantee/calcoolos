@@ -14,7 +14,14 @@ namespace Calcoolos;
  */
 final class Games
 {
-    public const TIERS = ['eveil', 'explorateur', 'stratege', 'maitre'];
+    /** Les six niveaux scolaires (03/11/2026, doc/NIVEAUX_SCOLAIRES.md). */
+    public const TIERS = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', 'aventurier'];
+    /**
+     * Anciens niveaux à piments (Doux, Relevé, Piquant, Explosif) : leurs résultats restent tels quels en base,
+     * classés à part (« Anciens records »). Un résultat resté dans la file d'attente d'un ancien navigateur est
+     * encore accepté sous son ancien niveau ; un profil ne peut plus en choisir un.
+     */
+    public const TIERS_ANCIENS = ['eveil', 'explorateur', 'stratege', 'maitre'];
     public const MODES = ['tranquille', 'defi'];
     public const OPS = ['+', '−', '×', '÷'];
 
@@ -74,6 +81,11 @@ final class Games
      * @param array<string, mixed> $in
      * @return array{jeu: string, niveau: string, mode: string, score: int, gagne: bool, etoiles: int, duree: int, precision: float, ops: array<string, array{int, int}>, details: array<string, int>}
      */
+    public static function niveauConnu(mixed $niveau): bool
+    {
+        return in_array($niveau, self::TIERS, true) || in_array($niveau, self::TIERS_ANCIENS, true);
+    }
+
     public static function parse(array $in): array
     {
         $jeu = $in['jeu'] ?? null;
@@ -82,7 +94,7 @@ final class Games
         if (!is_string($jeu) || !isset(self::CATALOG[$jeu])) {
             throw new HttpError(422, 'Jeu inconnu.');
         }
-        if (!is_string($niveau) || !in_array($niveau, self::TIERS, true) || !is_string($mode) || !in_array($mode, self::MODES, true)) {
+        if (!is_string($niveau) || !self::niveauConnu($niveau) || !is_string($mode) || !in_array($mode, self::MODES, true)) {
             throw new HttpError(422, 'Niveau ou mode inconnu.');
         }
         $score = self::int($in['score'] ?? null, 0, 5_000_000, 'score');

@@ -14,7 +14,7 @@ import { P, PX } from '../../art/pixel-rocket';
 import type { PixelCanvas } from '../../art/pixelforge';
 import { Sfx } from '../sfx';
 import { RocketSession, PLATFORM_ART, SUMMIT, ZONES, MAX_VX, MAX_LIVES, type Platform, type RocketEvent, type Star } from './session';
-import type { Grade } from '../../core/calc-grade';
+import type { Grade } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
@@ -159,6 +159,8 @@ export class RocketScene extends Phaser.Scene {
   // Interface
   private qPanel!: Phaser.GameObjects.Container;
   private qBg!: Phaser.GameObjects.Image;
+  /** Couleur du calcul en cours (encadré vert, orange ou rouge). */
+  private qGrade: Grade = 'facile';
   private qTag!: Phaser.GameObjects.Text;
   private qText!: Phaser.GameObjects.BitmapText;
   private qTokens: Phaser.GameObjects.BitmapText[] = [];
@@ -215,9 +217,21 @@ export class RocketScene extends Phaser.Scene {
   private setCalc(text: string): void {
     this.qText.setText('');
     for (const t of this.qTokens) t.destroy();
-    const parts = text.split(' ').map((w) => this.num(0, -8, w));
-    const gap = 18;
-    const total = parts.reduce((a, t) => a + t.displayWidth, 0) + gap * (parts.length - 1);
+    // Un long calcul (CM2, Aventurier) passe en pixels plus petits, toujours entiers, et l'encadré s'élargit.
+    let parts: Phaser.GameObjects.BitmapText[] = [];
+    let gap = 18;
+    let total = 0;
+    for (const sc of [PX, 3, 2]) {
+      for (const t of parts) t.destroy();
+      parts = text.split(' ').map((w) => this.num(0, -8, w, sc));
+      gap = Math.round((18 * sc) / PX);
+      total = parts.reduce((a, t) => a + t.displayWidth, 0) + gap * (parts.length - 1);
+      if (total <= (sc === PX ? 392 : 560)) break;
+    }
+    const look = GRADE_LOOK[this.qGrade];
+    const largeur = Math.max(104, Math.ceil((total + 48) / PX));
+    const cle = largeur === 104 ? `f-qpanel-${this.qGrade}` : `f-qpanel-${this.qGrade}-${largeur}`;
+    this.qBg.setTexture(this.tx(cle, () => A.gradePanel(largeur, 30, look.fill, look.edge)));
     let x = -total / 2;
     for (const t of parts) {
       t.setOrigin(0, 0.5).setX(x);
@@ -267,7 +281,7 @@ export class RocketScene extends Phaser.Scene {
   create(): void {
     const params = new URLSearchParams(window.location.search);
     this.seed = Number(params.get('graine')) || Math.floor(Math.random() * 1e9);
-    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.explorateur;
+    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.ce1;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || params.has('calme');
     this.speedBoost = Math.min(10, Math.max(1, Number(params.get('accelere')) || 1));
     this.input.addPointer(2);
@@ -993,7 +1007,7 @@ export class RocketScene extends Phaser.Scene {
     switch (ev.type) {
       case 'question': {
         const look = GRADE_LOOK[ev.q.grade];
-        this.qBg.setTexture(`f-qpanel-${ev.q.grade}`);
+        this.qGrade = ev.q.grade;
         this.qTag.setText(look.label).setColor(look.text);
         this.qPanel.setVisible(true);
         this.qPanel.setScale(1).setX(W / 2);

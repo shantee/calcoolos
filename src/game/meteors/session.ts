@@ -10,7 +10,8 @@
  * [0, 1] (0 = en haut, 1 = sur la station).
  */
 import { createRng, type Rng } from '../../core/rng';
-import { pickExpression, type Expression } from '../../core/expressions';
+import { conflicts, faitDe, type Expression } from '../../core/expressions';
+import { TirageCalculs } from '../../core/calculs';
 import type { TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { Releve } from '../../platform/releve';
@@ -50,6 +51,13 @@ export const METEOR_WAVES: readonly WavePlan[] = [
 ];
 export const BOSS_CALCS = 6;
 export const BOSS_FALL = 70;
+
+/**
+ * Allure de chute selon la classe : les plus jeunes tapent plus lentement, les grands calculs demandent plus de
+ * réflexion. Un calcul qui demande plus d'effort tombe aussi un peu moins vite.
+ */
+export const CHUTE_NIVEAU: Record<TierId, number> = { cp: 1.25, ce1: 1.15, ce2: 1.05, cm1: 1.05, cm2: 1.1, aventurier: 1.1 };
+export const chuteSelonEffort = (effort: number): number => 1 + 0.08 * Math.max(0, effort - 1.5);
 
 export const METEOR_MODES: Record<Mode, { speed: number; shields: number | null }> = {
   tranquille: { speed: 0.6, shields: null },
@@ -103,11 +111,13 @@ export class MeteorSession {
   private waveStarted = false;
   private bossPhase = false;
   private lastX = 0.5;
+  private tirage: TirageCalculs;
 
   constructor(tier: TierId, seed: number, mode: Mode) {
     this.tier = tier;
     this.mode = mode;
     this.rng = createRng(seed);
+    this.tirage = new TirageCalculs(tier, this.rng);
     this.shields = METEOR_MODES[mode].shields;
   }
 
@@ -152,11 +162,13 @@ export class MeteorSession {
   private spawn(kind: MeteorKind): Meteor {
     const speed = METEOR_MODES[this.mode].speed;
     const base = this.bossPhase ? BOSS_FALL : this.plan().fall;
-    const fall = (kind === 'robot' ? base * 1.15 : kind === 'dore' ? base * 0.85 : base) / speed;
+    const active = this.activeAnswers();
+    const expr = this.tirage.suivant((c) => active.some((x) => conflicts(x, c.answer)));
+    const fall = ((kind === 'robot' ? base * 1.15 : kind === 'dore' ? base * 0.85 : base) * CHUTE_NIVEAU[this.tier] * (this.bossPhase ? 1 : chuteSelonEffort(expr.effort))) / speed;
     const m: Meteor = {
       id: this.nextId++,
       kind,
-      expr: pickExpression(this.tier, this.rng, this.activeAnswers()),
+      expr,
       x: kind === 'boss' ? 0.5 : this.pickX(),
       p: 0,
       fall,
@@ -165,7 +177,7 @@ export class MeteorSession {
       alive: true,
     };
     if (kind === 'boss') {
-      for (let i = 1; i < BOSS_CALCS; i++) m.queue.push(pickExpression(this.tier, this.rng, []));
+      for (let i = 1; i < BOSS_CALCS; i++) m.queue.push(this.tirage.suivant());
     }
     this.meteors.push(m);
     return m;
@@ -203,6 +215,7 @@ export class MeteorSession {
           m.alive = false;
         }
         this.stats.impacts++;
+        this.tirage.resultat(false);
         this.countOp(m.expr.op, false);
         this.combo = 0;
         if (lost) this.shields = (this.shields ?? 0) - 1;
@@ -250,6 +263,7 @@ export class MeteorSession {
     this.typed = '';
     this.combo = 0;
     this.stats.errors++;
+    this.tirage.resultat(false);
     this.releve.reponse(false);
     return { kind: 'error', typed };
   }
@@ -265,7 +279,8 @@ export class MeteorSession {
     this.stats.bestCombo = Math.max(this.stats.bestCombo, this.combo);
     this.stats.heights.push(m.p);
     this.countOp(m.expr.op, true);
-    this.releve.reponse(true, m.kind === 'boss' ? undefined : m.p * m.fall * 1000, m.expr);
+    this.tirage.resultat(true);
+    this.releve.reponse(true, m.kind === 'boss' ? undefined : m.p * m.fall * 1000, faitDe(m.expr));
     const multiplier = 1 + 0.1 * Math.min(this.combo - 1, 20);
     let points = Math.round((50 + 100 * (1 - Math.min(1, m.p))) * multiplier);
     const destroyed: Meteor[] = [];

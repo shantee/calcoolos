@@ -121,7 +121,7 @@ if (NAV === 'chromium') {
 
   // Contexte perdu en plein vol : pause, puis rendu rétabli.
   {
-    const { ctx, page, erreurs } = await ouvrir(`${CHEMIN}?niveau=explorateur`);
+    const { ctx, page, erreurs } = await ouvrir(`${CHEMIN}?niveau=ce1`);
     await pret(page);
     await page.evaluate(() => {
       const gl = document.querySelector('#world').getContext('webgl2');

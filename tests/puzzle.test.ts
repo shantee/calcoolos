@@ -119,7 +119,7 @@ describe('générateur', () => {
   }
 
   it('une partie enchaînée (remplacement des cubes utilisés) reste toujours jouable', () => {
-    const cfg = TIERS.explorateur.puzzle;
+    const cfg = TIERS.ce1.puzzle;
     const rng = createRng(7);
     let p = generatePuzzle(cfg, rng);
     for (let k = 0; k < 500; k++) {
@@ -156,7 +156,7 @@ describe('générateur', () => {
   });
 
   it('admissibleTargets ne propose que des cibles dans les bornes', () => {
-    const cfg = TIERS.stratege.puzzle;
+    const cfg = TIERS.ce2.puzzle;
     const opts = admissibleTargets([2, 3, 5, 7, 11, 13, 17, 19, 4, 6, 8, 9, 10, 12, 14, 15], cfg);
     expect(opts.length).toBeGreaterThan(0);
     for (const o of opts) {

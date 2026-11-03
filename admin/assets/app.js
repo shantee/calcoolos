@@ -10,8 +10,9 @@ const JEUX = {
   multirail: { nom: 'MULTIRAIL', court: 'Multirail', couleur: '#2fa597', ico: '🚂' },
 };
 const ORDRE = ['cubes', 'dragon', 'meteores', 'fusee', 'neon', 'multirail'];
-const NIVEAUX = { eveil: 'Doux', explorateur: 'Relevé', stratege: 'Piquant', maitre: 'Explosif' };
-const COUL_NIVEAUX = { eveil: '#7fb3f2', explorateur: '#5fd39a', stratege: '#f2b84b', maitre: '#e87ba4' };
+// Six niveaux scolaires depuis le 03/11/2026 ; les anciens niveaux à piments restent lisibles dans l'historique.
+const NIVEAUX = { cp: 'CP', ce1: 'CE1', ce2: 'CE2', cm1: 'CM1', cm2: 'CM2', aventurier: 'Aventurier', eveil: 'Doux (ancien)', explorateur: 'Relevé (ancien)', stratege: 'Piquant (ancien)', maitre: 'Explosif (ancien)' };
+const COUL_NIVEAUX = { cp: '#58cf7c', ce1: '#3fd3c4', ce2: '#5aa9ff', cm1: '#b48cff', cm2: '#ff9838', aventurier: '#ffcf3f', eveil: '#8a94a8', explorateur: '#78829a', stratege: '#66708a', maitre: '#545e7a' };
 const MODES = { tranquille: 'Tranquille', defi: 'Défi' };
 const APPAREILS = { ordinateur: 'Ordinateur', tablette: 'Tablette', telephone: 'Téléphone' };
 const PAGES = { accueil: 'Accueil', compte: 'Mon espace', tableau: 'Mes progrès', classements: 'Classements', confidentialite: 'Confidentialité', cubes: 'Panique au phare !', meteores: 'Pluie de météores', dragon: 'Le Dragon gourmand', fusee: 'Décollage !', neon: 'Neon Flight', multirail: 'MULTIRAIL', autre: 'Autre page' };
@@ -611,7 +612,7 @@ async function ouvrirFiche(id) {
   fiche.replaceChildren(
     h('div', { class: 'fiche-tete' }, avatar(p.avatar, true),
       h('div', {}, h('h2', { id: 'fiche-titre' }, `Profil : ${p.pseudo}`),
-        h('p', {}, `Compte familial n° ${p.compte.id} · profil créé le ${jourCourt(p.creeLe)} · niveau du profil : ${NIVEAUX[p.niveauProfil] || p.niveauProfil}`)),
+        h('p', {}, `Compte familial n° ${p.compte.id} · profil créé le ${jourCourt(p.creeLe)} · niveau du profil : ${NIVEAUX[p.niveauProfil] || p.niveauProfil || 'à choisir'}`)),
       h('button', { class: 'fermer', type: 'button', onclick: fermerFiche, 'aria-label': 'Fermer la fiche' }, '×')),
     h('div', { class: 'grille g-cartes' },
       carte({ etiquette: 'Dernière activité', ico: '🕒', valeur: h('span', { style: { fontSize: '22px' } }, quand(p.derniereActivite)) }),

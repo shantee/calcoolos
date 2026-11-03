@@ -15,7 +15,7 @@ import {
 import { createRng } from '../src/core/rng';
 import type { TierId } from '../src/core/difficulty';
 
-const TIERS: TierId[] = ['eveil', 'explorateur', 'stratege', 'maitre'];
+const TIERS: TierId[] = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', 'aventurier'];
 
 /** Une solution minimale (ids) pour le reste de l'objectif, par force brute. */
 function solve(goal: Goal, belly: number[], orbs: Orb[]): number[] | null {
@@ -61,7 +61,7 @@ describe('table des produits', () => {
   });
 
   it('objectifs admissibles dans les bornes', () => {
-    const goals = admissibleGoals('×', [2, 3, 4, 7, 9], DRAGON_TIERS.stratege.mul!);
+    const goals = admissibleGoals('×', [2, 3, 4, 7, 9], DRAGON_TIERS.ce2.mul!);
     for (const g of goals) {
       expect(g.target).toBeGreaterThanOrEqual(12);
       expect(g.target).toBeLessThanOrEqual(90);
@@ -137,7 +137,7 @@ describe('partie du dragon', () => {
   });
 
   it('dépasser : hoquet, lanternes recrachées, combo perdu', () => {
-    const s = new DragonSession('explorateur', 5, 'tranquille');
+    const s = new DragonSession('ce1', 5, 'tranquille');
     // Manger les plus grosses jusqu'à dépasser.
     let r;
     let guard = 0;
@@ -147,7 +147,7 @@ describe('partie du dragon', () => {
     } while (r.kind === 'progress' && guard++ < 20);
     if (r.kind === 'overshoot') {
       expect(s.belly).toEqual([]);
-      expect(s.orbs.length).toBe(DRAGON_TIERS.explorateur.orbs);
+      expect(s.orbs.length).toBe(DRAGON_TIERS.ce1.orbs);
       expect(r.spat.length).toBeGreaterThan(1);
       // L'objectif reste atteignable.
       expect(solve(s.goal, [], s.orbs)).not.toBeNull();
@@ -160,15 +160,15 @@ describe('partie du dragon', () => {
   });
 
   it('Défi : la faim coûte un cœur, trois fois et c’est perdu', () => {
-    const s = new DragonSession('eveil', 3, 'defi');
+    const s = new DragonSession('cp', 3, 'defi');
     expect(s.hearts).toBe(3);
     const first = s.goal;
-    const ev = s.update(DRAGON_TIERS.eveil.hunger + 0.1);
+    const ev = s.update(DRAGON_TIERS.cp.hunger + 0.1);
     expect(ev).toHaveLength(1);
     expect(ev[0].setback.heartLost).toBe(true);
     expect(s.hearts).toBe(2);
     expect(s.goal).toBeDefined();
-    expect(s.hunger).toBeCloseTo(DRAGON_TIERS.eveil.hunger);
+    expect(s.hunger).toBeCloseTo(DRAGON_TIERS.cp.hunger);
     void first;
     s.hurt();
     expect(s.hearts).toBe(1);
@@ -179,7 +179,7 @@ describe('partie du dragon', () => {
   });
 
   it('Tranquille : ni cœurs ni faim', () => {
-    const s = new DragonSession('stratege', 9, 'tranquille');
+    const s = new DragonSession('ce2', 9, 'tranquille');
     expect(s.update(500)).toEqual([]);
     const hit = s.hurt();
     expect(hit.heartLost).toBe(false);
@@ -187,8 +187,8 @@ describe('partie du dragon', () => {
   });
 
   it('une même graine rejoue la même partie', () => {
-    const a = new DragonSession('maitre', 42, 'defi');
-    const b = new DragonSession('maitre', 42, 'defi');
+    const a = new DragonSession('aventurier', 42, 'defi');
+    const b = new DragonSession('aventurier', 42, 'defi');
     expect(a.orbs).toEqual(b.orbs);
     expect(a.goal).toEqual(b.goal);
   });

@@ -18,7 +18,7 @@ const { chromium } = await loadPlaywright();
 const base = process.argv[2] ?? 'http://localhost:5173';
 const out = process.argv[3] ?? 'CAPTURES';
 const mode = process.argv[4] ?? 'tranquille';
-const niveau = process.argv[5] ?? 'explorateur';
+const niveau = process.argv[5] ?? 'ce1';
 // « perdre » : mode Défi sans jamais répondre, monstres accélérés, pour filmer la défaite.
 const perdre = mode === 'perdre';
 mkdirSync(out, { recursive: true });

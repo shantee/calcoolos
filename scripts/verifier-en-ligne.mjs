@@ -65,7 +65,7 @@ for (const d of devices) {
   check(widths[0] <= widths[1], `${d.name} : accueil sans débordement horizontal (${widths.join(' / ')})`);
   await page.screenshot({ path: `${out}/${d.name}-accueil.png` });
   for (const [file, hook] of games) {
-    await page.goto(`${base}/jeu/${file}.html?niveau=explorateur`, { waitUntil: 'networkidle' });
+    await page.goto(`${base}/jeu/${file}.html?niveau=ce1`, { waitUntil: 'networkidle' });
     await page.waitForFunction((h) => window[h] !== undefined, hook, { timeout: 20000 });
     await page.waitForTimeout(800);
     await page.evaluate((h) => window[h].start('tranquille'), hook);
@@ -98,7 +98,7 @@ await page.waitForSelector('.mon-espace');
 await page.evaluate(() => { document.querySelector('#ajout-enfant').open = true; });
 const form = page.locator('section[aria-labelledby="t-new"] form');
 await form.locator('input[name="pseudo"]').fill('Testeur');
-await form.locator('select[name="niveau"]').selectOption('explorateur');
+await form.locator('select[name="niveau"]').selectOption('ce1');
 await form.locator('input[value="astronaute"]').check({ force: true });
 await form.locator('button[type="submit"]').click();
 await page.waitForSelector('h3:text-is("Testeur")');
@@ -110,7 +110,7 @@ await page.goto(`${base}/index.html`, { waitUntil: 'networkidle' });
 await page.waitForSelector('.joueur-profil');
 await page.locator('.manege-noms button', { hasText: 'Dragon' }).click();
 await page.locator('.vitrine-texte.devant a.jouer').click();
-await page.locator('.choix-niveau-option[data-niveau="explorateur"]').click();
+await page.locator('.choix-niveau-option[data-niveau="ce1"]').click();
 await page.waitForLoadState('networkidle');
 await page.waitForFunction(() => window.__dragon !== undefined, null, { timeout: 20000 });
 await page.waitForTimeout(600);

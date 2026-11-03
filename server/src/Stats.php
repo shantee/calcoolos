@@ -415,7 +415,7 @@ final class Stats
                 $joueurs[$p['joueur']][$this->jour($p['debut'])] = true;
             }
             $revenus = count(array_filter($joueurs, static fn ($jours) => count($jours) >= 2));
-            $niveaux = array_fill_keys(Games::TIERS, 0);
+            $niveaux = array_fill_keys([...Games::TIERS, ...Games::TIERS_ANCIENS], 0);
             $modes = array_fill_keys(Games::MODES, 0);
             foreach ($ps as $p) {
                 if (isset($niveaux[$p['niveau']])) {
@@ -475,8 +475,12 @@ final class Stats
     private function difficulte(array $parties): array
     {
         $out = [];
-        foreach (Games::TIERS as $n) {
+        foreach ([...Games::TIERS, ...Games::TIERS_ANCIENS] as $n) {
             $ps = array_values(array_filter($parties, static fn ($p) => $p['niveau'] === $n));
+            // Un ancien niveau à piments n'apparaît que s'il reste des parties sur la période.
+            if ($ps === [] && in_array($n, Games::TIERS_ANCIENS, true)) {
+                continue;
+            }
             $suivies = array_values(array_filter($ps, static fn ($p) => $p['source'] === 'suivi'));
             $ter = count(array_filter($suivies, static fn ($p) => $p['etat'] === 'terminee'));
             $ab = count(array_filter($suivies, static fn ($p) => $p['etat'] === 'abandon'));
@@ -577,7 +581,7 @@ final class Stats
             }
         }
         $jeux = array_fill_keys(array_keys(Games::CATALOG), 0);
-        $niveaux = array_fill_keys(Games::TIERS, 0);
+        $niveaux = array_fill_keys([...Games::TIERS, ...Games::TIERS_ANCIENS], 0);
         $temps = array_fill_keys(array_keys(Games::CATALOG), 0);
         foreach ($ps as $p) {
             $jeux[$p['jeu']] = ($jeux[$p['jeu']] ?? 0) + 1;

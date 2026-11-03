@@ -1,5 +1,5 @@
 import type { TierId } from "../../core/difficulty";
-import { poserTroisTermes, TEMPS_TROIS_TERMES, tirerTroisTermes, type TroisTermes } from "../../core/trois-termes";
+import { FACTEURS, facteursPermis, poserElaboree, TEMPS_TABLE, tirerElaboree, type Elaboree } from "../../core/multiplications";
 import { Releve } from "../../platform/releve";
 /** Arcade = mode Défi de Calcoolos (classé), Entraînement = mode Tranquille. */
 export type Mode = "arcade" | "training";
@@ -16,14 +16,13 @@ export interface Settings {
 }
 export const defaults: Settings = {
   tables: [2, 3, 4, 5],
-  difficulty: "explorateur",
+  difficulty: "ce1",
   mode: "arcade",
   quality: "high",
   sound: true,
 };
-/** Temps par calcul (s) selon le niveau, en Arcade ; il raccourcit un peu au fil des bonnes réponses. */
-const FACTEUR_MIN: Record<TierId, number> = { eveil: 2, explorateur: 2, stratege: 2, maitre: 3 };
-export const TIME_LIMIT: Record<TierId, number> = { eveil: 16, explorateur: 13, stratege: 10, maitre: 7 };
+/** Temps par calcul (s) selon la classe, en Arcade ; il raccourcit un peu au fil des bonnes réponses, sans descendre sous 65 %. */
+export const TIME_LIMIT: Record<TierId, number> = TEMPS_TABLE;
 /**
  * Séries de tables qui ont un classement : on ne compare que des joueurs qui révisent les mêmes tables.
  * Toute autre sélection est « perso » : comptée dans les progrès, hors classement.
@@ -41,7 +40,7 @@ export function seriesOf(tables: readonly number[]): SeriesId | "perso" {
   return "perso";
 }
 /** Série proposée d'office selon le niveau (avant tout choix du joueur). */
-export const TIER_SERIES: Record<TierId, SeriesId> = { eveil: "petites", explorateur: "petites", stratege: "toutes", maitre: "expert" };
+export const TIER_SERIES: Record<TierId, SeriesId> = { cp: "petites", ce1: "petites", ce2: "toutes", cm1: "toutes", cm2: "toutes", aventurier: "expert" };
 /** Étoiles du voyage : le village (1), la grande ville (2), la mégapole (3). */
 export const STAR_DISTANCES = [2600, 6600, 9400];
 export const starsFor = (distance: number) => STAR_DISTANCES.filter((d) => distance >= d).length;
@@ -49,7 +48,7 @@ export interface RecordData {
   best: number;
   combo: number;
   tables: Record<string, { correct: number; total: number }>;
-  /** Records Arcade par niveau et série (« explorateur/petites »). */
+  /** Records Arcade par niveau et série (« ce1/petites »). */
   bests?: Record<string, number>;
 }
 export const emptyRecord = (): RecordData => ({
@@ -107,8 +106,8 @@ export class Flight {
   fevers = 0;
   /** Relevé commun des réponses (temps, faits), envoyé avec le résultat. */
   releve = new Releve();
-  /** Calcul à trois nombres en cours (null pour une table). */
-  trio: TroisTermes | null = null;
+  /** Multiplication élaborée en cours (7 × 40, 25 × 16… ; null pour un fait de table). */
+  trio: Elaboree | null = null;
   private recent: string[] = [];
   private retry: { a: number; b: number; due: number }[] = [];
   stats: RecordData = emptyRecord();
@@ -116,6 +115,10 @@ export class Flight {
     public settings: Settings,
     private random = Math.random,
   ) {}
+  /** Palier d'une multiplication élaborée : découverte (3) seulement une fois la partie lancée, et pas juste après une erreur. */
+  private palierElabore(): 2 | 3 {
+    return this.questions > 8 && this.combo > 0 && this.random() < 0.45 ? 3 : 2;
+  }
   get multiplier() {
     return 1 + Math.min(5, Math.floor(this.combo / 3));
   }
@@ -125,9 +128,9 @@ export class Flight {
   get attendu() {
     return this.trio?.answer ?? this.a * this.b;
   }
-  /** Un calcul à trois nombres laisse plus de temps : les seuils du combo suivent. */
+  /** Une multiplication élaborée laisse plus de temps, selon son effort : les seuils du combo suivent. */
   get marge() {
-    return this.trio ? TEMPS_TROIS_TERMES : 1;
+    return this.trio?.temps ?? 1;
   }
   get floor() {
     return FLOOR[this.settings.mode];
@@ -173,17 +176,20 @@ export class Flight {
       this.b = q.b;
     } else if (
       this.settings.mode === "arcade" &&
-      poserTroisTermes(this.settings.difficulty, this.questions, this.random)
+      poserElaboree(this.settings.difficulty, this.questions, this.random) &&
+      (this.trio = tirerElaboree(this.settings.difficulty, this.settings.tables, this.random, this.palierElabore()))
     ) {
-      this.trio = tirerTroisTermes(this.settings.difficulty, this.settings.tables, this.random);
+      // multiplication élaborée bâtie sur une des tables choisies
     } else {
-      const pool = this.settings.tables
-        .flatMap((a) => Array.from({ length: 9 }, (_, i) => ({ a, b: i + 2 })))
-        .filter((q) => !this.recent.includes(`${q.a}:${q.b}`));
-      // En Explosif, plus de × 2, sauf si le joueur n'a gardé que des tables qui n'offrent rien d'autre.
-      const corses = pool.filter((q) => Math.min(q.a, q.b) >= FACTEUR_MIN[this.settings.difficulty]);
-      const choix = corses.length ? corses : pool;
+      const niveau = this.settings.difficulty;
+      // Une table plus petite que les facteurs du niveau (× 2 en Aventurier) est écartée, sauf si c'est la seule.
+      const grandes = this.settings.tables.filter((t) => t >= FACTEURS[niveau].min);
+      const tables = grandes.length ? grandes : this.settings.tables;
+      const toutes = tables.flatMap((a) => facteursPermis(niveau, a, this.questions).map((b) => ({ a, b })));
+      const pool = toutes.filter((q) => !this.recent.includes(`${q.a}:${q.b}`));
+      const choix = pool.length ? pool : toutes;
       const q = choix[Math.floor(this.random() * choix.length)] ?? { a: 2, b: 3 };
+      // La table choisie reste devant (la grille des tables compte par table) ; au CP, « 3 × 2 » se dessine en deux groupes de trois.
       this.a = q.a;
       this.b = q.b;
     }
@@ -191,7 +197,7 @@ export class Flight {
       this.recent.push(`${this.a}:${this.b}`);
       if (this.recent.length > 5) this.recent.shift();
     }
-    const base = TIME_LIMIT[this.settings.difficulty] ?? TIME_LIMIT.explorateur;
+    const base = TIME_LIMIT[this.settings.difficulty] ?? TIME_LIMIT.ce1;
     this.limit =
       this.settings.mode === "training"
         ? 30

@@ -1,6 +1,6 @@
-// Le calcul mental du niveau Explosif : des calculs qui combinent plusieurs opérations, de plus en plus élaborés au fil
-// du voyage, mais qui plafonnent et laissent respirer. Il remplace les tables en Aventure à ce niveau et les calculs du
-// Voyage Zen. L'Entraînement et les autres niveaux gardent les tables simples : c'est là qu'on les apprend.
+// Le calcul mental combiné du Voyage Zen en Aventurier : des calculs qui combinent plusieurs opérations, de plus en
+// plus élaborés au fil du voyage, mais qui plafonnent et laissent respirer. Du CP au CM2, le Voyage Zen puise dans la
+// grille commune (zen.ts) ; les Tables à bord restent des multiplications à tous les niveaux.
 import { clamp, factDifficulty, type Rng } from './model';
 import { boring, countOps, evaluate, format, numbers, ZEN_MAX, type Expr, type Op, type ZenProblem } from './zen';
 
@@ -252,7 +252,7 @@ function produitsDe(e: Expr): string[] {
   return [...ici, ...produitsDe(e.l), ...produitsDe(e.r)];
 }
 
-/** Un calcul du niveau Explosif et son effort estimé */
+/** Un calcul mental combiné (Aventurier) et son effort estimé */
 export interface CalculExplosif extends ZenProblem {
   effort: number;
 }

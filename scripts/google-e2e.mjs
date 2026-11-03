@@ -165,7 +165,7 @@ const profilClasse = (await etat(p)).profils[0];
 // Un résultat de partie, pour vérifier qu'il survit à l'association.
 const envoi = await p.evaluate(async (id) => {
   const csrf = (await (await fetch('api/etat')).json()).csrf;
-  const r = await fetch('api/resultats', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Calcoolos': '1', 'X-CSRF-Token': csrf }, body: JSON.stringify({ profil: id, jeu: 'dragon', niveau: 'explorateur', mode: 'defi', score: 8000, gagne: true, etoiles: 2, duree: 240, precision: 0.9, ops: { '+': [17, 2] }, details: { objectifs: 17 } }) });
+  const r = await fetch('api/resultats', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Calcoolos': '1', 'X-CSRF-Token': csrf }, body: JSON.stringify({ profil: id, jeu: 'dragon', niveau: 'ce1', mode: 'defi', score: 8000, gagne: true, etoiles: 2, duree: 240, precision: 0.9, ops: { '+': [17, 2] }, details: { objectifs: 17 } }) });
   return r.status;
 }, profilClasse.id);
 check(envoi === 201, 'une partie enregistrée sur le compte classique');

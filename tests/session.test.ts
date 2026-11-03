@@ -49,7 +49,7 @@ describe('partie complète', () => {
   });
 
   it('mode Défi : trois monstres au phare et c’est perdu', () => {
-    const s = new SiegeSession(TIERS.explorateur, 1, 'defi');
+    const s = new SiegeSession(TIERS.ce1, 1, 'defi');
     for (let i = 0; i < 3; i++) {
       expect(s.nextEnemy(0)).not.toBeNull();
       expect(s.enemyReachedTower()).toBe(true);
@@ -62,7 +62,7 @@ describe('partie complète', () => {
   });
 
   it('mode Tranquille : on ne perd jamais de cœur', () => {
-    const s = new SiegeSession(TIERS.eveil, 1, 'tranquille');
+    const s = new SiegeSession(TIERS.cp, 1, 'tranquille');
     s.nextEnemy(0);
     for (let i = 0; i < 20; i++) expect(s.enemyReachedTower()).toBe(false);
     expect(s.hearts).toBeNull();
@@ -77,7 +77,7 @@ describe('partie complète', () => {
   });
 
   it('les erreurs comptent dans la précision mais ne touchent pas le monstre', () => {
-    const s = new SiegeSession(TIERS.explorateur, 3, 'tranquille');
+    const s = new SiegeSession(TIERS.ce1, 3, 'tranquille');
     s.nextEnemy(0);
     s.round.toggle(0);
     const r = s.validate(1000);

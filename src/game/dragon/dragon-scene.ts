@@ -17,7 +17,7 @@ import * as Sp from '../../art/space';
 import * as D from '../../art/dragon';
 import { Sfx } from '../sfx';
 import { Fireworks } from '../fx';
-import { DragonSession, DRAGON_MODES, DRAGON_STAGES, type EatResult, type Goal, type Orb, type Setback } from './session';
+import { DragonSession, DRAGON_MODES, DRAGON_STAGES, DRAGON_TIERS, type EatResult, type Goal, type Orb, type Setback } from './session';
 import { TIERS, type Tier, type TierId } from '../../core/difficulty';
 import type { Mode } from '../../core/waves';
 import { reportResult, outcomeText } from '../../platform/results';
@@ -202,7 +202,7 @@ export class DragonScene extends Phaser.Scene {
   create(): void {
     const params = new URLSearchParams(window.location.search);
     this.seed = Number(params.get('graine')) || Math.floor(Math.random() * 1e9);
-    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.explorateur;
+    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.ce1;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || params.has('calme');
     this.speedBoost = Math.min(10, Math.max(1, Number(params.get('accelere')) || 1));
     this.fx = new Fireworks(this, 70, this.reducedMotion);
@@ -1673,7 +1673,7 @@ export class DragonScene extends Phaser.Scene {
     ex.add(this.add.text(214, 0, '17', style(40, B.C.saffron, 800, 5)).setOrigin(0.5));
     ex.add(this.add.image(310, 4, 'd-head-content').setScale(K * 0.62));
     c.add(ex);
-    const mul = this.tier.id === 'stratege' || this.tier.id === 'maitre';
+    const mul = DRAGON_TIERS[this.tier.id].mul !== null;
     c.add(this.add.text(W / 2, top + 304, mul ? 'Certains nombres se font en multipliant (×) · Niveau ' + this.tier.label : `Niveau ${this.tier.label} (${this.tier.public}) · moins de lanternes = coup parfait`, style(16, '#c9bfff', 700)).setOrigin(0.5));
     this.addOverlayButton(W / 2 - 140, top + 380, 'Tranquille', false, () => this.startGame('tranquille'));
     this.addOverlayButton(W / 2 + 140, top + 380, 'Défi', true, () => this.startGame('defi'));

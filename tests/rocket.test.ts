@@ -15,10 +15,11 @@ import {
   type Platform,
   type RocketEvent,
 } from '../src/game/rocket/session';
-import { makeExpression } from '../src/core/expressions';
+import { tirerCalcul, type Calcul, type Palier } from '../src/core/calculs';
+import { createRng } from '../src/core/rng';
 import type { TierId } from '../src/core/difficulty';
 
-const TIERS: TierId[] = ['eveil', 'explorateur', 'stratege', 'maitre'];
+const TIERS: TierId[] = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', 'aventurier'];
 const APEX = (BOOST * BOOST) / (2 * GRAVITY);
 
 /** Pilote automatique : vise une plateforme, freine avant d'arriver. */
@@ -71,31 +72,45 @@ describe('monde vertical', () => {
   });
 });
 
+/** Un calcul de la grille commune, reconnu par son texte (pour viser un calcul précis). */
+function calcul(niveau: TierId, texte: string): Calcul {
+  const rng = createRng(1);
+  for (let k = 0; k < 200_000; k++) {
+    const c = tirerCalcul(niveau, ((k % 3) + 1) as Palier, rng);
+    if (c.text === texte) return c;
+  }
+  throw new Error(`${texte} introuvable au niveau ${niveau}`);
+}
+
 describe('temps de réponse', () => {
-  it('plus court pour les calculs simples, borné entre 3 et 13 s', () => {
-    const easy = timeFor(makeExpression(4, '+', 3), 'explorateur', 'defi', 0);
-    const table = timeFor(makeExpression(7, '×', 8), 'explorateur', 'defi', 0);
-    const two = timeFor(makeExpression(2, '×', 6), 'explorateur', 'defi', 0);
-    const div = timeFor(makeExpression(56, '÷', 8), 'explorateur', 'defi', 0);
-    expect(easy).toBeLessThanOrEqual(4.5);
-    expect(table).toBeGreaterThan(two);
-    expect(div).toBeGreaterThan(table);
-    expect(timeFor(makeExpression(4, '+', 3), 'eveil', 'tranquille', 0)).toBeGreaterThan(easy);
-    expect(timeFor(makeExpression(7, '×', 8), 'explorateur', 'defi', SUMMIT)).toBeLessThan(table);
-    for (const t of TIERS) expect(timeFor(makeExpression(199, '+', 1), t, 'tranquille', 0)).toBeLessThanOrEqual(13);
-    expect(timeFor(makeExpression(1, '+', 1), 'maitre', 'defi', SUMMIT)).toBeGreaterThanOrEqual(3);
+  it('plus court pour les calculs simples, borné entre 3 et 20 s', () => {
+    const facile = timeFor(calcul('ce1', '4 + 3'), 'ce1', 'defi', 0);
+    const table = timeFor(calcul('ce1', '7 × 8'), 'ce1', 'defi', 0);
+    const deux = timeFor(calcul('ce1', '2 × 5'), 'ce1', 'defi', 0);
+    expect(facile).toBeLessThanOrEqual(6.5);
+    expect(table).toBeGreaterThan(deux);
+    expect(timeFor(calcul('cp', '4 + 3'), 'cp', 'tranquille', 0)).toBeGreaterThan(timeFor(calcul('cp', '4 + 3'), 'cp', 'defi', 0));
+    expect(timeFor(calcul('ce1', '7 × 8'), 'ce1', 'defi', SUMMIT)).toBeLessThan(table);
+    for (const t of TIERS) {
+      const rng = createRng(t.length);
+      for (let k = 0; k < 2000; k++) {
+        const c = tirerCalcul(t, ((k % 3) + 1) as Palier, rng);
+        for (const mode of ['defi', 'tranquille'] as const) {
+          const s = timeFor(c, t, mode, k % 2 ? SUMMIT : 0);
+          expect(s).toBeGreaterThanOrEqual(3);
+          expect(s).toBeLessThanOrEqual(20);
+        }
+      }
+    }
   });
 
-  it('une à deux secondes de plus qu’avant : deux en Éveil ou en Tranquille', () => {
-    // Avant (27/10/2026) : 4 + 3 = 3,8 s en Éveil Défi, 3,1 s en Explorateur Défi, 4,6 s en Explorateur Tranquille.
-    expect(timeFor(makeExpression(4, '+', 3), 'eveil', 'defi', 0)).toBeGreaterThanOrEqual(5.8);
-    expect(timeFor(makeExpression(4, '+', 3), 'explorateur', 'defi', 0)).toBeGreaterThanOrEqual(4.1);
-    expect(timeFor(makeExpression(4, '+', 3), 'explorateur', 'tranquille', 0)).toBeGreaterThanOrEqual(6.6);
+  it('les petits ont plus de temps à calcul égal', () => {
+    const c = calcul('cp', '4 + 3');
+    expect(timeFor(c, 'cp', 'defi', 0)).toBeGreaterThan(timeFor(c, 'aventurier', 'defi', 0) + 1);
   });
 
-  it('un calcul difficile laisse plus de temps qu’un facile du même genre', () => {
-    // 15 + 3 (vert) et 13 − 8 (rouge, emprunt) en Éveil.
-    expect(timeFor(makeExpression(13, '−', 8), 'eveil', 'defi', 0)).toBeGreaterThan(timeFor(makeExpression(15, '+', 3), 'eveil', 'defi', 0) + 1);
+  it('un calcul plus long laisse plus de temps qu’un calcul simple du même niveau', () => {
+    expect(timeFor(calcul('cm2', '(7 × 8) + 23'), 'cm2', 'defi', 0)).toBeGreaterThan(timeFor(calcul('cm2', '7 × 8'), 'cm2', 'defi', 0) + 2);
   });
 });
 
@@ -121,7 +136,7 @@ describe('partie', () => {
   }
 
   it('sans réponse, la fusée reste au sol ; rien n’est perdu en Tranquille', () => {
-    const s = new RocketSession('explorateur', 3, 'tranquille');
+    const s = new RocketSession('ce1', 3, 'tranquille');
     let timeouts = 0;
     for (let i = 0; i < 60 * 90; i++) for (const e of s.step(1 / 60, 0)) if (e.type === 'timeout') timeouts++;
     expect(timeouts).toBeGreaterThan(5);
@@ -132,7 +147,7 @@ describe('partie', () => {
   });
 
   it('Défi : un calcul laissé filer coûte ½ cœur, 1 cœur s’il était vert ; attendre les faciles ne paie pas', () => {
-    const s = new RocketSession('eveil', 3, 'defi');
+    const s = new RocketSession('cp', 3, 'defi');
     expect(s.lives).toBe(8);
     let lives = 8;
     let seen = 0;
@@ -152,7 +167,7 @@ describe('partie', () => {
   });
 
   it('une mauvaise réponse ne donne pas de poussée et casse la série', () => {
-    const s = new RocketSession('stratege', 4, 'defi');
+    const s = new RocketSession('ce2', 4, 'defi');
     while (!s.question) s.step(1 / 60, 0);
     answer(s);
     expect(s.combo).toBe(1);
@@ -173,7 +188,7 @@ describe('partie', () => {
 
   it('tomber dans le vide coûte une vie en Défi (le bouclier protège), jamais en Tranquille', () => {
     for (const mode of ['defi', 'tranquille'] as const) {
-      const s = new RocketSession('explorateur', 5, mode);
+      const s = new RocketSession('ce1', 5, mode);
       const fallFrom = (p: Platform) => {
         s.rocket.x = FLY.x0;
         s.rocket.y = p.y + 5;
@@ -200,7 +215,7 @@ describe('partie', () => {
   });
 
   it('bonus : turbo, sablier, cœur', () => {
-    const s = new RocketSession('eveil', 9, 'defi');
+    const s = new RocketSession('cp', 9, 'defi');
     s.lives = 5;
     const p = s.platforms[3];
     for (const kind of ['turbo', 'sablier', 'coeur'] as const) {
@@ -215,13 +230,13 @@ describe('partie', () => {
     expect(s.slow).toBeGreaterThanOrEqual(4);
     expect(s.lives).toBe(6);
     while (!s.question) s.step(1 / 60, 0);
-    expect(s.question.time).toBeGreaterThan(timeFor(s.question.expr, 'eveil', 'defi', s.altitude));
+    expect(s.question.time).toBeGreaterThan(timeFor(s.question.expr, 'cp', 'defi', s.altitude));
     answer(s);
     expect(s.rocket.vy).toBeGreaterThan(BOOST);
   });
 
   it('atterrissage brutal : seulement après une chute de plus de deux étages (Défi : −1 cœur)', () => {
-    const s = new RocketSession('explorateur', 6, 'defi');
+    const s = new RocketSession('ce1', 6, 'defi');
     const land = (from: number, p: Platform) => {
       s.rocket.x = p.x;
       s.rocket.y = from;
@@ -244,7 +259,7 @@ describe('partie', () => {
   });
 
   it('plateforme fragile : elle tombe peu après qu’on s’y est posé', () => {
-    const s = new RocketSession('maitre', 11, 'tranquille');
+    const s = new RocketSession('aventurier', 11, 'tranquille');
     const p = s.platforms.find((x) => x.kind === 'fragile')!;
     expect(p).toBeDefined();
     s.rocket.x = p.x;

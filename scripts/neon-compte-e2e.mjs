@@ -39,7 +39,7 @@ const email = `essai-neon-${Date.now()}@exemple.fr`;
 let r = await call('POST', '/inscription', { email, motDePasse: 'motdepasse-essai-42', adulte: true });
 check(r.status === 201 || r.status === 200, `inscription (${r.status})`);
 await call('GET', '/etat');
-for (const [pseudo, niveau] of [['Lina Neon', 'explorateur'], ['Noe Neon', 'maitre']]) {
+for (const [pseudo, niveau] of [['Lina Neon', 'ce1'], ['Noe Neon', 'aventurier']]) {
   r = await call('POST', '/profils', { pseudo, avatar: 'astronaute', niveau });
   check(r.status === 201, `profil ${pseudo}`);
 }
@@ -80,7 +80,7 @@ check(neonL.length === 2 && neonN.length === 1, `profils séparés : Lina ${neon
 const m = neonL[0]?.mesures;
 check(!!m && m.calculs === m.justes + m.fausses && m.calculs > 0, `mesures communes : ${JSON.stringify(m && { calculs: m.calculs, justes: m.justes, fausses: m.fausses, tempsMedian: m.tempsMedian, serie: m.serie })}`);
 check(!!m?.faits && Object.keys(m.faits).every((k) => /^\d+×\d+$/.test(k)), `faits de multiplication : ${Object.keys(m?.faits ?? {}).slice(0, 6).join(', ')}…`);
-check(m?.tempsMedian > 0 && m.tempsMedian < 16000, `temps de réponse cohérent (${m?.tempsMedian} ms, chrono à 13 s en Explorateur)`);
+check(m?.tempsMedian > 0 && m.tempsMedian < 16000, `temps de réponse cohérent (${m?.tempsMedian} ms, chrono à 15 s au CE1)`);
 check(neonL[0]?.actif > 0 && neonL[0].actif <= neonL[0].duree, `temps actif ${neonL[0]?.actif} s ≤ durée ${neonL[0]?.duree} s`);
 check(neonL[0]?.variante === 'petites' && neonN[0]?.variante === 'expert', `séries : Lina ${neonL[0]?.variante}, Noé ${neonN[0]?.variante}`);
 check(rl.data.totaux?.neon?.parties === 2, `totaux de Lina : ${JSON.stringify(rl.data.totaux?.neon)}`);
@@ -94,9 +94,9 @@ check(rl2.data.resultats.filter((x) => x.jeu === 'neon').length === 2, 'toujours
 
 const cl = await call('GET', '/classements');
 const tab = (niveau, variante) => cl.data.classements.find((b) => b.jeu === 'neon' && b.niveau === niveau && b.variante === variante);
-check(tab('explorateur', 'petites')?.public.some((x) => x.nom === 'Lina Neon'), 'Lina dans Neon · Explorateur · Tables 2 à 5');
-check(tab('maitre', 'expert')?.public.some((x) => x.nom === 'Noe Neon'), 'Noé dans Neon · Maître · Tables 2 à 12');
-check(!tab('explorateur', 'expert')?.public.some((x) => x.nom === 'Lina Neon'), 'Lina absente des autres séries');
+check(tab('ce1', 'petites')?.public.some((x) => x.nom === 'Lina Neon'), 'Lina dans Neon · CE1 · Tables 2 à 5');
+check(tab('aventurier', 'expert')?.public.some((x) => x.nom === 'Noe Neon'), 'Noé dans Neon · Aventurier · Tables 2 à 12');
+check(!tab('ce1', 'expert')?.public.some((x) => x.nom === 'Lina Neon'), 'Lina absente des autres séries');
 check(!cl.data.classements.some((b) => b.jeu === 'neon' && b.mode === 'tranquille'), 'pas de classement Entraînement');
 
 await page.evaluate((p) => localStorage.setItem('calcoolos.joueur', JSON.stringify(p)), lina);

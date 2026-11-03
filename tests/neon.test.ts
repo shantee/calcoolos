@@ -6,7 +6,7 @@ import { PROFILS_3D, essayerProfils } from "../src/game/neon/moteur3d";
 import { Flight, defaults, seriesOf, starsFor, tablesDuNiveau } from "../src/game/neon/model";
 import { hitsRoof } from "../src/game/neon/collision";
 function game() {
-  const f = new Flight({ ...defaults, difficulty: "eveil", tables: [7] }, () => 0.1);
+  const f = new Flight({ ...defaults, difficulty: "ce1", tables: [7] }, () => 0.1);
   f.start();
   return f;
 }
@@ -15,7 +15,7 @@ test("multiplications justes, variété et table sélectionnée", () => {
   const seen = new Set();
   for (let i = 0; i < 100; i++) {
     assert.equal(f.a, 7);
-    assert.ok(f.b >= 2 && f.b <= 10, "jamais × 1");
+    assert.ok(f.b >= 1 && f.b <= (f.questions <= 8 ? 5 : 10), "facteurs du CE1, de 1 à 5 au début");
     seen.add(f.b);
     assert.equal(f.answer(f.a * f.b), true);
     f.tick(1);
@@ -24,7 +24,7 @@ test("multiplications justes, variété et table sélectionnée", () => {
   assert.equal(f.correct, 100);
   assert.equal(f.total, 100);
   assert.ok(f.targetAltitude <= 155);
-  assert.ok(f.limit >= 16 * 0.65);
+  assert.ok(f.limit >= 15 * 0.65);
 });
 test("une erreur : nouveau calcul tout de suite, correction affichée, retour plus tard", () => {
   const f = game(),
@@ -105,8 +105,8 @@ test("sans réponse, l’appareil descend progressivement", () => {
     assert.ok(heights[i - 1] - heights[i] < 3, "pas de chute brutale");
   }
   assert.ok(f.vario < 0);
-  // 22 m perdus par question entière (16 s en Éveil) : 100 − 22 × 13 / 16 ≈ 82,1 m.
-  assert.ok(f.targetAltitude < 83 && f.targetAltitude > 81);
+  // 22 m perdus par question entière (15 s au CE1) : 100 − 22 × 13 / 15 ≈ 80,9 m.
+  assert.ok(f.targetAltitude < 82 && f.targetAltitude > 80);
 });
 test("pause et crash bloquent les réponses et le chronomètre", () => {
   const f = game();
@@ -238,15 +238,15 @@ test("démarrage 3D : sans aucun profil possible, l'erreur remonte et tout est n
 test("Neon Flight n'utilise pas WebGPU : importé sans ses extensions, il plantait partout où il fonctionne", () => {
   for (const source of [sourceWorld, sourceApp]) assert.notMatch(source, /from "[^"]*webgpu/i);
 });
-test("chaque niveau garde ses tables : celles de Doux ne suivent pas en Explosif", () => {
-  assert.deepEqual(tablesDuNiveau({ eveil: [2, 3] }, "maitre"), [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
-  assert.deepEqual(tablesDuNiveau({ maitre: [7, 8] }, "maitre"), [7, 8]);
-  assert.deepEqual(tablesDuNiveau({ maitre: ["x", 99] }, "eveil"), [2, 3, 4, 5]);
+test("chaque niveau garde ses tables : celles du CP ne suivent pas en Aventurier", () => {
+  assert.deepEqual(tablesDuNiveau({ cp: [2, 3] }, "aventurier"), [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
+  assert.deepEqual(tablesDuNiveau({ aventurier: [7, 8] }, "aventurier"), [7, 8]);
+  assert.deepEqual(tablesDuNiveau({ aventurier: ["x", 99] }, "cp"), [2, 3, 4, 5]);
 });
 
-test("Explosif ne pose plus de × 2, sauf si le joueur n'a gardé que cette table", () => {
+test("l'Aventurier ne pose plus de × 2, sauf si le joueur n'a gardé que cette table", () => {
   const vol = (tables: number[]) => {
-    const f = new Flight({ ...defaults, difficulty: "maitre", tables });
+    const f = new Flight({ ...defaults, difficulty: "aventurier", tables });
     f.start();
     return f;
   };
@@ -265,14 +265,14 @@ const rngFixe = (valeurs: number[]) => {
   return () => valeurs[i++ % valeurs.length];
 };
 
-test("Défi : un calcul à trois nombres se répond comme une table, avec plus de temps", () => {
-  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "maitre", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
+test("Défi : une multiplication élaborée se répond comme une table, avec plus de temps", () => {
+  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "aventurier", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
   f.start();
   while (!f.trio && f.questions < 50) {
     f.answer(f.attendu);
     f.tick(1);
   }
-  assert.ok(f.trio, "un calcul à trois nombres finit par sortir");
+  assert.ok(f.trio, "une multiplication élaborée finit par sortir");
   assert.equal(f.enonce, f.trio!.text);
   assert.equal(f.limit > 7, true, "plus de temps qu'une table");
   const avant = JSON.stringify(f.stats.tables);
@@ -280,8 +280,8 @@ test("Défi : un calcul à trois nombres se répond comme une table, avec plus d
   assert.equal(JSON.stringify(f.stats.tables), avant, "la grille des tables n'est pas faussée");
 });
 
-test("une erreur sur trois nombres montre la correction et ne repose pas le calcul", () => {
-  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "maitre", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
+test("une erreur sur une multiplication élaborée montre la correction et ne la repose pas", () => {
+  const f = new Flight({ ...defaults, tables: [7, 8], difficulty: "aventurier", mode: "arcade" }, rngFixe([0.1, 0.5, 0.3, 0.7, 0.9, 0.2]));
   f.start();
   while (!f.trio && f.questions < 50) {
     f.answer(f.attendu);
@@ -292,10 +292,11 @@ test("une erreur sur trois nombres montre la correction et ne repose pas le calc
   assert.equal(f.correction, `${text} = ${answer}`);
 });
 
-test("Doux et l'entraînement ne posent que des tables", () => {
+test("CP, CE1 et l'entraînement ne posent que des tables", () => {
   for (const reglage of [
-    { difficulty: "eveil", mode: "arcade" },
-    { difficulty: "maitre", mode: "training" },
+    { difficulty: "cp", mode: "arcade" },
+    { difficulty: "ce1", mode: "arcade" },
+    { difficulty: "aventurier", mode: "training" },
   ] as const) {
     const f = new Flight({ ...defaults, tables: [7, 8], ...reglage });
     f.start();

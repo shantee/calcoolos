@@ -4,6 +4,7 @@
  * Logique pure, testée.
  */
 import type { GameId, StoredResult } from './results';
+import { NIVEAUX, NOMS_ANCIENS, TIERS } from '../core/difficulty';
 
 export const GAME_NAMES: Record<GameId, string> = {
   cubes: 'Panique au phare !',
@@ -24,11 +25,13 @@ export const GAME_PAGES: Record<GameId, string> = {
   multirail: 'multirail.html',
 };
 
+/**
+ * Noms des niveaux pour l'historique : les six classes, et les anciens niveaux à piments (parties jouées avant le
+ * 03/11/2026, gardées telles quelles).
+ */
 export const TIER_NAMES: Record<string, string> = {
-  eveil: 'Doux',
-  explorateur: 'Relevé',
-  stratege: 'Piquant',
-  maitre: 'Explosif',
+  ...Object.fromEntries(NIVEAUX.map((id) => [id, TIERS[id].label])),
+  ...NOMS_ANCIENS,
 };
 
 export const MODE_NAMES: Record<string, string> = { tranquille: 'Tranquille', defi: 'Défi' };

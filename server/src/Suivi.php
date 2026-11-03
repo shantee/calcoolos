@@ -205,7 +205,7 @@ final class Suivi
             $jeu = $ev['jeu'] ?? null;
             $niveau = $ev['niveau'] ?? null;
             $mode = $ev['mode'] ?? null;
-            if (!is_string($jeu) || !isset(Games::CATALOG[$jeu]) || !in_array($niveau, Games::TIERS, true) || !in_array($mode, Games::MODES, true)) {
+            if (!is_string($jeu) || !isset(Games::CATALOG[$jeu]) || !Games::niveauConnu($niveau) || !in_array($mode, Games::MODES, true)) {
                 throw new HttpError(422, 'Jeu, niveau ou mode inconnu.');
             }
             $this->limite($ipKey);

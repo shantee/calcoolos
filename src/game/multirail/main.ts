@@ -15,19 +15,19 @@ import { buildIsland, makeFallsMaterial, straightFrame } from './islands';
 import { Flock, Motes, VIGNETTES, Vignette } from './life';
 import { MAX_LIGHTS, Rain, makeWaterMaterial, shadowMaterial, signAtlas, type StationInfo } from './mer';
 import {
-  CRACKS_PER_GAP, DIFFICULTIES, QuestionDeck, Run, START_WAGONS, answerOf, calculMental, comboMultiplier, cruiseSpeed,
+  CRACKS_PER_GAP, DIFFICULTIES, QuestionDeck, Run, START_WAGONS, answerOf, comboMultiplier, cruiseSpeed,
   SERIES, TIER_SERIES, TIER_SPEED, tablesDuNiveau, factKey, factMissed, mulberry32, seriesOf, starsFor, progressAt, recordAnswer, referenceTime, type Difficulty, type Fact, type Mastery,
   type Missed,
 } from './model';
 import { PRESSURE_MAX, PRESSURE_WAIT, ZenDeck, travelPoints, zenPoints, type ZenProblem } from './zen';
-import { ExplosifDeck, PALIER_MAX, PART_RAPIDE, TEMPS_ZEN, poidsDuPalier } from './explosif';
+import { ExplosifDeck, PALIER_MAX, TEMPS_ZEN } from './explosif';
 import { Post } from './post';
 import { FLIGHT, RailSystem } from './rails';
 import { REGIONS, Regions, ambienceAt } from './regions';
 import { Sky, cloneAmbience, AMBIENCES } from './sky';
 import { Layout, TrackPath, type Segment } from './track';
 import { Car, Passenger, Train } from './train';
-import { poserTroisTermes, TEMPS_TROIS_TERMES, tirerTroisTermes, type TroisTermes } from '../../core/trois-termes';
+import { poserElaboree, tirerElaboree } from '../../core/multiplications';
 import { UI, type Prefs, type Shown } from './ui';
 import { outcomeText, reportResult } from '../../platform/results';
 import { partieCommence, partiePause } from '../../platform/suivi';
@@ -68,7 +68,7 @@ const PREFS_KEY = parJoueur('calcoolos.multirail.reglages');
 const RECORDS_KEY = parJoueur('calcoolos.multirail.records');
 const MASTERY_KEY = parJoueur('calcoolos.multirail.maitrise');
 const niveauParam = params.get('niveau');
-const niveau0 = estNiveau(niveauParam) ? niveauParam : estNiveau(player?.niveau) ? player.niveau : niveauRetenu() ?? 'explorateur';
+const niveau0 = estNiveau(niveauParam) ? niveauParam : estNiveau(player?.niveau) ? player.niveau : niveauRetenu() ?? 'ce1';
 const prefs: Prefs = store.get<Prefs>(PREFS_KEY, {
   tables: [...SERIES[TIER_SERIES[niveau0]].tables], mode: 'aventure', niveau: niveau0, game: 'tables', sound: true, music: true, quality: 'auto', pad: true,
   camera: reducedMotion ? 'calme' : 'vivante',
@@ -414,15 +414,13 @@ function syncWorld(s: number): void {
 let state: State = 'title';
 let run = new Run(prefs.mode, diffOf());
 let deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo, prefs.niveau);
-/** calculs du Voyage Zen : en Explosif, le même calcul mental qu'en Aventure, avec plus de temps */
+/** calculs du Voyage Zen : ceux de la grille commune du niveau ; en Aventurier, le calcul mental combiné */
 interface DeckCalculs {
   next(region: number, plafond: number): ZenProblem;
   record(juste: boolean, rapide: boolean): void;
 }
-const deckZen = (): DeckCalculs => (prefs.niveau === 'maitre' ? new ExplosifDeck(Math.random, [], TEMPS_ZEN) : new ZenDeck(prefs.niveau, Math.random));
+const deckZen = (): DeckCalculs => (prefs.niveau === 'aventurier' ? new ExplosifDeck(Math.random, [], TEMPS_ZEN) : new ZenDeck(prefs.niveau, Math.random));
 let zenDeck = deckZen();
-/** Explosif en Aventure : le calcul mental remplace les tables */
-let explosif = new ExplosifDeck(Math.random, prefs.tables);
 /** relevé commun à Calcoolos : calculs, justes, fausses, temps, série, faits de multiplication */
 let releve = new Releve();
 /** opérations rencontrées : [réussies, ratées] */
@@ -431,7 +429,7 @@ let startedAt = 0;
 let reported = false;
 /** distance au départ de la partie (points de voyage) */
 let runS0 = 0;
-/** dernier pont bâti : un instant de voyage avant le calcul suivant (Voyage Zen, Explosif) */
+/** dernier pont bâti : un instant de voyage avant le calcul suivant (Voyage Zen) */
 let lastSolved = -1e9;
 let s = 0;
 let v = 0;
@@ -439,17 +437,19 @@ let gt = 0;
 let joltUntil = 0;
 let lastRank = -1;
 let regionsSeen: Array<{ emoji: string; name: string }> = [];
-/** calcul écrit posé en Aventure ; en Explosif, il a son temps accordé et son palier */
-interface CalculPose extends TroisTermes {
-  temps?: number;
-  palier?: number;
+/** multiplication élaborée posée entre les tables en Aventure (× 25, 7 × 13…) : `mult` multiplie le temps accordé */
+interface CalculPose {
+  text: string;
+  answer: number;
+  mult: number;
+  palier: number;
 }
 interface Question {
   /** multiplication des tables (null en Voyage Zen) */
   fact: Fact | null;
   /** calcul du Voyage Zen (null pour les tables) */
   zen: ZenProblem | null;
-  /** calcul à trois nombres posé entre les tables, ou calcul mental d'Explosif (null sinon) */
+  /** multiplication élaborée posée entre les tables (null sinon) */
   trio: CalculPose | null;
   answer: number;
   seg: Segment;
@@ -481,6 +481,15 @@ const missedOf = (c: Question): Missed => {
 };
 const isZenRun = (): boolean => run.game === 'zen';
 
+/** multiplications élaborées ratées d'affilée : après deux, on reste au palier 2 (cœur de l'année) */
+let elaboreesRatees = 0;
+let elaboree: ReturnType<typeof tirerElaboree> = null;
+/** palier d'une multiplication élaborée : la découverte (3) vient après un échauffement, jamais sur le Grand Pont */
+function palierElabore(grandPont: boolean): 2 | 3 {
+  if (grandPont || elaboreesRatees >= 2 || deck.asked < 8) return 2;
+  return Math.random() < 0.45 ? 3 : 2;
+}
+
 /** tire le calcul suivant (tables ou Voyage Zen) dans la question */
 function draw(cur: Pick<Question, 'fact' | 'zen' | 'trio' | 'answer' | 'seg'>): void {
   cur.trio = null;
@@ -490,18 +499,12 @@ function draw(cur: Pick<Question, 'fact' | 'zen' | 'trio' | 'answer' | 'seg'>): 
     cur.zen = zenDeck.next(cur.seg.region, plafond);
     cur.fact = null;
     cur.answer = cur.zen.answer;
-  } else if (calculMental(prefs.niveau, run.mode, run.game)) {
-    const c = explosif.next(cur.seg.region, plafond);
-    cur.trio = { text: c.text, answer: c.answer, temps: c.think, palier: c.tier };
-    cur.fact = null;
-    cur.zen = null;
-    cur.answer = c.answer;
-  } else if (run.mode === 'aventure' && !deck.reposePrevue && poserTroisTermes(prefs.niveau, deck.asked + 1, Math.random)) {
+  } else if (run.mode === 'aventure' && !deck.reposePrevue && poserElaboree(prefs.niveau, deck.asked + 1, Math.random) && (elaboree = tirerElaboree(prefs.niveau, prefs.tables, Math.random, palierElabore(cur.seg.style === 'grand')))) {
     deck.asked++;
-    cur.trio = tirerTroisTermes(prefs.niveau, prefs.tables, Math.random);
+    cur.trio = { text: elaboree.text, answer: elaboree.answer, mult: elaboree.temps, palier: elaboree.palier };
     cur.fact = null;
     cur.zen = null;
-    cur.answer = cur.trio.answer;
+    cur.answer = elaboree.answer;
   } else {
     cur.fact = deck.next(progressAt(s));
     cur.zen = null;
@@ -619,7 +622,7 @@ function startRun(): void {
     run = new Run(prefs.mode, diffOf(), prefs.game);
     deck = new QuestionDeck(prefs.tables, Math.random, mastery, DIFFICULTIES[TIER_SPEED[prefs.niveau]].combo, prefs.niveau);
     zenDeck = deckZen();
-    explosif = new ExplosifDeck(Math.random, prefs.tables);
+    elaboreesRatees = 0;
     releve = new Releve();
     opsTally = {};
     startedAt = Date.now();
@@ -766,13 +769,10 @@ function onCorrect(cur: Question): void {
     zenDeck.record(true, seconds < z.think * 0.5);
     ui.setPressure(run.pressure);
     lastSolved = gt;
-  } else if (cur.trio?.temps) {
-    const rapide = cur.trio.temps * PART_RAPIDE;
-    res = run.onCorrect(seconds, cur.trio.temps, gt, rapide, poidsDuPalier(cur.trio.palier ?? 1));
-    explosif.record(true, seconds <= rapide);
-    lastSolved = gt;
   } else {
-    res = run.onCorrect(seconds, referenceTime(run.difficulty, s) * (cur.trio ? TEMPS_TROIS_TERMES : 1), gt);
+    const mult = cur.trio?.mult ?? 1;
+    elaboreesRatees = cur.trio ? 0 : elaboreesRatees;
+    res = run.onCorrect(seconds, referenceTime(run.difficulty, s) * mult, gt, DIFFICULTIES[run.difficulty].combo * mult, mult);
     if (cur.fact) {
       recordAnswer(mastery, cur.fact, true, seconds, DIFFICULTIES[run.difficulty].combo);
       store.set(MASTERY_KEY, mastery);
@@ -913,11 +913,7 @@ function onWrong(cur: Question): void {
     store.set(MASTERY_KEY, mastery);
     deck.scheduleRetry(cur.fact);
   }
-  if (cur.trio?.temps) {
-    explosif.record(false, false);
-    // le nouveau calcul a tout son temps, même si le train attend déjà au bord du vide
-    cur.stuck = 0;
-  }
+  if (cur.trio) elaboreesRatees++;
   audio.wrong();
   ui.plateFlash('bad');
   ui.showCorrection(missedOf(cur));
@@ -1134,10 +1130,9 @@ function drive(dt: number): void {
   const rush = title || calm ? 0 : THREE.MathUtils.clamp((lead - 0.9) / 1.1, 0, 1) * 0.7;
   const zen = !title && isZenRun();
   let cruise = title ? 12 : base * (1 + rush) * (boiling ? 1.2 : 1) * (gt < joltUntil ? 0.55 : 1);
-  /** temps accordé au calcul en cours (Voyage Zen, Explosif) et temps de réflexion restant */
-  const accorde = title ? undefined : q?.zen?.think ?? q?.trio?.temps;
+  /** temps accordé au calcul en cours (Voyage Zen) et temps de réflexion restant */
+  const accorde = title ? undefined : q?.zen?.think;
   let left = Infinity;
-  const mental = !title && calculMental(prefs.niveau, run.mode, run.game);
   if (q && accorde !== undefined) {
     // Bouillotte règle son allure pour arriver au bord quand le temps de réflexion s'achève
     left = accorde - (gt - q.start);
@@ -1145,8 +1140,8 @@ function drive(dt: number): void {
     cruise = left > 0.5 ? THREE.MathUtils.clamp(dist / left, 1.2, base * 1.15) : base * 0.8;
     if (gt < joltUntil) cruise *= 0.7;
   } else if (zen) cruise = base * (1 + rush * 0.5) * (boiling ? 1.15 : 1);
-  // un calcul à trois nombres demande plus de réflexion : le train ralentit d'autant
-  if (q?.trio && accorde === undefined) cruise /= TEMPS_TROIS_TERMES;
+  // une multiplication élaborée demande plus de réflexion : le train ralentit d'autant
+  if (q?.trio && accorde === undefined) cruise /= q.trio.mult;
   const stop = stopPoint();
   const brake = run.mode === 'entrainement' && !title ? 4 : 6.5;
   const vMax = Math.sqrt(2 * brake * Math.max(0, stop - s));
@@ -1165,11 +1160,9 @@ function drive(dt: number): void {
     const next = layout.nextUnbuilt(s);
     if (!q && next && !doomed) {
       // jusqu'à deux brèches d'avance ; sur une île de contemplation, on attend la fin de la vue
-      // Voyage Zen et Explosif : un calcul à la fois, et un instant de voyage après chaque pont
+      // Voyage Zen : un calcul à la fois, et un instant de voyage après chaque pont
       if (zen) {
         if (next.s0 - s <= cycle * (calm ? 0.9 : 1.05) && (gt - lastSolved > 2.5 || next.style === 'grand')) ask(next);
-      } else if (mental) {
-        if (next.s0 - s <= cycle * (calm ? 1 : 1.25) && (gt - lastSolved > 2 || next.style === 'grand')) ask(next);
       } else if (next.s0 - s <= cycle * (calm ? 1 : 2.1)) ask(next);
     }
     if (doomed && v < 0.4 && doomed.s0 - s < 2.5) {
@@ -1208,9 +1201,9 @@ function drive(dt: number): void {
             q.strainAt = q.stuck + PRESSURE_WAIT;
             addPressure(q, 'attente');
           }
-        } else if (aventure && q.stuck > 1.1 && (q.trio?.temps === undefined || left <= 0)) {
+        } else if (aventure && q.stuck > 1.1) {
           noteAnswer(q, false);
-          if (q.trio?.temps) explosif.record(false, false);
+          if (q.trio) elaboreesRatees++;
           failGap(q);
         }
         else if (!aventure && q.stuck > 0.5) train.loco.setMood('idle', gt);
@@ -1778,7 +1771,7 @@ if (TEST) {
     get region() { const d = regions.def(regions.rankAt(s)); return { rank: regions.rankAt(s), key: d.key, name: d.name, altitude: Math.round(regions.altitude(s)) }; },
     get question() {
       if (!q) return null;
-      const think = q.zen?.think ?? q.trio?.temps;
+      const think = q.zen?.think;
       const left = think === undefined ? null : +(think - (gt - q.start)).toFixed(1);
       return { text: q.zen?.text ?? q.trio?.text ?? `${q.fact!.a} × ${q.fact!.b}`, answer: q.answer, tier: q.zen?.tier ?? q.trio?.palier, think, left, region: q.seg.region, entry: q.entry, cracks: q.cracks, key: q.fact ? factKey(q.fact.a, q.fact.b) : null, dist: Math.round(q.seg.s0 - s) };
     },

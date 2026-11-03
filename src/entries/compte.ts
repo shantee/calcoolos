@@ -8,22 +8,23 @@ import { api, apiUrl, type AccountState, type Profile } from '../platform/api';
 import { AVATAR_INVITE, AVATAR_PAR_DEFAUT, AVATARS, avatarId, avatarImg } from '../platform/avatars';
 import { activePlayer, joueurParDefaut, setActivePlayer } from '../platform/player';
 import { lireFavoris } from '../platform/favoris';
-import { GAME_NAMES, GAME_PAGES, TIER_NAMES, summarize } from '../platform/stats';
+import { GAME_NAMES, GAME_PAGES, summarize } from '../platform/stats';
 import type { GameId, StoredResult } from '../platform/results';
 import { field, h, showErrors } from '../platform/dom';
 import { boutonGoogle, oublierGoogle } from '../platform/google';
 import { pseudoAuHasard } from '../platform/pseudos';
 import { demarrerSuivi, etapeParcours } from '../platform/suivi';
-import { NIVEAU_INFOS, niveauRetenu, retenirNiveau } from '../platform/niveau';
-import type { TierId } from '../core/difficulty';
+import { NIVEAUX, NIVEAU_INFOS, estNiveau, niveauRetenu, retenirNiveau } from '../platform/niveau';
 
 demarrerSuivi('compte');
 
 const root = document.querySelector<HTMLElement>('#contenu')!;
 
-function tierSelect(name: string, value = 'explorateur'): HTMLSelectElement {
+/** Choix de la classe ; un profil resté sur un ancien niveau à piments (ou sans niveau) le choisira au prochain jeu. */
+function tierSelect(name: string, value: string | null = null): HTMLSelectElement {
   const s = h('select', { name });
-  for (const [id, label] of Object.entries(TIER_NAMES)) s.append(h('option', { value: id, selected: id === value }, `${label} · ${NIVEAU_INFOS[id as TierId].public}`));
+  if (!estNiveau(value)) s.append(h('option', { value: '', selected: true }, 'À choisir au prochain jeu'));
+  for (const id of NIVEAUX) s.append(h('option', { value: id, selected: id === value }, `${NIVEAU_INFOS[id].long} · ${NIVEAU_INFOS[id].public}`));
   return s;
 }
 
@@ -239,7 +240,7 @@ function profileCard(p: Profile, refresh: (profiles: Profile[]) => void): HTMLEl
   });
 
   return h('article', { class: 'carte profil' },
-    h('div', { class: 'profil-tete' }, avatarImg(p.avatar, 64, ''), h('div', {}, h('h3', {}, p.pseudo), h('span', { class: 'discret' }, `Niveau ${TIER_NAMES[p.niveau] ?? p.niveau}`))),
+    h('div', { class: 'profil-tete' }, avatarImg(p.avatar, 64, ''), h('div', {}, h('h3', {}, p.pseudo), h('span', { class: 'discret' }, estNiveau(p.niveau) ? `Niveau ${NIVEAU_INFOS[p.niveau].nom}` : 'Niveau à choisir'))),
     resumeProfil(p),
     h('div', { class: 'actions' }, play, h('a', { class: 'bouton petit secondaire', href: `tableau.html?profil=${p.id}` }, p.personnel ? 'Mes progrès' : 'Voir ses progrès')),
     h('details', {}, h('summary', {}, 'Modifier le pseudo, l’avatar ou le niveau'), edit),
@@ -253,7 +254,7 @@ function carteMonProfil(enfants: number): HTMLElement {
   const msg = h('p', { class: 'message', role: 'status' });
   const form = h('form', { class: 'formulaire', novalidate: true },
     pseudoField(),
-    field('Niveau', tierSelect('niveau', niveauRetenu() ?? 'explorateur'), 'niveau'),
+    field('Niveau', tierSelect('niveau', niveauRetenu()), 'niveau'),
     h('details', {}, h('summary', {}, 'Choisir mon avatar'), avatarPicker('avatar-perso')),
     msg,
     h('div', { class: 'actions' }, h('button', { class: 'bouton', type: 'submit' }, 'Créer mon profil et jouer')),
@@ -268,7 +269,7 @@ function carteMonProfil(enfants: number): HTMLElement {
       const moi = r.data.profils.find((p) => p.personnel);
       if (moi) {
         setActivePlayer(moi);
-        retenirNiveau(moi.niveau as TierId);
+        if (estNiveau(moi.niveau)) retenirNiveau(moi.niveau);
       }
       window.location.href = 'index.html';
       return;
@@ -308,7 +309,7 @@ function newProfileCard(refresh: (profiles: Profile[]) => void): HTMLElement {
   const msg = h('p', { class: 'message', role: 'status' });
   const form = h('form', { class: 'formulaire', novalidate: true },
     pseudoField(),
-    field('Niveau', tierSelect('niveau'), 'niveau'),
+    field('Niveau', tierSelect('niveau', niveauRetenu()), 'niveau'),
     avatarPicker('avatar-nouveau'),
     msg,
     h('div', { class: 'actions' }, h('button', { class: 'bouton', type: 'submit' }, 'Ajouter le profil')),

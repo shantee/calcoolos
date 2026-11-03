@@ -45,7 +45,7 @@ describe('difficulté adaptative', () => {
   });
 
   it('un cran plus haut élargit la plage des cibles', () => {
-    const base = TIERS.explorateur.puzzle;
+    const base = TIERS.ce1.puzzle;
     expect(adjustConfig(base, 1).targetMax).toBeGreaterThan(base.targetMax);
     expect(adjustConfig(base, -1).targetMax).toBeLessThan(base.targetMax);
     expect(adjustConfig(base, 0)).toEqual(base);

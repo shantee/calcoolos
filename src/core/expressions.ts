@@ -1,73 +1,14 @@
 /**
- * Générateur de calculs pour les jeux d'arcade (« Pluie de météores »).
- * Chaque palier a son menu d'opérations ; tous les résultats sont des entiers
- * positifs ou nuls, et chaque calcul se vérifie (voir tests).
+ * Calculs des jeux d'arcade (Pluie de météores, bonus de Panique au phare !, logo) : une façade sur la grille commune
+ * de calculs.ts. Tous les résultats sont des entiers de 1 à 999, et aucune réponse tirée n'entre en conflit avec
+ * celles déjà à l'écran (aucune n'est le début d'une autre).
  */
 import type { Rng } from './rng';
 import type { TierId } from './difficulty';
+import { PART_PLATEAU, tirerCalcul, type Calcul, type Op, type Palier } from './calculs';
 
-export type Op = '+' | '−' | '×' | '÷';
-
-export interface Expression {
-  a: number;
-  b: number;
-  op: Op;
-  answer: number;
-  /** Texte affiché, avec espaces fines autour de l'opérateur. */
-  text: string;
-}
-
-interface OpRule {
-  op: Op;
-  weight: number;
-  make(rng: Rng): [number, number];
-}
-
-const add = (max: number, min = 1): OpRule => ({
-  op: '+',
-  weight: 3,
-  make: (rng) => {
-    const a = rng.int(min, max - min);
-    return [a, rng.int(min, max - a)];
-  },
-});
-
-const sub = (max: number): OpRule => ({
-  op: '−',
-  weight: 2,
-  make: (rng) => {
-    const a = rng.int(3, max);
-    return [a, rng.int(1, a - 1)];
-  },
-});
-
-const mul = (tables: number[], maxFactor: number, minFactor = 2): OpRule => ({
-  op: '×',
-  weight: 4,
-  make: (rng) => {
-    const t = rng.pick(tables);
-    const k = rng.int(minFactor, maxFactor);
-    return rng.next() < 0.5 ? [t, k] : [k, t];
-  },
-});
-
-const div = (tables: number[], maxQuotient: number, minQuotient = 2): OpRule => ({
-  op: '÷',
-  weight: 2,
-  make: (rng) => {
-    const t = rng.pick(tables);
-    const q = rng.int(minQuotient, maxQuotient);
-    return [t * q, t];
-  },
-});
-
-export const MENUS: Record<TierId, OpRule[]> = {
-  eveil: [add(20), sub(20)],
-  explorateur: [add(50, 2), sub(50), mul([2, 5, 10], 10)],
-  stratege: [add(100, 5), sub(100), mul([2, 3, 4, 5, 6, 7, 8, 9], 9), div([2, 3, 4, 5, 6, 7, 8, 9], 9)],
-  // Explosif : ni table de 2 ni « 6 × 2 », dans un sens comme dans l'autre.
-  maitre: [add(200, 10), sub(200), mul([3, 4, 6, 7, 8, 9, 11, 12], 12, 3), div([3, 4, 6, 7, 8, 9, 11, 12], 12, 3)],
-};
+export type { Op } from './calculs';
+export type Expression = Calcul;
 
 export function evaluate(a: number, op: Op, b: number): number {
   switch (op) {
@@ -82,10 +23,6 @@ export function evaluate(a: number, op: Op, b: number): number {
   }
 }
 
-export function makeExpression(a: number, op: Op, b: number): Expression {
-  return { a, b, op, answer: evaluate(a, op, b), text: `${a} ${op} ${b}` };
-}
-
 /** Deux réponses entrent en conflit si l'une est le début de l'autre (ex. 3 et 36). */
 export function conflicts(x: number, y: number): boolean {
   const s = String(x);
@@ -93,28 +30,25 @@ export function conflicts(x: number, y: number): boolean {
   return s.startsWith(t) || t.startsWith(s);
 }
 
-/**
- * Tire un calcul du palier dont la réponse n'entre en conflit avec aucune des
- * réponses déjà à l'écran : taper une réponse ne peut jamais en déclencher une autre.
- */
-export function pickExpression(tier: TierId, rng: Rng, active: readonly number[] = []): Expression {
-  const menu = MENUS[tier];
-  const total = menu.reduce((s, r) => s + r.weight, 0);
-  let fallback: Expression | null = null;
-  for (let attempt = 0; attempt < 80; attempt++) {
-    let roll = rng.next() * total;
-    let rule = menu[0];
-    for (const r of menu) {
-      roll -= r.weight;
-      if (roll <= 0) {
-        rule = r;
-        break;
-      }
-    }
-    const [a, b] = rule.make(rng);
-    const e = makeExpression(a, rule.op, b);
-    fallback ??= e;
-    if (active.every((x) => !conflicts(x, e.answer))) return e;
+/** Palier tiré selon les parts du plateau (calcul isolé, sans suite de partie). */
+export function palierAuHasard(rng: Rng): Palier {
+  let x = rng.next();
+  for (const p of [1, 2, 3] as Palier[]) {
+    x -= PART_PLATEAU[p];
+    if (x < 0) return p;
   }
-  return fallback!;
+  return 3;
+}
+
+/**
+ * Un calcul du niveau dont la réponse n'entre en conflit avec aucune des réponses déjà à l'écran : taper une réponse
+ * ne peut jamais en déclencher une autre.
+ */
+export function pickExpression(tier: TierId, rng: Rng, active: readonly number[] = [], palier: Palier = palierAuHasard(rng)): Expression {
+  return tirerCalcul(tier, palier, rng, (c) => active.some((x) => conflicts(x, c.answer)));
+}
+
+/** Fait de table à verser au relevé : seulement pour un calcul à une opération (7 × 8, 56 ÷ 7). */
+export function faitDe(e: Expression): Expression | undefined {
+  return e.ops === 1 ? e : undefined;
 }

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BANDES, ExplosifDeck, PALIER_MAX, PLATEAU, TEMPS_MAX, TEMPS_MIN, TEMPS_ZEN, TEXTE_MAX, charge, niveauDuVoyage, poidsDuPalier, tempsAccorde, type CalculExplosif } from '../src/game/multirail/explosif';
-import { QuestionDeck, Run, TIER_SPEED, calculMental, mulberry32 } from '../src/game/multirail/model';
+import { QuestionDeck, Run, TIER_SPEED, mulberry32 } from '../src/game/multirail/model';
 import type { Expr } from '../src/game/multirail/zen';
-import { EXPLOSIF_MULTIRAIL, NIVEAUX } from '../src/platform/niveau';
 
 const TOUTES = [2, 3, 4, 5, 6, 7, 8, 9, 10];
 /** une région se traverse en neuf calculs environ */
@@ -70,33 +69,22 @@ const moyenne = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / xs.len
 const forme = (t: string): string => t.replace(/\d+/g, 'n');
 const SIMPLE = /^\d+ [×÷] \d+$/;
 
-describe('Explosif : qui joue à quoi', () => {
-  it('seul Explosif en Aventure passe au calcul mental, les tables restent ailleurs', () => {
-    expect(calculMental('maitre', 'aventure', 'tables')).toBe(true);
-    expect(calculMental('maitre', 'entrainement', 'tables')).toBe(false);
-    expect(calculMental('maitre', 'aventure', 'zen')).toBe(false);
-    for (const n of NIVEAUX.filter((x) => x !== 'maitre')) expect(calculMental(n, 'aventure', 'tables')).toBe(false);
-  });
-
-  it('la fenêtre de lancement annonce un exemple vrai de ce niveau', () => {
-    const { valeur, ops } = relire(EXPLOSIF_MULTIRAIL.exemple);
-    expect(valeur).toBe(79);
-    expect(ops.length).toBeGreaterThan(1);
-  });
-
-  it("l'Entraînement garde les tables simples, y compris en Explosif", () => {
-    const deck = new QuestionDeck(TOUTES, mulberry32(3), {}, 3, 'maitre');
+describe('MULTIRAIL : les Tables à bord restent des tables à tous les niveaux', () => {
+  it("l'Aventurier en Entraînement garde les tables simples (sans × 1 ni × 2)", () => {
+    const deck = new QuestionDeck(TOUTES, mulberry32(3), {}, 3, 'aventurier');
     const faits = Array.from({ length: 200 }, () => deck.next(0));
-    expect(faits.every((f) => f.a >= 3 && f.b >= 3 && f.a * f.b <= 100)).toBe(true);
+    expect(faits.every((f) => f.a >= 3 && f.b >= 3 && f.a * f.b <= 144)).toBe(true);
   });
 
-  it('Doux garde ses petites multiplications', () => {
-    const deck = new QuestionDeck([2, 3, 4, 5], mulberry32(3), {}, 6, 'eveil');
-    expect(Array.from({ length: 80 }, () => deck.next(0)).some((f) => f.a * f.b <= 12)).toBe(true);
+  it('le CP garde ses petites multiplications', () => {
+    const deck = new QuestionDeck([2, 3, 4, 5], mulberry32(3), {}, 6, 'cp');
+    const faits = Array.from({ length: 200 }, () => deck.next(0));
+    expect(faits.every((f) => f.a * f.b <= 30)).toBe(true);
+    expect(faits.some((f) => f.a * f.b <= 12)).toBe(true);
   });
 });
 
-describe('Explosif : chaque calcul est valide', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : chaque calcul est valide', () => {
   it('100 longues parties : entiers, divisions exactes, parenthèses, rien au-delà de 500', () => {
     let vus = 0;
     for (let g = 1; g <= 100; g++) {
@@ -143,7 +131,7 @@ describe('Explosif : chaque calcul est valide', () => {
   });
 });
 
-describe('Explosif : de vrais calculs variés', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : de vrais calculs variés', () => {
   it('jamais de multiplication ou de division isolée', () => {
     for (let g = 1; g <= 100; g++) for (const c of voyage(g, 200)) expect(SIMPLE.test(c.text), c.text).toBe(false);
   });
@@ -192,7 +180,7 @@ describe('Explosif : de vrais calculs variés', () => {
   });
 });
 
-describe('Explosif : progression au fil du voyage', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : progression au fil du voyage', () => {
   const parties = Array.from({ length: 150 }, (_, g) => voyage(g + 1, 270));
   const region = (r: number): CalculExplosif[] => parties.flatMap((p) => p.slice(r * CALCULS_PAR_REGION, (r + 1) * CALCULS_PAR_REGION));
 
@@ -252,7 +240,7 @@ describe('Explosif : progression au fil du voyage', () => {
   });
 });
 
-describe('Explosif : temps selon la complexité', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : temps selon la complexité', () => {
   const e = {
     petit: { op: '+', l: { op: '×', l: 3, r: 2 }, r: 12 },
     moyen: { op: '+', l: { op: '×', l: 7, r: 8 }, r: 23 },
@@ -296,7 +284,7 @@ describe('Explosif : temps selon la complexité', () => {
   });
 });
 
-describe('Explosif : adaptation au joueur', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : adaptation au joueur', () => {
   it('après deux erreurs, on souffle vraiment', () => {
     const deck = new ExplosifDeck(mulberry32(8), TOUTES);
     for (let k = 0; k < 40; k++) {
@@ -315,10 +303,10 @@ describe('Explosif : adaptation au joueur', () => {
   });
 });
 
-describe('Explosif : points et série', () => {
+describe('Aventurier, Voyage Zen (calcul mental combiné) : points et série', () => {
   const rapide = 8;
   it('une réponse juste dans le délai fait progresser la série, même après 3 s', () => {
-    const run = new Run('aventure', TIER_SPEED.maitre);
+    const run = new Run('aventure', TIER_SPEED.aventurier);
     expect(run.onCorrect(7, 14, 0, rapide, 1).fast).toBe(true);
     expect(run.combo).toBe(1);
     expect(run.onCorrect(9, 14, 0, rapide, 1).fast).toBe(false);
@@ -326,13 +314,13 @@ describe('Explosif : points et série', () => {
   });
 
   it('un palier élaboré rapporte plus', () => {
-    const a = new Run('aventure', TIER_SPEED.maitre).onCorrect(5, 10, 0, rapide, poidsDuPalier(1)).points;
-    const b = new Run('aventure', TIER_SPEED.maitre).onCorrect(5, 10, 0, rapide, poidsDuPalier(5)).points;
+    const a = new Run('aventure', TIER_SPEED.aventurier).onCorrect(5, 10, 0, rapide, poidsDuPalier(1)).points;
+    const b = new Run('aventure', TIER_SPEED.aventurier).onCorrect(5, 10, 0, rapide, poidsDuPalier(5)).points;
     expect(b).toBeGreaterThan(a);
   });
 
   it('les autres niveaux gardent leur barème', () => {
-    const a = new Run('aventure', TIER_SPEED.stratege).onCorrect(3, 9, 0);
+    const a = new Run('aventure', TIER_SPEED.ce2).onCorrect(3, 9, 0);
     expect(a.fast).toBe(true);
     expect(a.points).toBe(170);
   });

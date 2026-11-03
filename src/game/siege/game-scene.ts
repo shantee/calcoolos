@@ -195,7 +195,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   create(): void {
     const params = new URLSearchParams(window.location.search);
     this.seed = Number(params.get('graine')) || Math.floor(Math.random() * 1e9);
-    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.explorateur;
+    this.tier = TIERS[params.get('niveau') as TierId] ?? TIERS.ce1;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches || params.has('calme');
     this.speedBoost = Math.min(10, Math.max(1, Number(params.get('accelere')) || 1));
 

@@ -1475,38 +1475,32 @@ table.tableau {
   font-size: 0.85rem;
 }
 
-/* Quatre crans : la difficulté du niveau d'un coup d'œil. */
-.crans {
-  display: inline-flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 16px;
+/* Pastille de la classe (couleur du niveau, comme dans la fenêtre de choix). */
+.classement .niveau-pastille.petite {
+  min-width: 40px;
+  height: 26px;
+  padding: 0 7px;
+  border-radius: 9px;
+  font-size: 0.8rem;
 }
 
-.crans i {
-  width: 5px;
-  border-radius: 2px;
-  background: rgb(246 236 216 / 0.2);
+/* Anciens records (niveaux à piments) : repliés en bas de la page Classements. */
+.anciens-records {
+  margin-top: 28px;
 }
 
-.crans i:nth-child(1) {
-  height: 6px;
+.anciens-records summary {
+  cursor: pointer;
+  font-weight: 800;
 }
 
-.crans i:nth-child(2) {
-  height: 9px;
+.anciens-records .anciens-jeu h2 {
+  margin: 18px 0 8px;
+  font-size: 1.1rem;
 }
 
-.crans i:nth-child(3) {
-  height: 12px;
-}
-
-.crans i:nth-child(4) {
-  height: 16px;
-}
-
-.crans i.plein {
-  background: var(--accent);
+.classement.ancien {
+  opacity: 0.9;
 }
 
 .etiquette {

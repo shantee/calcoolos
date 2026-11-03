@@ -54,9 +54,9 @@ export class SiegeSession {
     return WAVES.length;
   }
 
-  /** Vitesse du monstre courant selon le mode. */
+  /** Vitesse du monstre courant selon le mode et la classe (plus lente quand les sommes demandent de réfléchir). */
   get enemySpeed(): number {
-    return this.enemy ? this.enemy.speed * MODES[this.mode].speedFactor : 0;
+    return this.enemy ? this.enemy.speed * MODES[this.mode].speedFactor * this.round.tier.allure : 0;
   }
 
   /** Fait entrer le monstre suivant. Renvoie null s'il faut changer de vague ou si c'est fini. */

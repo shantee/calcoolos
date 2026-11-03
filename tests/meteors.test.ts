@@ -1,43 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { conflicts, evaluate, MENUS, pickExpression } from '../src/core/expressions';
+import { conflicts, evaluate, pickExpression } from '../src/core/expressions';
+import { OPERATIONS } from '../src/core/calculs';
+import { lire } from './outils-calculs';
 import { createRng } from '../src/core/rng';
 import { MeteorSession, METEOR_WAVES, BOSS_CALCS } from '../src/game/meteors/session';
 import type { TierId } from '../src/core/difficulty';
 
-const TIERS: TierId[] = ['eveil', 'explorateur', 'stratege', 'maitre'];
+const TIERS: TierId[] = ['cp', 'ce1', 'ce2', 'cm1', 'cm2', 'aventurier'];
 
-describe('générateur de calculs', () => {
-  it('Explosif ne pose jamais de × 2 ni de ÷ 2, dans un sens comme dans l’autre', () => {
-    const rng = createRng(11);
-    for (let k = 0; k < 3000; k++) {
-      const e = pickExpression('maitre', rng);
-      if (e.op === '×') expect(Math.min(e.a, e.b), e.text).toBeGreaterThanOrEqual(3);
-      if (e.op === '÷') expect(Math.min(e.b, e.answer), e.text).toBeGreaterThanOrEqual(3);
-    }
-  });
-
+describe('générateur de calculs (façade de la grille commune)', () => {
   for (const tier of TIERS) {
-    it(`${tier} : 2 000 calculs justes, entiers, positifs`, () => {
+    it(`${tier} : 2 000 calculs justes, entiers de 1 à 999, opérations du niveau`, () => {
       const rng = createRng(tier.length * 31);
-      const ops = new Set<string>();
       for (let k = 0; k < 2000; k++) {
         const e = pickExpression(tier, rng);
-        ops.add(e.op);
-        expect(Number.isInteger(e.answer)).toBe(true);
-        expect(e.answer).toBeGreaterThanOrEqual(0);
-        expect(evaluate(e.a, e.op, e.b)).toBe(e.answer);
-        expect(e.text).toBe(`${e.a} ${e.op} ${e.b}`);
-        if (tier === 'eveil') expect(e.answer).toBeLessThanOrEqual(20);
+        expect(lire(e.text).valeur, e.text).toBe(e.answer);
+        expect(e.answer).toBeGreaterThanOrEqual(1);
+        expect(e.answer).toBeLessThanOrEqual(999);
+        for (const op of lire(e.text).operations) expect(OPERATIONS[tier]).toContain(op);
+        if (e.ops === 1) expect(evaluate(e.a, e.op, e.b)).toBe(e.answer);
       }
-      // Toutes les opérations du menu apparaissent.
-      expect(ops.size).toBe(new Set(MENUS[tier].map((r) => r.op)).size);
     });
   }
-
-  it('les petits (Éveil) n’ont ni multiplication ni division', () => {
-    const rng = createRng(1);
-    for (let k = 0; k < 500; k++) expect(['+', '−']).toContain(pickExpression('eveil', rng).op);
-  });
 
   it('aucune réponse à l’écran n’est le début d’une autre', () => {
     for (const tier of TIERS) {
@@ -85,7 +69,7 @@ describe('partie de Pluie de météores', () => {
       expect(m.calculs).toBe(s.stats.hits);
       expect(m.fausses).toBe(0);
       expect(m.tempsMedian).toBeGreaterThan(0);
-      if (tier !== 'eveil') expect(Object.keys(m.faits ?? {}).length).toBeGreaterThan(0);
+      if (tier !== 'cp') expect(Object.keys(m.faits ?? {}).length).toBeGreaterThan(0);
       const total = METEOR_WAVES.reduce((n, w) => n + w.rocks + w.robots + w.gold, 0);
       // Chaque météore est détruit (par un tir ou par une onde dorée), plus les calculs du boss.
       expect(s.stats.hits).toBeLessThanOrEqual(total + BOSS_CALCS);
@@ -97,7 +81,7 @@ describe('partie de Pluie de météores', () => {
   }
 
   it('mode Défi : sans répondre, les boucliers tombent et la partie est perdue', () => {
-    const s = new MeteorSession('explorateur', 3, 'defi');
+    const s = new MeteorSession('ce1', 3, 'defi');
     let t = 0;
     while (s.phase === 'play' && t < 300) {
       s.update(0.1);
@@ -109,7 +93,7 @@ describe('partie de Pluie de météores', () => {
   });
 
   it('mode Tranquille : on ne perd jamais', () => {
-    const s = new MeteorSession('eveil', 3, 'tranquille');
+    const s = new MeteorSession('cp', 3, 'tranquille');
     let t = 0;
     while (t < 400) {
       s.update(0.1);
@@ -120,7 +104,7 @@ describe('partie de Pluie de météores', () => {
   });
 
   it('saisie : attente sur un début de réponse, erreur sinon, combo cassé', () => {
-    const s = new MeteorSession('stratege', 5, 'tranquille');
+    const s = new MeteorSession('ce2', 5, 'tranquille');
     let guard = 0;
     while (s.alive.length === 0 && guard++ < 100) s.update(0.1);
     const m = s.alive[0];
@@ -139,7 +123,7 @@ describe('partie de Pluie de météores', () => {
   });
 
   it('le météore doré fait exploser tous les autres', () => {
-    const s = new MeteorSession('explorateur', 8, 'tranquille');
+    const s = new MeteorSession('ce1', 8, 'tranquille');
     let gold;
     for (let k = 0; k < 2000 && !gold; k++) {
       s.update(0.1);

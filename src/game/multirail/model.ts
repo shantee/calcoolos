@@ -1,6 +1,7 @@
 // Règles du jeu, indépendantes du rendu : choix des calculs, barème, combos, wagons.
-// Dans Calcoolos, la vitesse vient du niveau de la plateforme (Éveil, Explorateur, Stratège, Maître).
+// Dans Calcoolos, la vitesse vient du niveau scolaire de la plateforme (CP à CM2, Aventurier).
 import type { TierId } from '../../core/difficulty';
+import { DEBUT_CE1, FACTEURS, facteursPermis } from '../../core/multiplications';
 
 export type Mode = 'aventure' | 'entrainement';
 export type Difficulty = 'douce' | 'promenade' | 'express' | 'bolide' | 'zen';
@@ -30,7 +31,7 @@ export const DIFFICULTIES: Record<Difficulty, DiffPreset> = {
 };
 
 /** vitesse des tables selon le niveau Calcoolos */
-export const TIER_SPEED: Record<TierId, Difficulty> = { eveil: 'douce', explorateur: 'promenade', stratege: 'express', maitre: 'bolide' };
+export const TIER_SPEED: Record<TierId, Difficulty> = { cp: 'douce', ce1: 'douce', ce2: 'promenade', cm1: 'promenade', cm2: 'express', aventurier: 'express' };
 
 // ---------------------------------------------------------------- Calcoolos : séries, étoiles
 
@@ -50,11 +51,11 @@ export function seriesOf(tables: readonly number[]): SeriesId | 'perso' {
 }
 
 /** série proposée d'office selon le niveau */
-export const TIER_SERIES: Record<TierId, SeriesId> = { eveil: 'petites', explorateur: 'petites', stratege: 'toutes', maitre: 'toutes' };
+export const TIER_SERIES: Record<TierId, SeriesId> = { cp: 'petites', ce1: 'petites', ce2: 'toutes', cm1: 'toutes', cm2: 'toutes', aventurier: 'toutes' };
 
 /**
  * Tables retenues pour un niveau : chaque niveau garde les siennes. Une seule liste commune laissait les tables
- * d'une partie en Doux (2 à 5) à un joueur passé en Explosif.
+ * d'une partie au CP (2 à 5) à un joueur passé en Aventurier.
  */
 export function tablesDuNiveau(memoire: Partial<Record<TierId, number[]>> | undefined, niveau: TierId): number[] {
   const retenues = memoire?.[niveau];
@@ -63,19 +64,17 @@ export function tablesDuNiveau(memoire: Partial<Record<TierId, number[]>> | unde
 
 /**
  * Calculs de chaque niveau : `depart` plafonne la difficulté des premiers calculs (elle monte ensuite avec la
- * distance), `plancher` écarte ce qui est trop simple pour le niveau (× 1 dès Relevé ; × 2 et × 10 en Explosif, les × 5 y restent pour respirer).
+ * distance), `plancher` écarte ce qui est trop simple pour le niveau (× 1 dès le CE2 ; × 2 et × 10 en Aventurier,
+ * les × 5 y restent pour respirer). Les facteurs eux-mêmes viennent de la grille (core/multiplications.ts).
  */
 export const TIER_FACTS: Record<TierId, { depart: number; plancher: number }> = {
-  eveil: { depart: 0.35, plancher: -1 },
-  explorateur: { depart: 0.45, plancher: 0 },
-  stratege: { depart: 0.7, plancher: 0.1 },
-  maitre: { depart: 1, plancher: 0.25 },
+  cp: { depart: 0.35, plancher: -1 },
+  ce1: { depart: 0.4, plancher: -1 },
+  ce2: { depart: 0.5, plancher: 0 },
+  cm1: { depart: 0.6, plancher: 0.05 },
+  cm2: { depart: 0.7, plancher: 0.1 },
+  aventurier: { depart: 0.85, plancher: 0.25 },
 };
-/**
- * Explosif, en Aventure : plus de tables isolées, de vrais calculs mentaux (explosif.ts). L'Entraînement et les autres
- * niveaux gardent les tables : c'est là qu'on les apprend. Le Voyage Zen a son propre paquet.
- */
-export const calculMental = (niveau: TierId, mode: Mode, game: Game): boolean => niveau === 'maitre' && mode === 'aventure' && game === 'tables';
 
 /** en dessous, le plancher est relâché : il respecte les tables choisies à la main */
 const MIN_FACTS = 6;
@@ -168,12 +167,12 @@ export function factDifficulty(a: number, b: number): number {
   return 0.45 + (lo + hi - 8) * 0.05;
 }
 
-/** toutes les paires (table, facteur 1..10) sans doublon commutatif */
-export function factPool(tables: readonly number[]): Fact[] {
+/** toutes les paires (table, facteur permis au niveau) sans doublon commutatif */
+export function factPool(tables: readonly number[], niveau: TierId = 'ce2'): Fact[] {
   const seen = new Set<string>();
   const out: Fact[] = [];
   for (const t of [...new Set(tables)].sort((x, y) => x - y)) {
-    for (let k = 1; k <= 10; k++) {
+    for (const k of facteursPermis(niveau, t)) {
       const key = factKey(t, k);
       if (seen.has(key)) continue;
       seen.add(key);
@@ -245,9 +244,9 @@ export class QuestionDeck {
     private rng: Rng,
     private mastery: Mastery,
     private fastLimit: number,
-    private niveau: TierId = 'eveil',
+    private niveau: TierId = 'ce1',
   ) {
-    this.pool = factsDuNiveau(factPool(tables.length ? tables : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), niveau);
+    this.pool = factsDuNiveau(factPool(tables.length ? tables : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], niveau), niveau);
   }
 
   /** un fait raté attend son retour : il passe avant tout autre genre de calcul */
@@ -286,6 +285,7 @@ export class QuestionDeck {
     const weights = this.pool.map((f) => {
       const key = factKey(f.a, f.b);
       if (avoid.includes(key) && this.pool.length > 1) return 0;
+      if (this.reserve(f)) return 0;
       let w = masteryWeight(this.mastery[key], this.fastLimit);
       if (factDifficulty(f.a, f.b) > allowed) w *= 0.12;
       total += w;
@@ -297,6 +297,17 @@ export class QuestionDeck {
       if (r <= 0 && weights[i] > 0) return this.pool[i];
     }
     return this.pool[this.pool.length - 1];
+  }
+
+  /**
+   * Au CE1, les huit premiers calculs restent sur les facteurs 1 à 5 : les tables arrivent peu à peu (si les tables
+   * choisies n'ont rien d'autre, on garde tout).
+   */
+  private reserve(f: Fact): boolean {
+    const debut = FACTEURS[this.niveau].debutMax;
+    if (debut === undefined || this.asked > DEBUT_CE1) return false;
+    const petit = (x: Fact) => Math.min(x.a, x.b) <= debut;
+    return !petit(f) && this.pool.some(petit);
   }
 
   /** 7 × 3 ou 3 × 7 au hasard : les deux écritures sont à connaître */

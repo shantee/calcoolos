@@ -18,7 +18,7 @@ const { chromium } = await loadPlaywright();
 const base = process.argv[2] ?? 'http://localhost:5173';
 const out = process.argv[3] ?? 'CAPTURES';
 const plan = process.argv[4] ?? 'gagner';
-const niveau = process.argv[5] ?? 'explorateur';
+const niveau = process.argv[5] ?? 'ce1';
 mkdirSync(out, { recursive: true });
 const problems = [];
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

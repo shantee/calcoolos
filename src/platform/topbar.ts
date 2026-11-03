@@ -13,8 +13,7 @@ import { h } from './dom';
 import { logo } from './logo';
 import { activePlayer, setActivePlayer, syncActivePlayer, type ActivePlayer } from './player';
 import { localHistory } from './results';
-import { TIER_NAMES } from './stats';
-import { niveauRetenu } from './niveau';
+import { NIVEAU_INFOS, estNiveau, niveauRetenu } from './niveau';
 import { selecteurLangue } from '../i18n/drapeaux';
 
 export type PageId = 'accueil' | 'progres' | 'classements' | 'compte' | 'autre';
@@ -86,7 +85,8 @@ function choisir(p: Profile | null): void {
 function dessiner(espace: HTMLElement, compte: HTMLElement, joueur: ActivePlayer | null, state: AccountState | null | undefined): void {
   fermerPanneau?.();
   const connecte = !!state?.connecte;
-  const niveau = TIER_NAMES[joueur?.niveau ?? niveauRetenu() ?? ''] ?? null;
+  const choisi = estNiveau(joueur?.niveau) ? joueur?.niveau : niveauRetenu();
+  const niveau = choisi ? NIVEAU_INFOS[choisi].nom : null;
 
   // --- Le bouton : avatar, nom, statut.
   const nom = h('span', { class: 'joueur-nom' }, joueur ? joueur.pseudo : 'Invité');
