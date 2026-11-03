@@ -1461,7 +1461,9 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.spellLabels.forEach((label, i) => {
       const n = this.spellCharges(i);
       label.parentContainer.setVisible(!this.keypadShown);
-      label.setText(names[i] + '\n' + n + ' charge' + (n > 1 ? 's' : '')).setAlpha(n ? 1 : 0.5);
+      const every = [8, 6, 4][i];
+      const left = every - (this.session?.stats.hits ?? 0) % every;
+      label.setText(names[i] + '\n' + n + ' charge' + (n > 1 ? 's' : '') + (n === 0 ? ' · +' + left + ' ✓' : '')).setAlpha(n ? 1 : 0.65);
     });
   }
 
