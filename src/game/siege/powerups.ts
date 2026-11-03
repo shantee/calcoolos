@@ -51,8 +51,8 @@ export function flightMs(tier: TierId, mode: Mode, effort = 1.5): number {
 }
 
 /** Durée du gel (ms). */
-export function freezeMs(mode: Mode): number {
-  return mode === 'tranquille' ? 6000 : 5000;
+export function freezeMs(_mode: Mode): number {
+  return 8000;
 }
 
 /** Bornes de la Super Poussée (abscisses de la scène, 1280 px de large). */

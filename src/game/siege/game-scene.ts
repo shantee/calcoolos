@@ -152,6 +152,9 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   private speedBoost = 1;
 
   // Bonus volants
+  private spellSpent = [0, 0, 0];
+  private spellLabels: Phaser.GameObjects.Text[] = [];
+  private hintHalo: Phaser.GameObjects.Arc | null = null;
   private powers: PowerUps | null = null;
   /** Rang du monstre courant dans la partie (0 = premier). */
   private enemyIndex = -1;
@@ -210,6 +213,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.showIntro();
 
     (window as unknown as { __siege: unknown }).__siege = {
+      spell: (i: number) => this.castSpell(i),
       session: () => this.session,
       start: (mode: Mode) => this.startGame(mode),
       select: (i: number) => this.onCube(i),
@@ -257,6 +261,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     const e = this.enemy;
     if (!e || !this.session) return;
+    this.refreshSpells();
     this.bonusTick(time);
     if (this.enemyWalking && e.walking && !this.isFrozen()) {
       e.obj.x -= (this.session.enemySpeed * this.speedBoost * delta) / 1000;
@@ -816,6 +821,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const s = this.session;
     if (this.busy || !s || this.overlay) return;
     this.sfx.unlock();
+    this.clearHint();
     const selected = s.round.toggle(i);
     this.setCubeSelected(i, selected);
     if (selected) this.sfx.select(s.round.selected.length - 1);
@@ -957,6 +963,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     const s = this.session;
     if (this.busy || !s || this.overlay || !this.enemy || this.pushing) return;
     this.sfx.unlock();
+    this.clearHint();
     const target = s.round.target;
     const before = s.round.selected.slice();
     const res = s.validate(this.time.now);
@@ -1441,11 +1448,82 @@ export class CubesDeSiegeScene extends Phaser.Scene {
   // Deux fois par partie, un engin traverse le ciel avec un calcul : bonne réponse = un bonus
   // rangé dans une niche au pied du phare. Logique dans powerups.ts ; ici, seulement le spectacle.
 
+  private clearHint(): void {
+    if (this.hintHalo) { this.tweens.killTweensOf(this.hintHalo); this.hintHalo.destroy(); this.hintHalo = null; }
+  }
+
+  private spellCharges(i: number): number {
+    return Math.min(2, 1 + Math.floor((this.session?.stats.hits ?? 0) / [8, 6, 4][i]) - this.spellSpent[i]);
+  }
+
+  private refreshSpells(): void {
+    const names = ['❄ Coup de froid', '☄ Météorite', '✦ Indice lumineux'];
+    this.spellLabels.forEach((label, i) => {
+      const n = this.spellCharges(i);
+      label.parentContainer.setVisible(!this.keypadShown);
+      label.setText(names[i] + '\n' + n + ' charge' + (n > 1 ? 's' : '')).setAlpha(n ? 1 : 0.5);
+    });
+  }
+
+  private castSpell(i: number): void {
+    const s = this.session, e = this.enemy;
+    if (!Number.isInteger(i) || i < 0 || i > 2 || !s || s.phase !== 'play' || !e || e.entering ||
+      this.busy || this.pushing || this.overlay || s.enemyHp <= 0 || this.spellCharges(i) <= 0) return;
+    if (i === 0) {
+      if (this.isFrozen()) return;
+      this.sfx.freeze();
+      this.encase(e, 8000);
+      for (let k = 0; k < (this.reducedMotion ? 4 : 28); k++) {
+        const flake = this.add.text(580 + (k * 79) % 660, 170 + (k * 43) % 350, '❄', style(18 + k % 3 * 8, '#d6f8ff', 800)).setDepth(49);
+        this.tweens.add({ targets: flake, x: flake.x - (this.reducedMotion ? 0 : 300), y: flake.y + 50, alpha: 0, duration: 900, delay: k * 15, onComplete: () => flake.destroy() });
+      }
+    } else if (i === 1) {
+      const before = s.round.target;
+      if (!s.round.simplify()) { this.toast('Cette cible est déjà toute simple !'); return; }
+      this.clearHint();
+      this.cubes.forEach((_, j) => this.setCubeSelected(j, false));
+      this.setEnemyTarget(e, s.round.target, false);
+      this.refreshEquation();
+      s.markShown(this.time.now);
+      const x = e.obj.x, y = e.obj.y - 70 * e.scale;
+      if (!this.isFrozen()) e.obj.x = Math.min(1170, x + 100);
+      const rock = this.add.text(x + (this.reducedMotion ? 0 : 180), this.reducedMotion ? y : 100, '☄', style(76, '#ffba72', 800)).setOrigin(0.5).setDepth(50);
+      this.tweens.add({ targets: rock, x, y, duration: this.reducedMotion ? 100 : 430, onComplete: () => {
+        rock.destroy();
+        this.dust.explode(this.reducedMotion ? 3 : 18, x, y);
+        const ring = this.add.circle(x, y, 24, 0xffb452, 0.4).setStrokeStyle(4, 0xffe6a1).setDepth(48);
+        this.tweens.add({ targets: ring, scale: this.reducedMotion ? 1 : 4, alpha: 0, duration: 400, onComplete: () => ring.destroy() });
+      } });
+      this.toast(before + ' → ' + s.round.target + ' : sélection effacée, à toi !', 'good');
+    } else {
+      const index = s.round.hint();
+      if (index === null) return;
+      this.clearHint();
+      const cube = this.cubes[index];
+      const halo = this.add.circle(cube.obj.x, cube.obj.y, 43).setStrokeStyle(4, 0xffdf77).setDepth(35);
+      this.hintHalo = halo;
+      if (!this.reducedMotion) this.tweens.add({ targets: halo, alpha: 0.4, scale: 1.08, duration: 800, yoyo: true, repeat: -1 });
+      this.toast('Ce cube fait partie d’une solution avec peu de cubes.', 'good');
+    }
+    this.spellSpent[i]++;
+    this.refreshSpells();
+  }
+
   private isFrozen(): boolean {
     return this.time.now < this.frozenUntil;
   }
 
   private buildBonusUi(): void {
+    ['❄', '☄', '✦'].forEach((_, i) => {
+      const x = 738 + i * 190;
+      const box = this.add.container(x, 650).setDepth(60);
+      const bg = this.add.rectangle(0, 0, 176, 80, 0x202b48, 0.95).setStrokeStyle(2, [0x98eaff, 0xffb56a, 0xffe994][i]);
+      const label = this.add.text(0, 0, '', style(18, B.C.cream, 800)).setOrigin(0.5).setAlign('center');
+      box.add([bg, label]);
+      box.setSize(176, 80).setInteractive({ useHandCursor: true });
+      box.on('pointerdown', () => { this.sfx.unlock(); this.castSpell(i); });
+      this.spellLabels.push(label);
+    });
     this.tex('bonus-niche', Bn.niche);
     this.tex('bonus-halo', () => B.softGlow(64, '#ffc94a'));
     (['poussee', 'gel', 'supertir'] as PowerKind[]).forEach((k) => this.tex(`bonus-icon-${k}`, () => Bn.powerIcon(k)));
@@ -1534,6 +1612,8 @@ export class CubesDeSiegeScene extends Phaser.Scene {
     this.clearIce();
     this.pushing = false;
     this.clearMegaFx();
+    this.spellSpent = [0, 0, 0];
+    this.clearHint();
     this.powers = new PowerUps(this.tier.id, mode, this.seed);
     this.enemyIndex = -1;
     this.arriving.clear();

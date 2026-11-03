@@ -56,7 +56,23 @@ export class SiegeSession {
 
   /** Vitesse du monstre courant selon le mode et la classe (plus lente quand les sommes demandent de réfléchir). */
   get enemySpeed(): number {
-    return this.enemy ? this.enemy.speed * MODES[this.mode].speedFactor * this.round.tier.allure : 0;
+    return this.enemy ? this.enemy.speed * MODES[this.mode].speedFactor * this.round.tier.allure / this.thinkingFactor : 0;
+  }
+
+  /** Effort de la solution réelle : longueur, retenues et rareté des décompositions. */
+  get thinkingFactor(): number {
+    const p = this.round.puzzle;
+    let ways = 0;
+    const visit = (at: number, sum: number, left: number): void => {
+      if (left === 0) { if (sum === p.target) ways++; return; }
+      for (let i = at; i <= p.cubes.length - left; i++) {
+        if (sum + p.cubes[i] <= p.target) visit(i + 1, sum + p.cubes[i], left - 1);
+      }
+    };
+    visit(0, 0, p.optimalCount);
+    const awkward = p.solution.filter(i => p.cubes[i] % 10 !== 0 && p.cubes[i] > 10).length;
+    return 1 + Math.max(0, p.optimalCount - 2) * 0.3 + awkward * 0.08
+      + (ways <= 2 ? 0.35 : 0) + (p.target > 120 ? 0.5 : 0);
   }
 
   /** Fait entrer le monstre suivant. Renvoie null s'il faut changer de vague ou si c'est fini. */

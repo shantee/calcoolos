@@ -156,7 +156,11 @@ export function pickTarget(cubes: number[], cfg: PuzzleConfig, rng: Rng): Puzzle
   for (let attempt = 0; attempt < 200; attempt++) {
     const options = admissibleTargets(cubes, cfg);
     if (options.length > 0) {
-      const choice = rng.pick(options);
+      // Les grands défis restent occasionnels ; évite une longue combinaison unique.
+      const comfortable = options.filter(o => o.optimal <= 3);
+      const pool = comfortable.length && rng.next() < 0.92 ? comfortable : options;
+      const ordinary = pool.filter(o => o.target <= 120);
+      const choice = rng.pick(ordinary.length && rng.next() < 0.92 ? ordinary : pool);
       const solution = findOptimalSolution(cubes, choice.target);
       if (!solution || solution.length !== choice.optimal) throw new Error('incohérence interne du solveur');
       return { cubes: cubes.slice(), target: choice.target, optimalCount: choice.optimal, solution };

@@ -51,7 +51,7 @@ export const TIERS: Record<TierId, Tier> = {
   ce1: tier('ce1', 'CE1', 'nombres jusqu’à 100, premières tables', 4, 4, { minValue: 2, maxValue: 19, targetMin: 12, targetMax: 40, minOptimal: 2, maxOptimal: 3 }, 16, 0.9),
   ce2: tier('ce2', 'CE2', 'toutes les tables, premières divisions', 4, 4, { minValue: 3, maxValue: 29, targetMin: 20, targetMax: 60, minOptimal: 2, maxOptimal: 3 }, 14, 0.95),
   cm1: tier('cm1', 'CM1', 'grands nombres, × 5, × 25, distributivité', 4, 4, { minValue: 5, maxValue: 45, targetMin: 30, targetMax: 100, minOptimal: 2, maxOptimal: 3 }, 13, 0.95),
-  cm2: tier('cm2', 'CM2', '× 50, ÷ 4, ÷ 8, calculs en plusieurs étapes', 4, 4, { minValue: 8, maxValue: 69, targetMin: 50, targetMax: 160, minOptimal: 2, maxOptimal: 4 }, 12, 0.9),
+  cm2: tier('cm2', 'CM2', '× 50, ÷ 4, ÷ 8, calculs en plusieurs étapes', 4, 4, { minValue: 8, maxValue: 69, targetMin: 50, targetMax: 120, minOptimal: 2, maxOptimal: 3 }, 16, 0.9),
   aventurier: tier('aventurier', 'Aventurier', 'pour aller plus loin, à tout âge', 4, 4, { minValue: 11, maxValue: 99, targetMin: 80, targetMax: 240, minOptimal: 3, maxOptimal: 4 }, 12, 0.85),
 };
 

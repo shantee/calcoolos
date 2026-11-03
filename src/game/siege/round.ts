@@ -3,7 +3,7 @@
  * Les scènes Phaser lisent cet état et jouent les animations correspondantes.
  */
 import { createRng, type Rng } from '../../core/rng';
-import { evaluateSelection, generatePuzzle, refillAndNext, type Puzzle, type PuzzleConfig } from '../../core/puzzle';
+import { findOptimalSolution, minCubesTable, evaluateSelection, generatePuzzle, refillAndNext, type Puzzle, type PuzzleConfig } from '../../core/puzzle';
 import { scoreHit, type HitResult } from '../../core/scoring';
 import type { Tier } from '../../core/difficulty';
 
@@ -65,6 +65,33 @@ export class SiegeRound {
 
   clear(): void {
     this.selected = [];
+  }
+
+  /** Simplifie sans déplacer les cubes : une cible soluble, jamais de sélection périmée. */
+  simplify(): boolean {
+    const best = minCubesTable(this.cubes, this.target);
+    const wanted = Math.max(2, Math.round(this.target * 0.75));
+    const choices = best.map((k, target) => ({ k, target }))
+      .filter(({ k, target }) => target >= 2 && target < this.target && k >= 2 && k <= this.puzzle.optimalCount)
+      .sort((a, b) => Math.abs(a.target - wanted) - Math.abs(b.target - wanted) || a.k - b.k);
+    const choice = choices[0];
+    if (!choice) return false;
+    const solution = findOptimalSolution(this.cubes, choice.target)!;
+    this.puzzle = { cubes: this.cubes.slice(), target: choice.target, optimalCount: solution.length, solution };
+    this.clear();
+    return true;
+  }
+
+  /** Un seul cube, dans une solution optimale compatible avec la sélection si possible. */
+  hint(): number | null {
+    const remaining = this.cubes.map((v, i) => this.selected.includes(i) ? 0 : v);
+    const rest = this.target - this.sum;
+    if (rest > 0) {
+      const indices = remaining.map((v, i) => v > 0 ? i : -1).filter(i => i >= 0);
+      const solution = findOptimalSolution(indices.map(i => this.cubes[i]), rest);
+      if (solution && solution.length + this.selected.length === this.puzzle.optimalCount) return indices[solution[0]];
+    }
+    return this.puzzle.solution.find(i => !this.selected.includes(i)) ?? null;
   }
 
   validate(nowMs: number): ValidateOutcome {

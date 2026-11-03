@@ -1240,3 +1240,6 @@ Astéroïdes en morceaux, voir `doc/IDEES_JEUX.md`) ; multiplications dans Cubes
 - Philippe choisit A ou B (recommandation : B, avec l'atmosphère de A ; voir `doc/DIRECTION_ARTISTIQUE.md`).
 - Puis étape C : vagues, 3 archétypes d'ennemis, début et fin de partie, écran de score, mode sans pression,
   moteur d'adaptation simple.
+
+## 03/11/2026 — Codex : trois sorts du phare et équilibrage CM2
+Implémentés localement : Coup de froid 8 s (réutilise la glace existante), Météorite soluble et Indice lumineux optimal ; charges par bonnes réponses, boutons tactiles, effets réduits. CM2 de base limité à 120, vitesse liée à la grille réelle. Détails et reprise : doc/SORTS_PHARE.md. Statut : à confirmer, non publié.

@@ -83,7 +83,8 @@ describe('passages des engins', () => {
       }
     }
     expect(flightMs('cp', 'defi', 2)).toBeGreaterThan(flightMs('aventurier', 'defi', 2));
-    expect(freezeMs('tranquille')).toBeGreaterThan(freezeMs('defi'));
+    expect(freezeMs('tranquille')).toBe(8000);
+    expect(freezeMs('defi')).toBe(8000);
   });
 
   it('deux engins différents, et le premier chargement est la Super Poussée', () => {
