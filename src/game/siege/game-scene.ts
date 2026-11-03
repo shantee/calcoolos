@@ -1533,7 +1533,7 @@ export class CubesDeSiegeScene extends Phaser.Scene {
       const box = this.add.container(x, 650).setDepth(60);
       const bg = this.add.rectangle(0, 0, 176, 80, 0x202b48, 0.95).setStrokeStyle(2, [0x98eaff, 0xffb56a, 0xffe994][i]);
       const icon = this.add.image(-52, 0, `sort-${i + 1}-pret`).setDisplaySize(64, 64);
-      const label = this.add.text(32, 0, '', style(14, B.C.cream, 800)).setOrigin(0.5).setAlign('center');
+      const label = this.add.text(34, 0, '', style(13, B.C.cream, 800)).setOrigin(0.5).setAlign('center');
       box.add([bg, icon, label]);
       this.spellIcons.push(icon);
       box.setSize(176, 80).setInteractive({ useHandCursor: true });
