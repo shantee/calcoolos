@@ -83,6 +83,7 @@ export default defineConfig({
         tableau: resolve(import.meta.dirname, 'tableau.html'),
         classements: resolve(import.meta.dirname, 'classements.html'),
         confidentialite: resolve(import.meta.dirname, 'confidentialite.html'),
+        apropos: resolve(import.meta.dirname, 'a-propos.html'),
       },
     },
   },

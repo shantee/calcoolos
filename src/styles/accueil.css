@@ -1079,6 +1079,11 @@ h1 {
   font-weight: 800;
 }
 
+/* Crédit zfx.fr sous le bloc « familles » */
+.pied-accueil {
+  text-align: center;
+}
+
 /* ---------- Téléphone et tablette ---------- */
 
 @media (max-width: 520px) {
